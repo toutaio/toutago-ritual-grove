@@ -91,9 +91,13 @@ type ValidationRule struct {
 
 // QuestionCondition defines conditional display
 type QuestionCondition struct {
-	Field string      `yaml:"field"`
-	Equals interface{} `yaml:"equals,omitempty"`
-	NotEquals interface{} `yaml:"not_equals,omitempty"`
+	Field      string                `yaml:"field,omitempty"`
+	Equals     interface{}           `yaml:"equals,omitempty"`
+	NotEquals  interface{}           `yaml:"not_equals,omitempty"`
+	Expression string                `yaml:"expression,omitempty"`
+	And        []QuestionCondition   `yaml:"and,omitempty"`
+	Or         []QuestionCondition   `yaml:"or,omitempty"`
+	Not        *QuestionCondition    `yaml:"not,omitempty"`
 }
 
 // QuestionHelper provides helper tools
