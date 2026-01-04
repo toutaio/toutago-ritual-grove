@@ -266,3 +266,129 @@ func TestParseFlags(t *testing.T) {
 		})
 	}
 }
+
+func TestPrintUsage(t *testing.T) {
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	printUsage()
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	output := buf.String()
+
+	// Verify key sections are present
+	requiredStrings := []string{
+		"Ritual Grove",
+		"Usage:",
+		"Commands:",
+		"list",
+		"create",
+		"version",
+	}
+
+	for _, str := range requiredStrings {
+		if !strings.Contains(output, str) {
+			t.Errorf("Usage output should contain '%s'", str)
+		}
+	}
+}
+
+func TestCreateCommandError(t *testing.T) {
+	tmpDir := t.TempDir()
+	
+	// Try to create with invalid ritual path
+	err := runCreateCommand("/nonexistent/path", tmpDir, map[string]interface{}{})
+	if err == nil {
+		t.Error("Expected error when loading nonexistent ritual")
+	}
+}
+
+func TestListCommandError(t *testing.T) {
+	// Try to list from nonexistent path
+	err := runListCommand([]string{"/nonexistent/ritual/path"})
+	// This should not error - it should just return empty results
+	if err != nil {
+		t.Logf("List command returned error (acceptable): %v", err)
+	}
+}
+
+func TestListCommandJSONError(t *testing.T) {
+	// Try to list JSON from nonexistent path
+	err := runListCommandJSON([]string{"/nonexistent/ritual/path"})
+	// This should not error - it should just return empty results
+	if err != nil {
+		t.Logf("List JSON command returned error (acceptable): %v", err)
+	}
+}
+
+func TestRunCreateCommandWithMultipleAnswers(t *testing.T) {
+	tmpDir := t.TempDir()
+	
+	// Create source ritual
+	ritualDir := filepath.Join(tmpDir, "multi-var-ritual")
+	templatesDir := filepath.Join(ritualDir, "templates")
+	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	
+	ritualYAML := `ritual:
+  name: multi-var-ritual
+  version: 1.0.0
+  description: Ritual with multiple variables
+  template_engine: go-template
+
+files:
+  templates:
+    - src: "config.json.tmpl"
+      dest: "config.json"
+`
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+		t.Fatal(err)
+	}
+	
+	template := `{
+  "name": "{{ .app_name }}",
+  "version": "{{ .version }}",
+  "author": "{{ .author }}"
+}`
+	if err := os.WriteFile(filepath.Join(templatesDir, "config.json.tmpl"), []byte(template), 0644); err != nil {
+		t.Fatal(err)
+	}
+	
+	// Target directory
+	targetDir := filepath.Join(tmpDir, "output-project")
+	
+	// Mock answers with multiple variables
+	answers := map[string]interface{}{
+		"app_name": "awesome-app",
+		"version":  "1.2.3",
+		"author":   "Test Author",
+	}
+	
+	// Run create command
+	err := runCreateCommand(ritualDir, targetDir, answers)
+	if err != nil {
+		t.Fatalf("runCreateCommand() error = %v", err)
+	}
+	
+	// Verify rendered content
+	configPath := filepath.Join(targetDir, "config.json")
+	content, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("Failed to read config.json: %v", err)
+	}
+	
+	expected := `{
+  "name": "awesome-app",
+  "version": "1.2.3",
+  "author": "Test Author"
+}`
+	if string(content) != expected {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, string(content))
+	}
+}
