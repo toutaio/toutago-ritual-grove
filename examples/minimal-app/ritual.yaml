@@ -50,20 +50,21 @@ questions:
 
 files:
   templates:
-    - source: "main.go.tmpl"
-      destination: "main.go"
-    - source: "go.mod.tmpl"
-      destination: "go.mod"
-    - source: "README.md.tmpl"
-      destination: "README.md"
-    - source: "handlers/hello.go.tmpl"
-      destination: "handlers/hello.go"
+    - src: "main.go.tmpl"
+      dest: "main.go"
+    - src: "go.mod.tmpl"
+      dest: "go.mod"
+    - src: "README.md.tmpl"
+      dest: "README.md"
+    - src: "handlers/hello.go.tmpl"
+      dest: "handlers/hello.go"
       condition: "{{ .with_example_handler }}"
-    - source: ".env.example.tmpl"
-      destination: ".env.example"
-    - source: ".gitignore"
-      destination: ".gitignore"
-      static: true
+    - src: ".env.example.tmpl"
+      dest: ".env.example"
+  
+  static:
+    - src: ".gitignore"
+      dest: ".gitignore"
 
   protected:
     - "README.md"
