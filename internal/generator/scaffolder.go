@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/toutaio/toutago-ritual-grove/internal/hooks"
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
 
@@ -404,5 +405,41 @@ func (s *ProjectScaffolder) GenerateFromRitual(projectPath, ritualPath string, m
 		return err
 	}
 
+	return nil
+}
+
+// ExecutePostGenerateHooks executes post-generation hooks
+func (s *ProjectScaffolder) ExecutePostGenerateHooks(projectPath string, hookCommands []string) error {
+	if len(hookCommands) == 0 {
+		return nil
+	}
+	
+	hookExecutor := hooks.NewHookExecutor(projectPath)
+	return hookExecutor.ExecutePostInstall(hookCommands)
+}
+
+// GenerateFromRitualWithHooks generates a project and executes hooks
+func (s *ProjectScaffolder) GenerateFromRitualWithHooks(projectPath, ritualPath string, manifest *ritual.Manifest, vars *Variables) error {
+	// Execute pre-install hooks
+	if len(manifest.Hooks.PreInstall) > 0 {
+		hookExecutor := hooks.NewHookExecutor(projectPath)
+		if err := hookExecutor.ExecutePreInstall(manifest.Hooks.PreInstall); err != nil {
+			return fmt.Errorf("pre-install hooks failed: %w", err)
+		}
+	}
+	
+	// Generate project
+	if err := s.GenerateFromRitual(projectPath, ritualPath, manifest, vars); err != nil {
+		return err
+	}
+	
+	// Execute post-install hooks
+	if len(manifest.Hooks.PostInstall) > 0 {
+		hookExecutor := hooks.NewHookExecutor(projectPath)
+		if err := hookExecutor.ExecutePostInstall(manifest.Hooks.PostInstall); err != nil {
+			return fmt.Errorf("post-install hooks failed: %w", err)
+		}
+	}
+	
 	return nil
 }

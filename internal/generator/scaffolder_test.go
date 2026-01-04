@@ -408,3 +408,88 @@ func anySubstringMatch(s, substr string) bool {
 	}
 	return false
 }
+
+func TestProjectScaffolder_ExecuteHooks(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectPath := filepath.Join(tmpDir, "test-project")
+	
+	scaffolder := NewProjectScaffolder()
+	if err := scaffolder.CreateStructure(projectPath); err != nil {
+		t.Fatal(err)
+	}
+	
+	// Create test hooks
+	hooks := []string{
+		"echo 'hook executed' > hook_marker.txt",
+	}
+	
+	err := scaffolder.ExecutePostGenerateHooks(projectPath, hooks)
+	if err != nil {
+		t.Fatalf("ExecutePostGenerateHooks() error = %v", err)
+	}
+	
+	// Verify hook was executed
+	markerFile := filepath.Join(projectPath, "hook_marker.txt")
+	if _, err := os.Stat(markerFile); os.IsNotExist(err) {
+		t.Error("Hook should have created marker file")
+	}
+}
+
+func TestProjectScaffolder_GenerateWithHooks(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectPath := filepath.Join(tmpDir, "test-project")
+	ritualPath := filepath.Join(tmpDir, "ritual")
+	
+	// Create ritual with hooks
+	if err := os.MkdirAll(filepath.Join(ritualPath, "templates"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	
+	ritualYAML := `ritual:
+  name: hooks-ritual
+  version: 1.0.0
+  description: Test hooks
+  template_engine: go-template
+
+hooks:
+  post_install:
+    - "echo 'post-install hook' > post_install.txt"
+
+files:
+  templates:
+    - src: "test.txt.tmpl"
+      dest: "test.txt"
+`
+	if err := os.WriteFile(filepath.Join(ritualPath, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+		t.Fatal(err)
+	}
+	
+	template := "Test content"
+	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "test.txt.tmpl"), []byte(template), 0644); err != nil {
+		t.Fatal(err)
+	}
+	
+	// Load ritual
+	loader := ritual.NewLoader(ritualPath)
+	manifest, err := loader.Load(ritualPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	scaffolder := NewProjectScaffolder()
+	vars := NewVariables()
+	vars.Set("app_name", "test-app")
+	
+	// Generate with hooks
+	err = scaffolder.GenerateFromRitualWithHooks(projectPath, ritualPath, manifest, vars)
+	if err != nil {
+		t.Fatalf("GenerateFromRitualWithHooks() error = %v", err)
+	}
+	
+	// Verify hook was executed
+	hookFile := filepath.Join(projectPath, "post_install.txt")
+	if _, err := os.Stat(hookFile); os.IsNotExist(err) {
+		t.Error("Post-install hook should have been executed")
+	}
+}
+
