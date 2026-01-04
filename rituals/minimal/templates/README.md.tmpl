@@ -1,0 +1,52 @@
+# {{ .project_name | title }}
+
+A minimal Toutā application.
+
+## Getting Started
+
+### Prerequisites
+
+- Go {{ .go_version }} or later
+- The Toutā framework
+
+### Running the Application
+
+```bash
+go run cmd/{{ .project_name }}/main.go
+```
+
+The server will start on port {{ .port }}.
+
+### Available Endpoints
+
+- `GET /` - Welcome message
+- `GET /health` - Health check endpoint
+
+## Project Structure
+
+```
+{{ .project_name }}/
+├── cmd/
+│   └── {{ .project_name }}/
+│       └── main.go          # Application entry point
+├── go.mod                    # Go module definition
+└── README.md                 # This file
+```
+
+## Development
+
+### Building
+
+```bash
+go build -o {{ .project_name }} cmd/{{ .project_name }}/main.go
+```
+
+### Testing
+
+```bash
+go test ./...
+```
+
+## License
+
+MIT

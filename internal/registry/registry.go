@@ -359,9 +359,24 @@ func (r *Registry) FilterByCompatibility(toutaVersion string) []*RitualMetadata 
 func getDefaultSearchPaths() []string {
 	var paths []string
 
+	// Built-in rituals (relative to executable or in rituals/ directory)
+	if exePath, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exePath)
+		builtinPath := filepath.Join(exeDir, "rituals")
+		if _, err := os.Stat(builtinPath); err == nil {
+			paths = append(paths, builtinPath)
+		}
+	}
+
 	// Current directory .ritual/
 	if cwd, err := os.Getwd(); err == nil {
 		paths = append(paths, filepath.Join(cwd, ".ritual"))
+		
+		// Also check for rituals/ in current directory (for development)
+		ritualsPath := filepath.Join(cwd, "rituals")
+		if _, err := os.Stat(ritualsPath); err == nil {
+			paths = append(paths, ritualsPath)
+		}
 	}
 
 	// User home directory ~/.toutago/rituals/

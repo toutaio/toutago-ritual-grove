@@ -1,0 +1,65 @@
+ritual:
+  name: minimal
+  version: 1.0.0
+  description: Minimal Toutā application with basic structure
+  author: Toutā Team
+  tags:
+    - minimal
+    - starter
+    - basic
+
+compatibility:
+  min_touta_version: 1.0.0
+  go_version: ">=1.21"
+
+dependencies:
+  packages:
+    - github.com/toutaio/toutago
+
+questions:
+  - id: project_name
+    type: text
+    prompt: "What is your project name?"
+    required: true
+    validation:
+      pattern: "^[a-z][a-z0-9-]*$"
+      message: "Project name must start with a letter and contain only lowercase letters, numbers, and hyphens"
+    default: "my-app"
+
+  - id: module_name
+    type: text
+    prompt: "What is your Go module name?"
+    required: true
+    default: "github.com/yourusername/{{ .project_name }}"
+    help: "This will be used in go.mod (e.g., github.com/user/project)"
+
+  - id: port
+    type: number
+    prompt: "What port should the server listen on?"
+    default: 8080
+    validation:
+      min: 1024
+      max: 65535
+
+files:
+  templates:
+    - path: main.go.tmpl
+      output: cmd/{{ .project_name }}/main.go
+      mode: 0644
+
+    - path: README.md.tmpl
+      output: README.md
+      mode: 0644
+
+    - path: go.mod.tmpl
+      output: go.mod
+      mode: 0644
+
+    - path: gitignore.tmpl
+      output: .gitignore
+      mode: 0644
+
+hooks:
+  post_install:
+    - "go mod tidy"
+    - "go fmt ./..."
