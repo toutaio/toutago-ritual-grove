@@ -2,6 +2,7 @@ package questionnaire
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
@@ -341,5 +342,88 @@ func TestValidator_OptionalField(t *testing.T) {
 	err := validator.ValidateAnswer(question, "")
 	if err != nil {
 		t.Errorf("Unexpected error for optional field: %v", err)
+	}
+}
+
+func TestValidator_toNumber(t *testing.T) {
+	v := &Validator{}
+	
+	tests := []struct {
+		name      string
+		input     interface{}
+		wantFloat float64
+		wantErr   bool
+	}{
+		{"int", 42, 42.0, false},
+		{"int64", int64(100), 100.0, false},
+		{"float64", 3.14, 3.14, false},
+		{"string valid", "123", 123.0, false},
+		{"string invalid", "abc", 0, true},
+		{"bool", true, 0, true},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFloat, gotErr := v.toNumber(tt.input)
+			if (gotErr != nil) != tt.wantErr {
+				t.Errorf("toNumber(%v) error = %v, wantErr %v", tt.input, gotErr, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && gotFloat != tt.wantFloat {
+				t.Errorf("toNumber(%v) = %v, want %v", tt.input, gotFloat, tt.wantFloat)
+			}
+		})
+	}
+}
+
+func TestValidatePath(t *testing.T) {
+	// Create temp directory for testing
+	tmpDir := t.TempDir()
+	tmpFile := tmpDir + "/test"
+	if err := os.WriteFile(tmpFile, []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	
+	tests := []struct {
+		name    string
+		path    string
+		wantErr bool
+	}{
+		{"valid absolute path", tmpFile, false},
+		{"valid relative path", "./validator_test.go", false},
+		{"invalid path with null", "/tmp/test\x00", true},
+		{"empty path", "", true},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePath(tt.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidatePath(%q) error = %v, wantErr %v", tt.path, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateWritablePath(t *testing.T) {
+	// Create a temporary directory
+	tmpDir := t.TempDir()
+	
+	tests := []struct {
+		name    string
+		path    string
+		wantErr bool
+	}{
+		{"writable dir", tmpDir, false},
+		{"non-existent path", "/nonexistent/path/that/does/not/exist", true},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateWritablePath(tt.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateWritablePath(%q) error = %v, wantErr %v", tt.path, err, tt.wantErr)
+			}
+		})
 	}
 }

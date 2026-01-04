@@ -263,3 +263,49 @@ func TestDependencyResolver_ValidateDependencies(t *testing.T) {
 		})
 	}
 }
+
+func TestDependencyResolver_GetInstallationOrder(t *testing.T) {
+	resolver := NewDependencyResolver()
+	
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-project",
+			Version: "1.0.0",
+		},
+	}
+	
+	err := resolver.BuildGraph(manifest)
+	if err != nil {
+		t.Fatalf("BuildGraph failed: %v", err)
+	}
+	
+	order, err := resolver.GetInstallationOrder()
+	if err != nil {
+		t.Fatalf("GetInstallationOrder failed: %v", err)
+	}
+	
+	// Should have the main ritual node
+	if len(order) != 1 {
+		t.Errorf("Expected 1 ritual, got %d", len(order))
+	}
+	
+	if len(order) > 0 && order[0] != "test-project" {
+		t.Errorf("Expected test-project, got %s", order[0])
+	}
+}
+
+func TestDependencyResolver_ValidateDependenciesExtra(t *testing.T) {
+	resolver := NewDependencyResolver()
+	
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-project",
+			Version: "1.0.0",
+		},
+	}
+	
+	err := resolver.ValidateDependencies(manifest)
+	if err != nil {
+		t.Errorf("ValidateDependencies failed: %v", err)
+	}
+}

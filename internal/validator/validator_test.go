@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
@@ -316,6 +317,103 @@ func TestIsValidGoVersion(t *testing.T) {
 			result := validator.isValidGoVersion(tt.version)
 			if result != tt.valid {
 				t.Errorf("isValidGoVersion(%s) = %v, want %v", tt.version, result, tt.valid)
+			}
+		})
+	}
+}
+
+func TestValidator_validateFiles_Comprehensive(t *testing.T) {
+	v := NewValidator()
+	
+	tests := []struct {
+		name      string
+		manifest  *ritual.Manifest
+		wantErr   bool
+		errString string
+	}{
+		{
+			name: "empty source path",
+			manifest: &ritual.Manifest{
+				Files: ritual.FilesSection{
+					Templates: []ritual.FileMapping{
+						{Source: "", Destination: "output.txt"},
+					},
+				},
+			},
+			wantErr:   true,
+			errString: "source is required",
+		},
+		{
+			name: "empty target path",
+			manifest: &ritual.Manifest{
+				Files: ritual.FilesSection{
+					Templates: []ritual.FileMapping{
+						{Source: "input.txt", Destination: ""},
+					},
+				},
+			},
+			wantErr:   true,
+			errString: "destination is required",
+		},
+		{
+			name: "valid template files",
+			manifest: &ritual.Manifest{
+				Files: ritual.FilesSection{
+					Templates: []ritual.FileMapping{
+						{Source: "input.txt", Destination: "output.txt"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := v.validateFiles(tt.manifest)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateFiles() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && tt.errString != "" && !strings.Contains(err.Error(), tt.errString) {
+				t.Errorf("validateFiles() error = %v, want error containing %q", err, tt.errString)
+			}
+		})
+	}
+}
+
+func TestValidator_validateCompatibility_Comprehensive(t *testing.T) {
+	v := NewValidator()
+	
+	tests := []struct {
+		name     string
+		manifest *ritual.Manifest
+		wantErr  bool
+	}{
+		{
+			name: "no compatibility specified",
+			manifest: &ritual.Manifest{
+				Compatibility: ritual.Compatibility{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid min version",
+			manifest: &ritual.Manifest{
+				Compatibility: ritual.Compatibility{
+					MinToutaVersion: "1.0.0",
+					MinGoVersion:    "1.19",
+				},
+			},
+			wantErr: false,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := v.validateCompatibility(tt.manifest)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateCompatibility() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

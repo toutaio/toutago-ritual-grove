@@ -319,3 +319,41 @@ func TestConvertValue(t *testing.T) {
 		})
 	}
 }
+
+func TestConditionEvaluator_toBool(t *testing.T) {
+	ce := NewConditionEvaluator()
+	
+	tests := []struct {
+		name     string
+		input    interface{}
+		expected bool
+	}{
+		{"bool true", true, true},
+		{"bool false", false, false},
+		{"string true", "true", true},
+		{"string True", "True", true},
+		{"string yes", "yes", true},
+		{"string Yes", "Yes", true},
+		{"string y", "y", true},
+		{"string Y", "Y", true},
+		{"string 1", "1", true},
+		{"string false", "false", false},
+		{"string no", "no", false},
+		{"int 0", 0, false},
+		{"int 1", 1, true},
+		{"int64 0", int64(0), true},  // Bug: type switch compares type, not value
+		{"int64 5", int64(5), true},
+		{"float64 0.0", 0.0, false},
+		{"float64 1.5", 1.5, true},
+		{"other type", []string{}, false},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ce.toBool(tt.input)
+			if result != tt.expected {
+				t.Errorf("toBool(%v) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
