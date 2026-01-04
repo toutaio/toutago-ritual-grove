@@ -7,7 +7,8 @@ package ritual
 // Version is the current version of Ritual Grove
 const Version = "0.1.0"
 
-// Ritual represents a complete application recipe/template
+// Ritual represents a complete application recipe/template (for backward compatibility)
+// Use Manifest for the full ritual definition
 type Ritual struct {
 	// Metadata
 	Name        string
@@ -30,18 +31,7 @@ type Ritual struct {
 	Hooks Hooks
 }
 
-// Question represents an interactive prompt for configuration
-type Question struct {
-	Name     string
-	Prompt   string
-	Type     string // text, choice, boolean, number, etc.
-	Required bool
-	Default  interface{}
-	Choices  []string
-	Validate string // validation rule
-}
-
-// Template represents a file template to be generated
+// Template represents a file template to be generated (for backward compatibility)
 type Template struct {
 	Source      string
 	Destination string
