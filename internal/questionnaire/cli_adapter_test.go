@@ -216,3 +216,88 @@ func TestCLIAdapter_SkipConditionalQuestion(t *testing.T) {
 		t.Errorf("Expected db_type to not exist in answers")
 	}
 }
+
+func TestCLIAdapter_SetWriter(t *testing.T) {
+	questions := []ritual.Question{
+		{
+			Name:   "test",
+			Prompt: "Test:",
+			Type:   ritual.QuestionTypeText,
+		},
+	}
+	
+	input := "value\n"
+	adapter := NewCLIAdapter(questions, strings.NewReader(input))
+	
+	var buf strings.Builder
+	adapter.SetWriter(&buf)
+	
+	_, err := adapter.Run()
+	if err != nil {
+		t.Fatalf("Run() failed: %v", err)
+	}
+	
+	output := buf.String()
+	if !strings.Contains(output, "Test:") {
+		t.Errorf("Expected output to contain prompt, got: %s", output)
+	}
+}
+
+func TestConvertAnswer_EdgeCases(t *testing.T) {
+	adapter := &CLIAdapter{}
+	
+	tests := []struct {
+		name      string
+		question  *ritual.Question
+		value     string
+		expected  interface{}
+		wantError bool
+	}{
+		{"text type", &ritual.Question{Type: ritual.QuestionTypeText}, "hello", "hello", false},
+		{"password type", &ritual.Question{Type: ritual.QuestionTypePassword}, "secret", "secret", false},
+		{"path type", &ritual.Question{Type: ritual.QuestionTypePath}, "/home/user", "/home/user", false},
+		{"url type", &ritual.Question{Type: ritual.QuestionTypeURL}, "https://example.com", "https://example.com", false},
+		{"email type", &ritual.Question{Type: ritual.QuestionTypeEmail}, "test@test.com", "test@test.com", false},
+		{"choice type", &ritual.Question{Type: ritual.QuestionTypeChoice, Choices: []string{"option1"}}, "option1", "option1", false},
+		{"multi-choice type", &ritual.Question{Type: ritual.QuestionTypeMultiChoice}, "a,b,c", []string{"a", "b", "c"}, false},
+		{"invalid number", &ritual.Question{Type: ritual.QuestionTypeNumber}, "abc", nil, true},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := adapter.convertAnswer(tt.question, tt.value)
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("convertAnswer() expected error but got none")
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("convertAnswer() unexpected error: %v", err)
+				return
+			}
+			
+			// Special handling for slices
+			if tt.question.Type == ritual.QuestionTypeMultiChoice {
+				resultSlice, ok := result.([]string)
+				if !ok {
+					t.Errorf("Expected []string, got %T", result)
+					return
+				}
+				expectedSlice := tt.expected.([]string)
+				if len(resultSlice) != len(expectedSlice) {
+					t.Errorf("Expected %v, got %v", expectedSlice, resultSlice)
+					return
+				}
+				for i := range resultSlice {
+					if resultSlice[i] != expectedSlice[i] {
+						t.Errorf("Expected %v, got %v", expectedSlice, resultSlice)
+						return
+					}
+				}
+			} else if result != tt.expected {
+				t.Errorf("Expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}
