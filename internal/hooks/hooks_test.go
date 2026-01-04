@@ -271,3 +271,179 @@ func TestHookExecutor_WorkingDirectory(t *testing.T) {
 		t.Error("Hook should execute in correct working directory")
 	}
 }
+
+func TestHookExecutor_ExecutePreUpdate(t *testing.T) {
+	tmpDir := t.TempDir()
+	
+	executor := NewHookExecutor(tmpDir)
+	
+	hooks := []string{
+		"echo 'pre-update hook' > pre_update.txt",
+	}
+	
+	err := executor.ExecutePreUpdate(hooks)
+	if err != nil {
+		t.Fatalf("ExecutePreUpdate() error = %v", err)
+	}
+	
+	// Verify file was created
+	testFile := filepath.Join(tmpDir, "pre_update.txt")
+	if _, err := os.Stat(testFile); os.IsNotExist(err) {
+		t.Error("Hook should have created pre_update.txt")
+	}
+}
+
+func TestHookExecutor_ExecutePostUpdate(t *testing.T) {
+	tmpDir := t.TempDir()
+	
+	executor := NewHookExecutor(tmpDir)
+	
+	hooks := []string{
+		"echo 'post-update hook' > post_update.txt",
+	}
+	
+	err := executor.ExecutePostUpdate(hooks)
+	if err != nil {
+		t.Fatalf("ExecutePostUpdate() error = %v", err)
+	}
+	
+	// Verify file was created
+	testFile := filepath.Join(tmpDir, "post_update.txt")
+	if _, err := os.Stat(testFile); os.IsNotExist(err) {
+		t.Error("Hook should have created post_update.txt")
+	}
+	
+	content, _ := os.ReadFile(testFile)
+	if !strings.Contains(string(content), "post-update") {
+		t.Error("File should contain 'post-update'")
+	}
+}
+
+func TestHookExecutor_ExecutePreDeploy(t *testing.T) {
+	tmpDir := t.TempDir()
+	
+	executor := NewHookExecutor(tmpDir)
+	
+	hooks := []string{
+		"mkdir -p deploy-prep",
+		"echo 'deployment preparation' > deploy-prep/status.txt",
+	}
+	
+	err := executor.ExecutePreDeploy(hooks)
+	if err != nil {
+		t.Fatalf("ExecutePreDeploy() error = %v", err)
+	}
+	
+	// Verify directory and file were created
+	statusFile := filepath.Join(tmpDir, "deploy-prep", "status.txt")
+	if _, err := os.Stat(statusFile); os.IsNotExist(err) {
+		t.Error("Hook should have created deploy-prep/status.txt")
+	}
+}
+
+func TestHookExecutor_ExecutePostDeploy(t *testing.T) {
+	tmpDir := t.TempDir()
+	
+	executor := NewHookExecutor(tmpDir)
+	
+	hooks := []string{
+		"echo 'deployment complete' > deployment.log",
+	}
+	
+	err := executor.ExecutePostDeploy(hooks)
+	if err != nil {
+		t.Fatalf("ExecutePostDeploy() error = %v", err)
+	}
+	
+	// Verify file was created
+	logFile := filepath.Join(tmpDir, "deployment.log")
+	if _, err := os.Stat(logFile); os.IsNotExist(err) {
+		t.Error("Hook should have created deployment.log")
+	}
+	
+	content, _ := os.ReadFile(logFile)
+	if !strings.Contains(string(content), "deployment complete") {
+		t.Error("Log file should contain 'deployment complete'")
+	}
+}
+
+func TestHookExecutor_ValidateHook(t *testing.T) {
+	tests := []struct {
+		name    string
+		hook    string
+		wantErr bool
+	}{
+		{
+			name:    "valid simple command",
+			hook:    "echo 'hello'",
+			wantErr: false,
+		},
+		{
+			name:    "valid command with pipe",
+			hook:    "cat file.txt | grep pattern",
+			wantErr: false,
+		},
+		{
+			name:    "valid multi-line command",
+			hook:    "mkdir -p dir && cd dir && touch file.txt",
+			wantErr: false,
+		},
+		{
+			name:    "empty hook",
+			hook:    "",
+			wantErr: true,
+		},
+		{
+			name:    "whitespace only",
+			hook:    "   \t  \n  ",
+			wantErr: true,
+		},
+	}
+	
+	executor := NewHookExecutor("/tmp")
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := executor.ValidateHook(tt.hook)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateHook() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHookExecutor_AllHookTypes(t *testing.T) {
+	tmpDir := t.TempDir()
+	executor := NewHookExecutor(tmpDir)
+	
+	testCases := []struct {
+		name     string
+		executor func([]string) error
+		marker   string
+	}{
+		{"PreInstall", executor.ExecutePreInstall, "pre_install"},
+		{"PostInstall", executor.ExecutePostInstall, "post_install"},
+		{"PreUpdate", executor.ExecutePreUpdate, "pre_update"},
+		{"PostUpdate", executor.ExecutePostUpdate, "post_update"},
+		{"PreDeploy", executor.ExecutePreDeploy, "pre_deploy"},
+		{"PostDeploy", executor.ExecutePostDeploy, "post_deploy"},
+	}
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			hooks := []string{
+				"echo '" + tc.marker + "' > " + tc.marker + ".txt",
+			}
+			
+			err := tc.executor(hooks)
+			if err != nil {
+				t.Fatalf("%s hook failed: %v", tc.name, err)
+			}
+			
+			markerFile := filepath.Join(tmpDir, tc.marker+".txt")
+			if _, err := os.Stat(markerFile); os.IsNotExist(err) {
+				t.Errorf("%s hook should have created %s.txt", tc.name, tc.marker)
+			}
+		})
+	}
+}
