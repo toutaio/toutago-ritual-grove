@@ -326,6 +326,38 @@ func TestManifestValidate_ComprehensiveTests(t *testing.T) {
 			},
 			wantError: true,
 		},
+		{
+			name: "question missing name",
+			manifest: &Manifest{
+				Ritual: RitualMeta{
+					Name:    "test",
+					Version: "1.0.0",
+				},
+				Questions: []Question{
+					{
+						Prompt: "Q1",
+						Type:   QuestionTypeText,
+					},
+				},
+			},
+			wantError: true,
+		},
+		{
+			name: "question missing prompt",
+			manifest: &Manifest{
+				Ritual: RitualMeta{
+					Name:    "test",
+					Version: "1.0.0",
+				},
+				Questions: []Question{
+					{
+						Name: "q1",
+						Type: QuestionTypeText,
+					},
+				},
+			},
+			wantError: true,
+		},
 	}
 
 	for _, tt := range tests {

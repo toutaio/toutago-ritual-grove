@@ -195,3 +195,91 @@ func TestExecutor_Rollback(t *testing.T) {
 		t.Errorf("Rollback failed: %v", err)
 	}
 }
+
+func TestExecutor_Execute_WithStaticFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	ritualDir := filepath.Join(tmpDir, "ritual")
+	outputDir := filepath.Join(tmpDir, "output")
+
+	// Create ritual structure
+	os.MkdirAll(filepath.Join(ritualDir, "static"), 0755)
+
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-ritual",
+			Version: "1.0.0",
+		},
+		Files: ritual.FilesSection{
+			Static: []ritual.FileMapping{
+				{Source: "static/config.json", Destination: "config.json"},
+			},
+		},
+	}
+
+	// Create static file
+	staticPath := filepath.Join(ritualDir, "static", "config.json")
+	os.WriteFile(staticPath, []byte(`{"app": "test"}`), 0644)
+
+	vars := generator.NewVariables()
+	
+	context := &ExecutionContext{
+		RitualPath: ritualDir,
+		OutputPath: outputDir,
+		Variables:  vars,
+		DryRun:     false,
+		Logger:     log.New(os.Stdout, "[test] ", 0),
+	}
+
+	executor := NewExecutor(context)
+	
+	if err := executor.Execute(manifest); err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	// Check that file was copied
+	outputFile := filepath.Join(outputDir, "config.json")
+	content, err := os.ReadFile(outputFile)
+	if err != nil {
+		t.Fatalf("Failed to read output file: %v", err)
+	}
+
+	expected := `{"app": "test"}`
+	if string(content) != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, string(content))
+	}
+}
+
+func TestExecutor_Execute_MissingSourceFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	ritualDir := filepath.Join(tmpDir, "ritual")
+	outputDir := filepath.Join(tmpDir, "output")
+
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-ritual",
+			Version: "1.0.0",
+		},
+		Files: ritual.FilesSection{
+			Templates: []ritual.FileMapping{
+				{Source: "nonexistent.go", Destination: "main.go"},
+			},
+		},
+	}
+
+	vars := generator.NewVariables()
+	
+	context := &ExecutionContext{
+		RitualPath: ritualDir,
+		OutputPath: outputDir,
+		Variables:  vars,
+		DryRun:     false,
+		Logger:     log.New(os.Stdout, "[test] ", 0),
+	}
+
+	executor := NewExecutor(context)
+	
+	// Should error when source file doesn't exist
+	if err := executor.Execute(manifest); err == nil {
+		t.Error("Expected error for missing source file, got nil")
+	}
+}
