@@ -1,350 +1,161 @@
-// Package questionnaire provides interactive question handling for rituals.
 package questionnaire
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/toutaio/toutago-ritual-grove/internal/ritual"
+	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
 
-// CLIAdapter is a command-line adapter for the questionnaire system
+// CLIAdapter provides a command-line interface for questionnaires
 type CLIAdapter struct {
 	controller *Controller
-	useDefaults bool
-	configFile  string
-	answers     map[string]interface{}
+	reader     io.Reader
+	writer     io.Writer
+	scanner    *bufio.Scanner
 }
 
-// NewCLIAdapter creates a new CLI adapter for questionnaire
-func NewCLIAdapter(questions []*ritual.Question, useDefaults bool, configFile string) (*CLIAdapter, error) {
-	controller := NewController(questions)
-	
-	adapter := &CLIAdapter{
-		controller: controller,
-		useDefaults: useDefaults,
-		configFile:  configFile,
-		answers:     make(map[string]interface{}),
+// NewCLIAdapter creates a new CLI adapter
+func NewCLIAdapter(questions []ritual.Question, reader io.Reader) *CLIAdapter {
+	if reader == nil {
+		reader = os.Stdin
 	}
 	
-	// Load answers from config file if provided
-	if configFile != "" {
-		if err := adapter.loadConfig(); err != nil {
-			return nil, fmt.Errorf("failed to load config: %w", err)
-		}
+	return &CLIAdapter{
+		controller: NewController(questions),
+		reader:     reader,
+		writer:     os.Stdout,
+		scanner:    bufio.NewScanner(reader),
 	}
-	
-	return adapter, nil
+}
+
+// SetWriter sets the output writer (for testing)
+func (a *CLIAdapter) SetWriter(w io.Writer) {
+	a.writer = w
 }
 
 // Run executes the questionnaire and returns collected answers
 func (a *CLIAdapter) Run() (map[string]interface{}, error) {
-	total := len(a.controller.questions)
-	current := 0
-	currentGroup := ""
-	
 	for {
-		question := a.controller.NextQuestion()
+		question, err := a.controller.GetNextQuestion()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get next question: %w", err)
+		}
+		
 		if question == nil {
+			// No more questions
 			break
 		}
-		
-		current++
-		
-		// Show section header if group changed
-		if question.Group != "" && question.Group != currentGroup {
-			currentGroup = question.Group
-			fmt.Printf("\n=== %s ===\n", currentGroup)
-		}
-		
-		// Skip if we already have an answer (from config or --yes)
-		if answer, exists := a.answers[question.ID]; exists {
-			if err := a.controller.SetAnswer(question.ID, answer); err != nil {
-				return nil, err
-			}
-			continue
-		}
-		
-		// Use defaults if --yes flag is set
-		if a.useDefaults && question.Default != nil {
-			if err := a.controller.SetAnswer(question.ID, question.Default); err != nil {
-				return nil, err
-			}
-			a.answers[question.ID] = question.Default
-			continue
-		}
-		
-		// Show progress
-		fmt.Printf("\n[%d/%d] ", current, total)
-		
+
 		// Ask the question
 		answer, err := a.askQuestion(question)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to ask question %s: %w", question.Name, err)
 		}
-		
-		// Set the answer
-		if err := a.controller.SetAnswer(question.ID, answer); err != nil {
-			return nil, err
+
+		// Submit the answer
+		if err := a.controller.SubmitAnswer(question.Name, answer); err != nil {
+			// Show error and retry
+			fmt.Fprintf(a.writer, "Error: %v\n", err)
+			continue
 		}
-		
-		a.answers[question.ID] = answer
 	}
-	
+
 	return a.controller.GetAnswers(), nil
 }
 
-// askQuestion prompts the user for a single question
+// askQuestion prompts the user and reads their answer
 func (a *CLIAdapter) askQuestion(q *ritual.Question) (interface{}, error) {
-	var prompt survey.Prompt
-	var answer interface{}
-	
-	// Build the message
-	message := q.Label
-	if q.Required {
-		message += " *"
+	// Display prompt
+	prompt := q.Prompt
+	if q.Default != nil {
+		prompt = fmt.Sprintf("%s [%v]", prompt, q.Default)
 	}
-	if q.Help != "" {
-		message += fmt.Sprintf("\n  %s", q.Help)
+	fmt.Fprintf(a.writer, "%s: ", prompt)
+
+	// Read input
+	if !a.scanner.Scan() {
+		if err := a.scanner.Err(); err != nil {
+			return nil, err
+		}
+		return nil, io.EOF
 	}
-	
-	// Create appropriate prompt based on question type
+
+	input := strings.TrimSpace(a.scanner.Text())
+
+	// Use default if input is empty
+	if input == "" && q.Default != nil {
+		return q.Default, nil
+	}
+
+	// Convert based on question type
+	return a.convertAnswer(q, input)
+}
+
+// convertAnswer converts string input to the appropriate type
+func (a *CLIAdapter) convertAnswer(q *ritual.Question, input string) (interface{}, error) {
 	switch q.Type {
-	case "text", "path", "url", "email":
-		defaultStr := ""
-		if q.Default != nil {
-			defaultStr = fmt.Sprint(q.Default)
-		}
-		
-		textPrompt := &survey.Input{
-			Message: message,
-			Default: defaultStr,
-		}
-		
-		var result string
-		if err := survey.AskOne(textPrompt, &result, a.getValidatorOpts(q)...); err != nil {
-			return nil, err
-		}
-		answer = result
-		
-	case "password":
-		passPrompt := &survey.Password{
-			Message: message,
-		}
-		
-		var result string
-		if err := survey.AskOne(passPrompt, &result, a.getValidatorOpts(q)...); err != nil {
-			return nil, err
-		}
-		answer = result
-		
-	case "boolean":
-		defaultBool := false
-		if q.Default != nil {
-			if b, ok := q.Default.(bool); ok {
-				defaultBool = b
-			}
-		}
-		
-		boolPrompt := &survey.Confirm{
-			Message: message,
-			Default: defaultBool,
-		}
-		
-		var result bool
-		if err := survey.AskOne(boolPrompt, &result); err != nil {
-			return nil, err
-		}
-		answer = result
-		
-	case "choice":
-		if q.Choices == nil || len(q.Choices) == 0 {
-			return nil, fmt.Errorf("no choices provided for question %s", q.ID)
-		}
-		
-		defaultStr := ""
-		if q.Default != nil {
-			defaultStr = fmt.Sprint(q.Default)
-		}
-		
-		selectPrompt := &survey.Select{
-			Message: message,
-			Options: q.Choices,
-			Default: defaultStr,
-		}
-		
-		var result string
-		if err := survey.AskOne(selectPrompt, &result); err != nil {
-			return nil, err
-		}
-		answer = result
-		
-	case "multi-choice":
-		if q.Choices == nil || len(q.Choices) == 0 {
-			return nil, fmt.Errorf("no choices provided for question %s", q.ID)
-		}
-		
-		var defaults []string
-		if q.Default != nil {
-			if arr, ok := q.Default.([]interface{}); ok {
-				for _, v := range arr {
-					defaults = append(defaults, fmt.Sprint(v))
+	case ritual.QuestionTypeText, ritual.QuestionTypePassword, 
+	     ritual.QuestionTypePath, ritual.QuestionTypeURL, ritual.QuestionTypeEmail:
+		return input, nil
+
+	case ritual.QuestionTypeBoolean:
+		return a.parseBoolean(input)
+
+	case ritual.QuestionTypeNumber:
+		return a.parseNumber(input)
+
+	case ritual.QuestionTypeChoice:
+		// Validate choice
+		if len(q.Choices) > 0 {
+			for _, choice := range q.Choices {
+				if input == choice {
+					return input, nil
 				}
 			}
+			return nil, fmt.Errorf("invalid choice: %s (valid: %v)", input, q.Choices)
 		}
-		
-		multiPrompt := &survey.MultiSelect{
-			Message: message,
-			Options: q.Choices,
-			Default: defaults,
-		}
-		
-		var result []string
-		if err := survey.AskOne(multiPrompt, &result); err != nil {
-			return nil, err
-		}
-		answer = result
-		
-	case "number":
-		defaultStr := ""
-		if q.Default != nil {
-			defaultStr = fmt.Sprint(q.Default)
-		}
-		
-		numberPrompt := &survey.Input{
-			Message: message,
-			Default: defaultStr,
-		}
-		
-		var resultStr string
-		opts := append(a.getValidatorOpts(q), survey.WithValidator(func(ans interface{}) error {
-			str := ans.(string)
-			if str == "" && !q.Required {
-				return nil
+		return input, nil
+
+	case ritual.QuestionTypeMultiChoice:
+		// Split by comma and trim
+		parts := strings.Split(input, ",")
+		result := make([]string, 0, len(parts))
+		for _, p := range parts {
+			trimmed := strings.TrimSpace(p)
+			if trimmed != "" {
+				result = append(result, trimmed)
 			}
-			if _, err := strconv.ParseFloat(str, 64); err != nil {
-				return fmt.Errorf("invalid number")
-			}
-			return nil
-		}))
-		
-		if err := survey.AskOne(numberPrompt, &resultStr, opts...); err != nil {
-			return nil, err
 		}
-		
-		if resultStr == "" {
-			answer = nil
-		} else {
-			num, _ := strconv.ParseFloat(resultStr, 64)
-			answer = num
-		}
-		
+		return result, nil
+
 	default:
-		return nil, fmt.Errorf("unsupported question type: %s", q.Type)
+		return input, nil
 	}
-	
-	// Validate the answer
-	if err := a.controller.validator.Validate(q, answer); err != nil {
-		fmt.Printf("  Error: %s\n", err)
-		return a.askQuestion(q) // Retry
+}
+
+// parseBoolean parses boolean input
+func (a *CLIAdapter) parseBoolean(input string) (bool, error) {
+	lower := strings.ToLower(input)
+	switch lower {
+	case "yes", "y", "true", "t", "1":
+		return true, nil
+	case "no", "n", "false", "f", "0":
+		return false, nil
+	default:
+		return false, fmt.Errorf("invalid boolean value: %s (expected yes/no)", input)
 	}
-	
-	return answer, nil
 }
 
-// getValidatorOpts creates survey validator options from question validation rules
-func (a *CLIAdapter) getValidatorOpts(q *ritual.Question) []survey.AskOpt {
-	var opts []survey.AskOpt
-	
-	if q.Required {
-		opts = append(opts, survey.WithValidator(survey.Required))
+// parseNumber parses numeric input
+func (a *CLIAdapter) parseNumber(input string) (int, error) {
+	val, err := strconv.Atoi(input)
+	if err != nil {
+		return 0, fmt.Errorf("invalid number: %s", input)
 	}
-	
-	if q.Validation != nil {
-		if q.Validation.Pattern != "" {
-			opts = append(opts, survey.WithValidator(func(ans interface{}) error {
-				return a.controller.validator.Validate(q, ans)
-			}))
-		}
-		
-		if q.Validation.MinLength > 0 || q.Validation.MaxLength > 0 {
-			opts = append(opts, survey.WithValidator(func(ans interface{}) error {
-				str := fmt.Sprint(ans)
-				if q.Validation.MinLength > 0 && len(str) < q.Validation.MinLength {
-					return fmt.Errorf("minimum length is %d", q.Validation.MinLength)
-				}
-				if q.Validation.MaxLength > 0 && len(str) > q.Validation.MaxLength {
-					return fmt.Errorf("maximum length is %d", q.Validation.MaxLength)
-				}
-				return nil
-			}))
-		}
-	}
-	
-	return opts
-}
-
-// loadConfig loads answers from a configuration file
-func (a *CLIAdapter) loadConfig() error {
-	// TODO: Implement YAML/JSON config loading
-	// For now, just return nil
-	return nil
-}
-
-// SaveAnswers persists answers to .ritual/answers.yaml
-func (a *CLIAdapter) SaveAnswers(path string) error {
-	// TODO: Implement answer persistence
-	return nil
-}
-
-// printProgress shows a progress indicator
-func printProgress(current, total int) {
-	percentage := float64(current) / float64(total) * 100
-	fmt.Printf("Progress: [%d/%d] %.0f%%\n", current, total, percentage)
-}
-
-// formatError formats validation errors for display
-func formatError(err error) string {
-	msg := err.Error()
-	// Clean up common error message patterns
-	msg = strings.ReplaceAll(msg, "validation error: ", "")
-	msg = strings.TrimPrefix(msg, "error: ")
-	return msg
-}
-
-// RunWithoutInteraction runs the questionnaire using only defaults and config
-func (a *CLIAdapter) RunWithoutInteraction() (map[string]interface{}, error) {
-	for {
-		question := a.controller.NextQuestion()
-		if question == nil {
-			break
-		}
-		
-		var answer interface{}
-		
-		// Check config first
-		if configAnswer, exists := a.answers[question.ID]; exists {
-			answer = configAnswer
-		} else if question.Default != nil {
-			answer = question.Default
-		} else if question.Required {
-			return nil, fmt.Errorf("no answer provided for required question: %s", question.ID)
-		} else {
-			answer = nil
-		}
-		
-		if err := a.controller.SetAnswer(question.ID, answer); err != nil {
-			return nil, err
-		}
-	}
-	
-	return a.controller.GetAnswers(), nil
-}
-
-// GetController returns the underlying controller
-func (a *CLIAdapter) GetController() *Controller {
-	return a.controller
+	return val, nil
 }

@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 )

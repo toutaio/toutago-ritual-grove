@@ -397,4 +397,3 @@ migrations:
 
 - [Fíth Template Engine](https://github.com/toutaio/toutago-fith-renderer)
 - [Examples](../examples/)
-- [Design Document](../../openspec/changes/create-ritual-grove/design.md)

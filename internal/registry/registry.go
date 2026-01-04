@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/toutaio/toutago-ritual-grove/internal/ritual"
+	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
 
 // Source represents where a ritual can be loaded from
@@ -96,23 +96,24 @@ func (r *Registry) scanDirectory(dir string) error {
 
 // loadRitual loads a ritual's metadata
 func (r *Registry) loadRitual(path string) error {
-	rit, err := ritual.LoadFromFile(filepath.Join(path, "ritual.yaml"))
+	loader := ritual.NewLoader(path)
+	manifest, err := loader.Load(path)
 	if err != nil {
 		return err
 	}
 	
 	metadata := &RitualMetadata{
-		Name:          rit.Name,
-		Version:       rit.Version,
-		Description:   rit.Description,
-		Author:        rit.Author,
-		Tags:          rit.Tags,
+		Name:          manifest.Ritual.Name,
+		Version:       manifest.Ritual.Version,
+		Description:   manifest.Ritual.Description,
+		Author:        manifest.Ritual.Author,
+		Tags:          manifest.Ritual.Tags,
 		Source:        SourceLocal,
 		Path:          path,
-		Compatibility: rit.Compatibility,
+		Compatibility: &manifest.Compatibility,
 	}
 	
-	r.cache[rit.Name] = metadata
+	r.cache[manifest.Ritual.Name] = metadata
 	return nil
 }
 
@@ -141,6 +142,8 @@ func (r *Registry) Search(query string) []*RitualMetadata {
 
 // matchesQuery checks if metadata matches search query
 func (r *Registry) matchesQuery(meta *RitualMetadata, query string) bool {
+	query = strings.ToLower(query)
+	
 	// Check name
 	if strings.Contains(strings.ToLower(meta.Name), query) {
 		return true
@@ -171,13 +174,14 @@ func (r *Registry) Get(name string) (*RitualMetadata, error) {
 }
 
 // Load loads a ritual by name
-func (r *Registry) Load(name string) (*ritual.Ritual, error) {
+func (r *Registry) Load(name string) (*ritual.Manifest, error) {
 	meta, err := r.Get(name)
 	if err != nil {
 		return nil, err
 	}
 	
-	return ritual.LoadFromFile(filepath.Join(meta.Path, "ritual.yaml"))
+	loader := ritual.NewLoader(meta.Path)
+	return loader.Load(meta.Path)
 }
 
 // FilterByTag filters rituals by tag

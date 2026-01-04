@@ -109,13 +109,11 @@ toutago-ritual-grove/
 
 ## Development Status
 
-This project is under active development. See [tasks.md](../../openspec/changes/create-ritual-grove/tasks.md) for implementation progress.
+This project is under active development.
 
 ## Documentation
 
-- [Design Document](../../openspec/changes/create-ritual-grove/design.md)
-- [Proposal](../../openspec/changes/create-ritual-grove/proposal.md)
-- [Tasks](../../openspec/changes/create-ritual-grove/tasks.md)
+See [docs/](docs/) for detailed documentation on ritual format, examples, and usage.
 
 ## Contributing
 
