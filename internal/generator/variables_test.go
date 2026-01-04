@@ -98,6 +98,45 @@ func TestAddComputed(t *testing.T) {
 	}
 }
 
+func TestGetBool(t *testing.T) {
+	vars := NewVariables()
+	
+	// Test bool value
+	vars.Set("enabled", true)
+	if val := vars.GetBool("enabled"); val != true {
+		t.Error("Expected true for bool value")
+	}
+	
+	// Test "true" string
+	vars.Set("debug", "true")
+	if val := vars.GetBool("debug"); val != true {
+		t.Error("Expected true for 'true' string")
+	}
+	
+	// Test "yes" string
+	vars.Set("verbose", "yes")
+	if val := vars.GetBool("verbose"); val != true {
+		t.Error("Expected true for 'yes' string")
+	}
+	
+	// Test "1" string
+	vars.Set("feature", "1")
+	if val := vars.GetBool("feature"); val != true {
+		t.Error("Expected true for '1' string")
+	}
+	
+	// Test false value
+	vars.Set("disabled", false)
+	if val := vars.GetBool("disabled"); val != false {
+		t.Error("Expected false for bool value")
+	}
+	
+	// Test non-existent key
+	if val := vars.GetBool("nonexistent"); val != false {
+		t.Error("Expected false for non-existent key")
+	}
+}
+
 func TestCaseTransformations(t *testing.T) {
 	tests := []struct {
 		input  string
