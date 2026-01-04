@@ -44,10 +44,41 @@ func NewCLIAdapter(questions []*ritual.Question, useDefaults bool, configFile st
 func (a *CLIAdapter) Run() (map[string]interface{}, error) {
 	total := len(a.controller.questions)
 	current := 0
+	currentGroup := ""
 	
 	for {
 		question := a.controller.NextQuestion()
 		if question == nil {
+			break
+		}
+		
+		current++
+		
+		// Show section header if group changed
+		if question.Group != "" && question.Group != currentGroup {
+			currentGroup = question.Group
+			fmt.Printf("\n=== %s ===\n", currentGroup)
+		}
+		
+		// Skip if we already have an answer (from config or --yes)
+		if answer, exists := a.answers[question.ID]; exists {
+			if err := a.controller.SetAnswer(question.ID, answer); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		
+		// Use defaults if --yes flag is set
+		if a.useDefaults && question.Default != nil {
+			if err := a.controller.SetAnswer(question.ID, question.Default); err != nil {
+				return nil, err
+			}
+			a.answers[question.ID] = question.Default
+			continue
+		}
+		
+		// Show progress
+		fmt.Printf("\n[%d/%d] ", current, total)
 			break
 		}
 		
