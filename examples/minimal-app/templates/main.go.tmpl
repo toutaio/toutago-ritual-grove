@@ -1,0 +1,30 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/toutaio/toutago-cosan-router"
+{{ if .with_example_handler }}	"{{ .module_name }}/handlers"
+{{ end }})
+
+func main() {
+	router := cosan.NewRouter()
+
+{{ if .with_example_handler }}	// Register example handler
+	router.GET("/hello", handlers.HelloHandler)
+{{ end }}
+	// Health check endpoint
+	router.GET("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "OK")
+	})
+
+	addr := fmt.Sprintf(":{{ .port }}")
+	log.Printf("Starting {{ .app_name }} server on %s", addr)
+	
+	if err := http.ListenAndServe(addr, router); err != nil {
+		log.Fatal(err)
+	}
+}

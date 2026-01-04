@@ -1,0 +1,73 @@
+ritual:
+  name: minimal-app
+  version: 1.0.0
+  description: A minimal Toutā application with basic HTTP server
+  author: Toutā Team
+  tags:
+    - minimal
+    - starter
+    - web
+  template_engine: go-template
+
+compatibility:
+  min_touta_version: "1.0.0"
+  max_touta_version: "2.0.0"
+  go_version: "1.21"
+
+dependencies:
+  packages:
+    - github.com/toutaio/toutago
+    - github.com/toutaio/toutago-nasc-dependency-injector
+    - github.com/toutaio/toutago-cosan-router
+
+questions:
+  - name: app_name
+    prompt: "Application name?"
+    type: text
+    default: "my-app"
+    required: true
+    validation:
+      pattern: "^[a-z][a-z0-9-]*$"
+
+  - name: module_name
+    prompt: "Go module name?"
+    type: text
+    default: "github.com/example/{{ .app_name }}"
+    required: true
+
+  - name: port
+    prompt: "HTTP port?"
+    type: number
+    default: 8080
+    validation:
+      min: 1024
+      max: 65535
+
+  - name: with_example_handler
+    prompt: "Include example handler?"
+    type: boolean
+    default: true
+
+files:
+  templates:
+    - source: "main.go.tmpl"
+      destination: "main.go"
+    - source: "go.mod.tmpl"
+      destination: "go.mod"
+    - source: "README.md.tmpl"
+      destination: "README.md"
+    - source: "handlers/hello.go.tmpl"
+      destination: "handlers/hello.go"
+      condition: "{{ .with_example_handler }}"
+    - source: ".env.example.tmpl"
+      destination: ".env.example"
+    - source: ".gitignore"
+      destination: ".gitignore"
+      static: true
+
+  protected:
+    - "README.md"
+
+hooks:
+  post_generate:
+    - "go mod tidy"

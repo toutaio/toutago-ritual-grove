@@ -1,0 +1,62 @@
+# {{ pascal .app_name }}
+
+{{ .Description }}
+
+## Getting Started
+
+### Prerequisites
+
+- Go 1.21 or higher
+- Git
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd {{ .app_name }}
+
+# Install dependencies
+go mod download
+
+# Run the application
+go run main.go
+```
+
+### Running
+
+The server will start on port {{ .port }}:
+
+```bash
+go run main.go
+```
+
+Visit `http://localhost:{{ .port }}/health` to verify the server is running.
+{{ if .with_example_handler }}
+### Example Endpoints
+
+- `GET /hello` - Example hello world handler
+{{ end }}
+- `GET /health` - Health check endpoint
+
+## Configuration
+
+Configuration is managed through environment variables. See `.env.example` for available options.
+
+## Development
+
+### Running Tests
+
+```bash
+go test ./...
+```
+
+### Building
+
+```bash
+go build -o bin/{{ .app_name }}
+```
+
+## License
+
+MIT
