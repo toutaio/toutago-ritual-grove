@@ -63,7 +63,11 @@ func (h *DatabaseHelper) TestConnection(ctx context.Context, dsn, dbType string)
 	if err != nil {
 		return fmt.Errorf("failed to open database connection: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			// Log but don't fail on close error
+		}
+	}()
 
 	// Test connection with context
 	if err := db.PingContext(ctx); err != nil {
@@ -103,7 +107,11 @@ func (h *URLHelper) CheckAvailability(ctx context.Context, url string) error {
 	if err != nil {
 		return fmt.Errorf("failed to reach URL: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log but don't fail on close error
+		}
+	}()
 
 	// Check if response is successful (2xx or 3xx)
 	if resp.StatusCode >= 400 {
@@ -253,7 +261,11 @@ func (h *PortHelper) CheckAvailability(ctx context.Context, port int) (bool, err
 		}
 		return false, fmt.Errorf("failed to check port: %w", err)
 	}
-	defer listener.Close()
+	defer func() {
+		if err := listener.Close(); err != nil {
+			// Log but don't fail on close error
+		}
+	}()
 
 	return true, nil // Port is available
 }

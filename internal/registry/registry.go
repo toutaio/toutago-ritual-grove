@@ -120,14 +120,22 @@ func (r *Registry) extractTarball(tarballPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open tarball: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			// Log but don't fail on close error
+		}
+	}()
 
 	// Create gzip reader
 	gzReader, err := gzip.NewReader(file)
 	if err != nil {
 		return "", fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	defer gzReader.Close()
+	defer func() {
+		if err := gzReader.Close(); err != nil {
+			// Log but don't fail on close error
+		}
+	}()
 
 	// Create tar reader
 	tarReader := tar.NewReader(gzReader)
@@ -188,10 +196,13 @@ func (r *Registry) extractTarball(tarballPath string) (string, error) {
 			}
 
 			if _, err := io.Copy(outFile, tarReader); err != nil {
-				outFile.Close()
+				_ = outFile.Close()
 				return "", fmt.Errorf("failed to write file: %w", err)
 			}
-			outFile.Close()
+
+			if err := outFile.Close(); err != nil {
+				return "", fmt.Errorf("failed to close file: %w", err)
+			}
 		}
 	}
 

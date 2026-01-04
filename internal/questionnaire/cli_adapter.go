@@ -60,7 +60,7 @@ func (a *CLIAdapter) Run() (map[string]interface{}, error) {
 		// Submit the answer
 		if err := a.controller.SubmitAnswer(question.Name, answer); err != nil {
 			// Show error and retry
-			fmt.Fprintf(a.writer, "Error: %v\n", err)
+			_, _ = fmt.Fprintf(a.writer, "Error: %v\n", err)
 			continue
 		}
 	}
@@ -75,7 +75,7 @@ func (a *CLIAdapter) askQuestion(q *ritual.Question) (interface{}, error) {
 	if q.Default != nil {
 		prompt = fmt.Sprintf("%s [%v]", prompt, q.Default)
 	}
-	fmt.Fprintf(a.writer, "%s: ", prompt)
+	_, _ = fmt.Fprintf(a.writer, "%s: ", prompt)
 
 	// Read input
 	if !a.scanner.Scan() {

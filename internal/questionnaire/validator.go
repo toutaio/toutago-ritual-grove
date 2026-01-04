@@ -358,8 +358,8 @@ func ValidateWritablePath(value interface{}) error {
 	if err != nil {
 		return fmt.Errorf("path is not writable: %w", err)
 	}
-	f.Close()
-	os.Remove(testFile)
+	_ = f.Close()
+	_ = os.Remove(testFile)
 
 	return nil
 }
