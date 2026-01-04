@@ -79,30 +79,6 @@ func (a *CLIAdapter) Run() (map[string]interface{}, error) {
 		
 		// Show progress
 		fmt.Printf("\n[%d/%d] ", current, total)
-			break
-		}
-		
-		current++
-		
-		// Skip if we already have an answer (from config or --yes)
-		if answer, exists := a.answers[question.ID]; exists {
-			if err := a.controller.SetAnswer(question.ID, answer); err != nil {
-				return nil, err
-			}
-			continue
-		}
-		
-		// Use defaults if --yes flag is set
-		if a.useDefaults && question.Default != nil {
-			if err := a.controller.SetAnswer(question.ID, question.Default); err != nil {
-				return nil, err
-			}
-			a.answers[question.ID] = question.Default
-			continue
-		}
-		
-		// Show progress
-		fmt.Printf("\n[%d/%d] ", current, total)
 		
 		// Ask the question
 		answer, err := a.askQuestion(question)
