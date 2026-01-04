@@ -3,6 +3,7 @@ package registry
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
@@ -142,7 +143,7 @@ func TestMatchesQuery(t *testing.T) {
 	
 	for _, tt := range tests {
 		t.Run(tt.query, func(t *testing.T) {
-			result := reg.matchesQuery(meta, tt.query)
+			result := reg.matchesQuery(meta, strings.ToLower(tt.query))
 			if result != tt.matches {
 				t.Errorf("query '%s': expected %v, got %v", tt.query, tt.matches, result)
 			}
