@@ -38,6 +38,21 @@ func (v *Variables) GetString(key string) string {
 	return ""
 }
 
+// GetBool gets a variable as bool
+func (v *Variables) GetBool(key string) bool {
+	if val, ok := v.data[key]; ok {
+		switch v := val.(type) {
+		case bool:
+			return v
+		case string:
+			return v == "true" || v == "1" || v == "yes"
+		case int:
+			return v != 0
+		}
+	}
+	return false
+}
+
 // SetFromAnswers loads variables from questionnaire answers
 func (v *Variables) SetFromAnswers(answers map[string]interface{}) {
 	for key, value := range answers {
