@@ -1,0 +1,308 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://toutago.io/schemas/ritual.schema.json",
+  "title": "Toutago Ritual",
+  "description": "Schema for Toutago Ritual Grove ritual.yaml files",
+  "type": "object",
+  "required": ["name", "version"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Ritual name (lowercase, alphanumeric, hyphens)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-z0-9.-]+)?(\\+[a-z0-9.-]+)?$",
+      "description": "Semantic version (e.g., 1.0.0, 1.0.0-alpha.1)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the ritual"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author name or organization"
+    },
+    "license": {
+      "type": "string",
+      "description": "License identifier (e.g., MIT, Apache-2.0)"
+    },
+    "compatibility": {
+      "type": "object",
+      "description": "Compatibility requirements",
+      "properties": {
+        "touta_min_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Minimum Toutago version"
+        },
+        "touta_max_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Maximum Toutago version"
+        },
+        "go_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Required Go version"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "External dependencies",
+      "properties": {
+        "go_packages": {
+          "type": "object",
+          "description": "Go package dependencies",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "rituals": {
+          "type": "array",
+          "description": "Ritual composition dependencies",
+          "items": {
+            "type": "string"
+          }
+        },
+        "database": {
+          "type": "object",
+          "description": "Database requirements",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["mysql", "postgres", "sqlite", "mongodb"]
+            },
+            "min_version": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "description": "Interactive questionnaire",
+      "items": {
+        "$ref": "#/definitions/question"
+      }
+    },
+    "files": {
+      "type": "object",
+      "description": "File generation configuration",
+      "properties": {
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "static": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "protected": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "migrations": {
+      "type": "object",
+      "description": "Migration handlers",
+      "additionalProperties": {
+        "$ref": "#/definitions/migration"
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Lifecycle hooks",
+      "properties": {
+        "pre_install": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "post_install": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pre_update": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "post_update": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pre_deploy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "post_deploy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "multi_tenancy": {
+      "type": "object",
+      "description": "Multi-tenancy configuration",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["single", "multi"]
+        },
+        "database_strategy": {
+          "type": "string",
+          "enum": ["shared", "separate"]
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "description": "Telemetry and monitoring",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["prometheus", "opentelemetry", "custom"]
+        }
+      }
+    },
+    "parent": {
+      "type": "string",
+      "description": "Parent ritual for composition"
+    }
+  },
+  "definitions": {
+    "question": {
+      "type": "object",
+      "required": ["id", "type", "prompt"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_]*$",
+          "description": "Question identifier (snake_case)"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["text", "password", "choice", "multi_choice", "boolean", "number", "path", "url", "email"],
+          "description": "Question type"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "Question prompt text"
+        },
+        "description": {
+          "type": "string",
+          "description": "Additional help text"
+        },
+        "default": {
+          "description": "Default value"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether answer is required"
+        },
+        "choices": {
+          "type": "array",
+          "description": "Available choices (for choice/multi_choice)",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "required": ["value", "label"],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "validation": {
+          "type": "object",
+          "description": "Validation rules",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "description": "Regex pattern"
+            },
+            "min": {
+              "type": "number",
+              "description": "Minimum value/length"
+            },
+            "max": {
+              "type": "number",
+              "description": "Maximum value/length"
+            },
+            "custom": {
+              "type": "string",
+              "description": "Custom validator function"
+            }
+          }
+        },
+        "condition": {
+          "type": "object",
+          "description": "Conditional display",
+          "properties": {
+            "answer": {
+              "type": "string",
+              "description": "Answer ID to check"
+            },
+            "equals": {
+              "description": "Expected value"
+            },
+            "not_equals": {
+              "description": "Value that should not match"
+            }
+          }
+        }
+      }
+    },
+    "migration": {
+      "type": "object",
+      "properties": {
+        "up": {
+          "type": "string",
+          "description": "Upgrade handler (script path or inline)"
+        },
+        "down": {
+          "type": "string",
+          "description": "Downgrade handler (script path or inline)"
+        },
+        "idempotent": {
+          "type": "boolean",
+          "description": "Whether migration is idempotent"
+        }
+      }
+    }
+  }
+}
