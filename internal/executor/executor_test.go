@@ -3,6 +3,7 @@ package executor
 import (
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -281,5 +282,174 @@ func TestExecutor_Execute_MissingSourceFile(t *testing.T) {
 	// Should error when source file doesn't exist
 	if err := executor.Execute(manifest); err == nil {
 		t.Error("Expected error for missing source file, got nil")
+	}
+}
+
+func TestExecutor_Execute_WithHooksAndPackages(t *testing.T) {
+	// Skip if no go command available
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skip("go command not available")
+	}
+
+	tmpDir := t.TempDir()
+	ritualDir := filepath.Join(tmpDir, "ritual")
+	outputDir := filepath.Join(tmpDir, "output")
+
+	// Create ritual structure
+	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0755)
+	os.MkdirAll(outputDir, 0755)
+
+	// Create go.mod first
+	goModContent := "module testapp\n\ngo 1.21\n"
+	os.WriteFile(filepath.Join(outputDir, "go.mod"), []byte(goModContent), 0644)
+
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-ritual",
+			Version: "1.0.0",
+		},
+		Files: ritual.FilesSection{
+			Templates: []ritual.FileMapping{
+				{Source: "templates/main.go", Destination: "main.go"},
+			},
+		},
+		Dependencies: ritual.Dependencies{
+			Packages: []string{"github.com/stretchr/testify@v1.8.4"},
+		},
+		Hooks: ritual.ManifestHooks{
+			PreInstall:  []string{"echo 'Pre-install'"},
+			PostInstall: []string{"echo 'Post-install'"},
+		},
+	}
+
+	// Create template file
+	templatePath := filepath.Join(ritualDir, "templates", "main.go")
+	os.WriteFile(templatePath, []byte("package main"), 0644)
+
+	vars := generator.NewVariables()
+
+	context := &ExecutionContext{
+		RitualPath: ritualDir,
+		OutputPath: outputDir,
+		Variables:  vars,
+		DryRun:     false,
+		Logger:     log.New(os.Stdout, "[test] ", 0),
+	}
+
+	executor := NewExecutor(context)
+
+	if err := executor.Execute(manifest); err != nil {
+		t.Fatalf("Execute with hooks and packages failed: %v", err)
+	}
+
+	// Check that file was generated
+	outputFile := filepath.Join(outputDir, "main.go")
+	if _, err := os.Stat(outputFile); err != nil {
+		t.Errorf("Output file not created: %v", err)
+	}
+}
+
+func TestExecutor_Execute_NilLogger(t *testing.T) {
+	tmpDir := t.TempDir()
+	ritualDir := filepath.Join(tmpDir, "ritual")
+	outputDir := filepath.Join(tmpDir, "output")
+
+	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0755)
+
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-ritual",
+			Version: "1.0.0",
+		},
+		Files: ritual.FilesSection{
+			Templates: []ritual.FileMapping{
+				{Source: "templates/main.go", Destination: "main.go"},
+			},
+		},
+	}
+
+	templatePath := filepath.Join(ritualDir, "templates", "main.go")
+	os.WriteFile(templatePath, []byte("package main"), 0644)
+
+	vars := generator.NewVariables()
+
+	context := &ExecutionContext{
+		RitualPath: ritualDir,
+		OutputPath: outputDir,
+		Variables:  vars,
+		DryRun:     false,
+		Logger:     nil, // Test with nil logger
+	}
+
+	executor := NewExecutor(context)
+
+	if err := executor.Execute(manifest); err != nil {
+		t.Fatalf("Execute failed with nil logger: %v", err)
+	}
+}
+
+func TestExecutor_Execute_HookFailure(t *testing.T) {
+	tmpDir := t.TempDir()
+	ritualDir := filepath.Join(tmpDir, "ritual")
+	outputDir := filepath.Join(tmpDir, "output")
+
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-ritual",
+			Version: "1.0.0",
+		},
+		Hooks: ritual.ManifestHooks{
+			PreInstall: []string{"exit 1"}, // Command that fails
+		},
+	}
+
+	vars := generator.NewVariables()
+
+	context := &ExecutionContext{
+		RitualPath: ritualDir,
+		OutputPath: outputDir,
+		Variables:  vars,
+		DryRun:     false,
+		Logger:     log.New(os.Stdout, "[test] ", 0),
+	}
+
+	executor := NewExecutor(context)
+
+	// Should error when hook fails
+	if err := executor.Execute(manifest); err == nil {
+		t.Error("Expected error for failed hook, got nil")
+	}
+}
+
+func TestExecutor_Execute_PackageInstallFailure(t *testing.T) {
+	tmpDir := t.TempDir()
+	ritualDir := filepath.Join(tmpDir, "ritual")
+	outputDir := filepath.Join(tmpDir, "output")
+
+	manifest := &ritual.Manifest{
+		Ritual: ritual.RitualMeta{
+			Name:    "test-ritual",
+			Version: "1.0.0",
+		},
+		Dependencies: ritual.Dependencies{
+			Packages: []string{"invalid/nonexistent/package@v999.999.999"},
+		},
+	}
+
+	vars := generator.NewVariables()
+
+	context := &ExecutionContext{
+		RitualPath: ritualDir,
+		OutputPath: outputDir,
+		Variables:  vars,
+		DryRun:     false,
+		Logger:     log.New(os.Stdout, "[test] ", 0),
+	}
+
+	executor := NewExecutor(context)
+
+	// Should handle package install failure
+	if err := executor.Execute(manifest); err == nil {
+		t.Error("Expected error for failed package install, got nil")
 	}
 }

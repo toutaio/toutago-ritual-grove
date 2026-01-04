@@ -239,3 +239,132 @@ func TestQuestionFlow_AnswerValidation(t *testing.T) {
 		t.Error("Invalid answer should not be in AllAnswers")
 	}
 }
+
+func TestController_GetStateEdgeCases(t *testing.T) {
+	flow := NewQuestionFlow()
+	
+	// Get non-existent state
+	state := flow.GetState("nonexistent")
+	if state != StateNotReached {
+		t.Errorf("Expected StateNotReached, got %v", state)
+	}
+}
+
+func TestController_GetAnswerEdgeCases(t *testing.T) {
+	flow := NewQuestionFlow()
+	
+	// Get non-existent answer
+	_, exists := flow.GetAnswer("nonexistent")
+	if exists {
+		t.Error("Expected false for non-existent answer")
+	}
+}
+
+func TestController_IsComplete_WithSkippedQuestions(t *testing.T) {
+	questions := []ritual.Question{
+		{
+			Name:     "q1",
+			Prompt:   "Question 1",
+			Type:     ritual.QuestionTypeText,
+			Required: true,
+		},
+		{
+			Name:   "q2",
+			Prompt: "Question 2",
+			Type:   ritual.QuestionTypeText,
+			Condition: &ritual.QuestionCondition{
+				Expression: "false", // Always skipped
+			},
+		},
+		{
+			Name:     "q3",
+			Prompt:   "Question 3",
+			Type:     ritual.QuestionTypeText,
+			Required: true,
+		},
+	}
+
+	ctrl := NewController(questions)
+
+	// Answer q1
+	ctrl.SubmitAnswer("q1", "value1")
+	
+	// q2 should be skipped due to condition
+	q, _ := ctrl.GetNextQuestion()
+	if q.Name != "q3" {
+		t.Errorf("Expected q3, got %s", q.Name)
+	}
+
+	// Not complete yet
+	if ctrl.IsComplete() {
+		t.Error("Should not be complete before answering q3")
+	}
+
+	// Answer q3
+	ctrl.SubmitAnswer("q3", "value3")
+
+	// Now should be complete
+	if !ctrl.IsComplete() {
+		t.Error("Should be complete after answering all required non-skipped questions")
+	}
+}
+
+func TestController_IsComplete_AllSkipped(t *testing.T) {
+	questions := []ritual.Question{
+		{
+			Name:   "q1",
+			Prompt: "Question 1",
+			Type:   ritual.QuestionTypeText,
+			Condition: &ritual.QuestionCondition{
+				Expression: "false",
+			},
+		},
+		{
+			Name:   "q2",
+			Prompt: "Question 2",
+			Type:   ritual.QuestionTypeText,
+			Condition: &ritual.QuestionCondition{
+				Expression: "false",
+			},
+		},
+	}
+
+	ctrl := NewController(questions)
+
+	// All questions skipped, should be complete
+	if !ctrl.IsComplete() {
+		t.Error("Should be complete when all questions are skipped")
+	}
+}
+
+func TestController_Reset(t *testing.T) {
+	questions := []ritual.Question{
+		{
+			Name:   "q1",
+			Prompt: "Question 1",
+			Type:   ritual.QuestionTypeText,
+		},
+	}
+
+	ctrl := NewController(questions)
+	ctrl.SubmitAnswer("q1", "value")
+
+	// Verify answer exists
+	if ctrl.GetAnswers()["q1"] != "value" {
+		t.Error("Answer should exist before reset")
+	}
+
+	// Reset
+	ctrl.Reset()
+
+	// Answer should be gone
+	if len(ctrl.GetAnswers()) != 0 {
+		t.Error("Answers should be empty after reset")
+	}
+
+	// Should be able to answer again
+	ctrl.SubmitAnswer("q1", "new value")
+	if ctrl.GetAnswers()["q1"] != "new value" {
+		t.Error("Should be able to answer after reset")
+	}
+}

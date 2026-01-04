@@ -357,3 +357,116 @@ func TestConditionEvaluator_toBool(t *testing.T) {
 		})
 	}
 }
+
+func TestConditionEvaluator_Expression_ComplexLogic(t *testing.T) {
+	eval := NewConditionEvaluator()
+
+	tests := []struct {
+		name       string
+		expression string
+		answers    map[string]interface{}
+		expected   bool
+	}{
+		{
+			name:       "Multiple ANDs",
+			expression: "a && b && c",
+			answers:    map[string]interface{}{"a": true, "b": true, "c": true},
+			expected:   true,
+		},
+		{
+			name:       "Multiple ANDs with false",
+			expression: "a && b && c",
+			answers:    map[string]interface{}{"a": true, "b": false, "c": true},
+			expected:   false,
+		},
+		{
+			name:       "Multiple ORs",
+			expression: "a || b || c",
+			answers:    map[string]interface{}{"a": false, "b": false, "c": true},
+			expected:   true,
+		},
+		{
+			name:       "Multiple ORs all false",
+			expression: "a || b || c",
+			answers:    map[string]interface{}{"a": false, "b": false, "c": false},
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition := &ritual.QuestionCondition{
+				Expression: tt.expression,
+			}
+			result, err := eval.Evaluate(condition, tt.answers)
+			if err != nil {
+				t.Fatalf("Evaluate failed: %v", err)
+			}
+			if result != tt.expected {
+				t.Errorf("Expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestConditionEvaluator_Expression_InvalidSyntax(t *testing.T) {
+	eval := NewConditionEvaluator()
+
+	tests := []string{
+		"!field",   // NOT operator not supported
+		"a > 5",    // Greater than not supported
+		"a < 10",   // Less than not supported
+		"(a && b)", // Parentheses not supported
+	}
+
+	for _, expr := range tests {
+		condition := &ritual.QuestionCondition{
+			Expression: expr,
+		}
+		_, err := eval.Evaluate(condition, map[string]interface{}{"a": 1, "b": true, "field": false})
+		if err == nil {
+			t.Errorf("Expected error for unsupported expression: %s", expr)
+		}
+	}
+}
+
+func TestConditionEvaluator_Expression_UndefinedVariable(t *testing.T) {
+	eval := NewConditionEvaluator()
+
+	tests := []struct {
+		name     string
+		expr     string
+		expected bool
+	}{
+		{
+			name:     "undefined in equality",
+			expr:     "undefined_var == 'value'",
+			expected: false,
+		},
+		{
+			name:     "undefined in inequality",
+			expr:     "undefined_var != 'value'",
+			expected: true,
+		},
+		{
+			name:     "undefined field reference",
+			expr:     "undefined_var",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition := &ritual.QuestionCondition{
+				Expression: tt.expr,
+			}
+			result, err := eval.Evaluate(condition, map[string]interface{}{})
+			if err != nil {
+				t.Fatalf("Evaluate failed: %v", err)
+			}
+			if result != tt.expected {
+				t.Errorf("Expected %v for %s, got %v", tt.expected, tt.expr, result)
+			}
+		})
+	}
+}
