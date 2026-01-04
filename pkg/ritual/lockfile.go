@@ -67,7 +67,7 @@ func (l *LockFile) Save(path string) error {
 	return nil
 }
 
-// Verify checks if the lock file matches the ritual definition
+// Verify checks if the lock file matches the ritual manifest
 func (l *LockFile) Verify(manifest *Manifest) error {
 	if l.Ritual.Name != manifest.Ritual.Name {
 		return fmt.Errorf("lock file name mismatch: expected %s, got %s",
