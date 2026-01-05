@@ -203,7 +203,7 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 		// Use defaults
 		for _, question := range manifest.Questions {
 			if question.Default != nil {
-				variables[question.ID] = question.Default
+				variables[question.Name] = question.Default
 			}
 		}
 	}
@@ -218,9 +218,16 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 		projectName = filepath.Base(cwd)
 	}
 	
+	// Generate module path (github.com/user/project or example.com/project)
+	modulePath := fmt.Sprintf("example.com/%s", projectName)
+	if userVar, ok := variables["github_user"]; ok {
+		modulePath = fmt.Sprintf("github.com/%s/%s", userVar, projectName)
+	}
+	
 	variables["project_name"] = projectName
+	variables["module_path"] = modulePath
 	variables["ritual_name"] = ritualName
-	variables["ritual_version"] = manifest.Metadata.Version
+	variables["ritual_version"] = manifest.Ritual.Version
 
 	// Generate files
 	gen := generator.NewFileGenerator("go")
@@ -292,29 +299,25 @@ func showRitualInfo(ritualName string) error {
 		return fmt.Errorf("failed to load ritual manifest: %w", err)
 	}
 
-	fmt.Printf("📦 %s\n\n", manifest.Metadata.Name)
-	fmt.Printf("Version:     %s\n", manifest.Metadata.Version)
-	fmt.Printf("Description: %s\n", manifest.Metadata.Description)
-	if manifest.Metadata.Author != "" {
-		fmt.Printf("Author:      %s\n", manifest.Metadata.Author)
+	fmt.Printf("📦 %s\n\n", manifest.Ritual.Name)
+	fmt.Printf("Version:     %s\n", manifest.Ritual.Version)
+	fmt.Printf("Description: %s\n", manifest.Ritual.Description)
+	if manifest.Ritual.Author != "" {
+		fmt.Printf("Author:      %s\n", manifest.Ritual.Author)
 	}
 	
 	fmt.Println("\nCompatibility:")
 	if manifest.Compatibility.MinToutaVersion != "" {
 		fmt.Printf("  Min Toutā version: %s\n", manifest.Compatibility.MinToutaVersion)
 	}
-	if manifest.Compatibility.GoVersion != "" {
-		fmt.Printf("  Go version:        %s\n", manifest.Compatibility.GoVersion)
+	if manifest.Compatibility.MinGoVersion != "" {
+		fmt.Printf("  Go version:        %s\n", manifest.Compatibility.MinGoVersion)
 	}
 
 	if len(manifest.Dependencies.Packages) > 0 {
 		fmt.Println("\nGo Dependencies:")
 		for _, pkg := range manifest.Dependencies.Packages {
-			version := ""
-			if pkg.Version != "" {
-				version = fmt.Sprintf("@%s", pkg.Version)
-			}
-			fmt.Printf("  - %s%s\n", pkg.Name, version)
+			fmt.Printf("  - %s\n", pkg)
 		}
 	}
 
@@ -325,7 +328,7 @@ func showRitualInfo(ritualName string) error {
 			if q.Required {
 				required = " (required)"
 			}
-			fmt.Printf("  - %s: %s%s\n", q.ID, q.Prompt, required)
+			fmt.Printf("  - %s: %s%s\n", q.Name, q.Prompt, required)
 		}
 	}
 
@@ -360,8 +363,8 @@ func validateRitual(ritualPath string) error {
 	}
 
 	fmt.Printf("✅ Ritual is valid!\n\n")
-	fmt.Printf("Name:    %s\n", manifest.Metadata.Name)
-	fmt.Printf("Version: %s\n", manifest.Metadata.Version)
+	fmt.Printf("Name:    %s\n", manifest.Ritual.Name)
+	fmt.Printf("Version: %s\n", manifest.Ritual.Version)
 
 	return nil
 }
@@ -386,7 +389,7 @@ func createRitual(ritualName string) error {
 	}
 
 	// Create ritual.yaml
-	ritualYAML := fmt.Sprintf(`metadata:
+	ritualYAML := fmt.Sprintf(`ritual:
   name: %s
   version: 1.0.0
   description: A custom ritual template
@@ -394,10 +397,10 @@ func createRitual(ritualName string) error {
 
 compatibility:
   min_touta_version: "0.1.0"
-  go_version: "1.22"
+  min_go_version: "1.22"
 
 questions:
-  - id: project_name
+  - name: project_name
     type: text
     prompt: "What is your project name?"
     required: true
