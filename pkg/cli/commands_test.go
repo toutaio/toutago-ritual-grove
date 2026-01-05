@@ -389,7 +389,7 @@ func TestShowRitualInfo_ValidRitual(t *testing.T) {
 	err := showRitualInfo("basic-site")
 	if err != nil {
 		// This may fail in test environments where rituals are not installed
-		t.Skipf("showRitualInfo('basic-site') failed (rituals may not be available in test environment): %v", err)
+		t.Skip("Skipping test - built-in rituals may not be available in test environment")
 	}
 }
 
@@ -436,8 +436,7 @@ func TestInitRitual_ValidRitual(t *testing.T) {
 	err := initRitual("basic-site", outputDir, true)
 	if err != nil {
 		// This may fail in test environments where rituals are not installed
-		t.Skipf("initRitual('basic-site') failed (rituals may not be available in test environment): %v", err)
-		return
+		t.Skip("Skipping test - built-in rituals may not be available in test environment")
 	}
 
 	// Check that project was created
