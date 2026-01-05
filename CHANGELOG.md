@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Update command handler**: Update projects to new ritual versions
+  - Version-to-version migration support
+  - Automatic backup creation before updates  
+  - Rollback on migration failure
+  - Dry-run mode for preview
+  - Breaking change detection
+
 ### Changed
 - Improved test coverage for pkg/cli package (16.9% → 31.4%)
 - Enhanced command structure validation tests
