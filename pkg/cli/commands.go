@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/toutaio/toutago-ritual-grove/internal/commands"
 	"github.com/toutaio/toutago-ritual-grove/internal/generator"
 	"github.com/toutaio/toutago-ritual-grove/internal/questionnaire"
 	"github.com/toutaio/toutago-ritual-grove/internal/registry"
@@ -33,6 +34,7 @@ Use rituals to create:
 	cmd.AddCommand(infoCommand())
 	cmd.AddCommand(validateCommand())
 	cmd.AddCommand(createCommand())
+	cmd.AddCommand(planCommand())
 
 	return cmd
 }
@@ -159,6 +161,11 @@ This will create:
 	}
 
 	return cmd
+}
+
+// planCommand shows deployment plan for updates
+func planCommand() *cobra.Command {
+	return commands.NewPlanCommand()
 }
 
 // initRitual initializes a project from a ritual
