@@ -6,6 +6,8 @@
 
 Ritual Grove is a powerful system for building production-ready applications using **rituals** (recipes/templates). Think of it as a sophisticated project generator that goes beyond simple scaffolding - it handles the complete lifecycle from creation to deployment and updates.
 
+**Architecture:** Ritual Grove is a **library integrated into the main `touta` CLI**, not a standalone tool. All commands are accessed through the main `touta` binary.
+
 ## Features
 
 - 🎯 **Create Complete Applications** - Generate production-ready apps from rituals (blog, CRM, wiki, API server, etc.)
@@ -21,27 +23,34 @@ Ritual Grove is a powerful system for building production-ready applications usi
 
 ## Installation
 
+Ritual Grove is integrated into the main Toutā CLI. Install or build the `touta` binary:
+
 ```bash
-go install github.com/toutaio/toutago-ritual-grove/cmd/ritual@latest
+# From the toutago repository
+cd toutago
+go build -o touta cmd/touta/main.go
+sudo mv touta /usr/local/bin/
 ```
 
 ## Quick Start
 
+All ritual commands are accessed through the `touta` binary:
+
 ```bash
 # List available rituals
-ritual list
+touta ritual list
 
 # Create a new blog application
-ritual create blog-app --ritual blog
+touta ritual init blog-app --ritual blog
 
 # Add authentication to existing project
-ritual mixin add auth
+touta ritual mixin add auth
 
 # Deploy to production
-ritual deploy
+touta ritual deploy
 
 # Update to newer ritual version
-ritual update
+touta ritual update
 ```
 
 ## Ritual Format
@@ -86,9 +95,12 @@ mixins:
 
 ## Architecture
 
+Ritual Grove is designed as a **library that integrates into the main `touta` CLI**:
+
 ```
 toutago-ritual-grove/
-├── cmd/ritual/          # CLI entry point
+├── pkg/cli/             # Exported CLI commands (for touta integration)
+│   └── ritual.go        # RitualCommand() for cobra integration
 ├── internal/
 │   ├── ritual/          # Core ritual engine
 │   ├── registry/        # Ritual discovery
@@ -106,6 +118,8 @@ toutago-ritual-grove/
 ├── examples/            # Example rituals
 └── docs/                # Documentation
 ```
+
+**Integration:** The `touta` binary imports `pkg/cli.RitualCommand()` and adds it as a subcommand.
 
 ## Development Status
 
