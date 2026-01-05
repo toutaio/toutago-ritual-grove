@@ -165,3 +165,19 @@ func SelectBestVersion(versions []string, constraint *Constraint) (string, error
 
 	return bestStr, nil
 }
+
+// IsVersionNewer checks if newVersion is newer than currentVersion.
+// Returns true if newVersion > currentVersion.
+func IsVersionNewer(newVersion, currentVersion string) (bool, error) {
+	new, err := ParseVersion(newVersion)
+	if err != nil {
+		return false, fmt.Errorf("invalid new version: %w", err)
+	}
+
+	current, err := ParseVersion(currentVersion)
+	if err != nil {
+		return false, fmt.Errorf("invalid current version: %w", err)
+	}
+
+	return new.Compare(current) > 0, nil
+}

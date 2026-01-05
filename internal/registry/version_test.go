@@ -51,7 +51,7 @@ func TestParseVersion(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "invalid - empty",
+			name:    "invalid - empty string",
 			version: "",
 			wantErr: true,
 		},
@@ -70,6 +70,94 @@ func TestParseVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestIsVersionNewer(t *testing.T) {
+	tests := []struct {
+		name           string
+		newVersion     string
+		currentVersion string
+		want           bool
+		wantErr        bool
+	}{
+		{
+			name:           "newer major version",
+			newVersion:     "2.0.0",
+			currentVersion: "1.0.0",
+			want:           true,
+			wantErr:        false,
+		},
+		{
+			name:           "newer minor version",
+			newVersion:     "1.2.0",
+			currentVersion: "1.1.0",
+			want:           true,
+			wantErr:        false,
+		},
+		{
+			name:           "newer patch version",
+			newVersion:     "1.0.2",
+			currentVersion: "1.0.1",
+			want:           true,
+			wantErr:        false,
+		},
+		{
+			name:           "same version",
+			newVersion:     "1.0.0",
+			currentVersion: "1.0.0",
+			want:           false,
+			wantErr:        false,
+		},
+		{
+			name:           "older major version",
+			newVersion:     "1.0.0",
+			currentVersion: "2.0.0",
+			want:           false,
+			wantErr:        false,
+		},
+		{
+			name:           "older minor version",
+			newVersion:     "1.1.0",
+			currentVersion: "1.2.0",
+			want:           false,
+			wantErr:        false,
+		},
+		{
+			name:           "older patch version",
+			newVersion:     "1.0.1",
+			currentVersion: "1.0.2",
+			want:           false,
+			wantErr:        false,
+		},
+		{
+			name:           "invalid new version",
+			newVersion:     "invalid",
+			currentVersion: "1.0.0",
+			want:           false,
+			wantErr:        true,
+		},
+		{
+			name:           "invalid current version",
+			newVersion:     "1.0.0",
+			currentVersion: "invalid",
+			want:           false,
+			wantErr:        true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := IsVersionNewer(tt.newVersion, tt.currentVersion)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IsVersionNewer() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("IsVersionNewer() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 
 func TestVersionString(t *testing.T) {
 	tests := []struct {
