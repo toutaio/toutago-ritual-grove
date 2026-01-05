@@ -17,47 +17,41 @@ dependencies:
     - github.com/toutaio/toutago
 
 questions:
-  - id: project_name
+  - name: project_name
     type: text
     prompt: "What is your project name?"
     required: true
-    validation:
+    validate:
       pattern: "^[a-z][a-z0-9-]*$"
-      message: "Project name must start with a letter and contain only lowercase letters, numbers, and hyphens"
     default: "my-app"
 
-  - id: module_name
+  - name: module_name
     type: text
     prompt: "What is your Go module name?"
     required: true
-    default: "github.com/yourusername/{{ .project_name }}"
-    help: "This will be used in go.mod (e.g., github.com/user/project)"
+    default: "github.com/yourusername/my-app"
 
-  - id: port
+  - name: port
     type: number
     prompt: "What port should the server listen on?"
     default: 8080
-    validation:
+    validate:
       min: 1024
       max: 65535
 
 files:
   templates:
-    - path: main.go.tmpl
-      output: cmd/{{ .project_name }}/main.go
-      mode: 0644
+    - src: main.go.tmpl
+      dest: cmd/{{ .project_name }}/main.go
 
-    - path: README.md.tmpl
-      output: README.md
-      mode: 0644
+    - src: README.md.tmpl
+      dest: README.md
 
-    - path: go.mod.tmpl
-      output: go.mod
-      mode: 0644
+    - src: go.mod.tmpl
+      dest: go.mod
 
-    - path: gitignore.tmpl
-      output: .gitignore
-      mode: 0644
+    - src: gitignore.tmpl
+      dest: .gitignore
 
 hooks:
   post_install:

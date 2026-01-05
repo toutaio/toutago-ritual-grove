@@ -1,12 +1,12 @@
-// Package main provides the CLI entry point for Ritual Grove
 package main
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/toutaio/toutago-ritual-grove/internal/generator"
+	"github.com/toutaio/toutago-ritual-grove/internal/cli"
 	"github.com/toutaio/toutago-ritual-grove/internal/registry"
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
@@ -48,11 +48,31 @@ func main() {
 		}
 	case "create":
 		if len(os.Args) < 3 {
-			fmt.Println("Usage: ritual create <project-name>")
+			fmt.Println("Usage: ritual create <ritual-name> [project-path] [--yes] [--dry-run]")
 			os.Exit(1)
 		}
-		fmt.Println("Creating project from ritual...")
-		fmt.Println("(Interactive questionnaire not fully implemented yet)")
+		
+		ritualName := os.Args[2]
+		projectPath := "."
+		if len(os.Args) > 3 && !strings.HasPrefix(os.Args[3], "--") {
+			projectPath = os.Args[3]
+		}
+		
+		dryRun := false
+		useDefaults := false
+		for _, arg := range os.Args[3:] {
+			if arg == "--dry-run" {
+				dryRun = true
+			}
+			if arg == "--yes" {
+				useDefaults = true
+			}
+		}
+		
+		if err := runCreateCommand(ritualName, projectPath, dryRun, useDefaults); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	case "mixin":
 		fmt.Println("Managing mixins...")
 		fmt.Println("(Not implemented yet)")
@@ -200,28 +220,42 @@ func runListCommandJSON(customPaths []string) error {
 }
 
 // runCreateCommand creates a project from a ritual
-func runCreateCommand(ritualPath, targetPath string, answers map[string]interface{}) error {
-	// Load ritual
-	loader := ritual.NewLoader(ritualPath)
-	manifest, err := loader.Load(ritualPath)
+func runCreateCommand(ritualName, projectPath string, dryRun, useDefaults bool) error {
+	// Find ritual
+	reg := registry.NewRegistry()
+	if err := reg.Scan(); err != nil {
+		return fmt.Errorf("failed to scan rituals: %w", err)
+	}
+
+	meta, err := reg.Get(ritualName)
 	if err != nil {
-		return fmt.Errorf("failed to load ritual: %w", err)
+		return fmt.Errorf("ritual not found: %s", ritualName)
 	}
 
-	// Create scaffolder
-	scaffolder := generator.NewProjectScaffolder()
+	fmt.Printf("Using ritual: %s v%s\n", meta.Name, meta.Version)
+	if meta.Description != "" {
+		fmt.Printf("  %s\n", meta.Description)
+	}
+	fmt.Println()
 
-	// Convert answers to Variables
-	vars := generator.NewVariables()
-	for key, value := range answers {
-		vars.Set(key, value)
+	// Load ritual
+	var answers map[string]interface{}
+	if useDefaults {
+		// Use default answers
+		loader := ritual.NewLoader(meta.Path)
+		manifest, err := loader.Load(meta.Path)
+		if err != nil {
+			return fmt.Errorf("failed to load ritual: %w", err)
+		}
+		
+		answers = make(map[string]interface{})
+		for _, q := range manifest.Questions {
+			if q.Default != nil {
+				answers[q.Name] = q.Default
+			}
+		}
 	}
 
-	// Generate project
-	if err := scaffolder.GenerateFromRitual(targetPath, ritualPath, manifest, vars); err != nil {
-		return fmt.Errorf("failed to generate project: %w", err)
-	}
-
-	fmt.Printf("Project created successfully at: %s\n", targetPath)
-	return nil
+	// Execute workflow
+	return cli.Execute(meta.Path, projectPath, answers, dryRun)
 }

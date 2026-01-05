@@ -294,7 +294,13 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 	// Process template files
 	for _, fileMapping := range manifest.Files.Templates {
 		srcPath := filepath.Join(templatesDir, fileMapping.Source)
-		destPath := filepath.Join(projectPath, fileMapping.Destination)
+		
+		// Render destination path (may contain template variables)
+		destPathRendered, err := s.generator.engine.Render(fileMapping.Destination, vars.All())
+		if err != nil {
+			return fmt.Errorf("failed to render destination path %s: %w", fileMapping.Destination, err)
+		}
+		destPath := filepath.Join(projectPath, destPathRendered)
 
 		// Check if source exists
 		if _, err := os.Stat(srcPath); os.IsNotExist(err) {
@@ -306,14 +312,20 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 
 		// Generate file (templates are always rendered)
 		if err := s.generator.GenerateFile(srcPath, destPath, true); err != nil {
-			return fmt.Errorf("failed to generate %s: %w", fileMapping.Destination, err)
+			return fmt.Errorf("failed to generate %s: %w", destPathRendered, err)
 		}
 	}
 
 	// Process static files
 	for _, fileMapping := range manifest.Files.Static {
 		srcPath := filepath.Join(templatesDir, fileMapping.Source)
-		destPath := filepath.Join(projectPath, fileMapping.Destination)
+		
+		// Render destination path (may contain template variables)
+		destPathRendered, err := s.generator.engine.Render(fileMapping.Destination, vars.All())
+		if err != nil {
+			return fmt.Errorf("failed to render destination path %s: %w", fileMapping.Destination, err)
+		}
+		destPath := filepath.Join(projectPath, destPathRendered)
 
 		// Check if source exists
 		if _, err := os.Stat(srcPath); os.IsNotExist(err) {
@@ -325,7 +337,7 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 
 		// Copy static file (no template rendering)
 		if err := s.generator.GenerateFile(srcPath, destPath, false); err != nil {
-			return fmt.Errorf("failed to copy %s: %w", fileMapping.Destination, err)
+			return fmt.Errorf("failed to copy %s: %w", destPathRendered, err)
 		}
 	}
 

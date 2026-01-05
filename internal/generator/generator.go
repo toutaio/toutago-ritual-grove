@@ -95,7 +95,13 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 	// Generate template files
 	for _, tmpl := range manifest.Files.Templates {
 		srcPath := filepath.Join(ritualPath, tmpl.Source)
-		destPath := filepath.Join(outputPath, tmpl.Destination)
+		
+		// Render destination path (it may contain template variables)
+		destPathRendered, err := g.engine.Render(tmpl.Destination, g.variables.All())
+		if err != nil {
+			return fmt.Errorf("failed to render destination path %s: %w", tmpl.Destination, err)
+		}
+		destPath := filepath.Join(outputPath, destPathRendered)
 
 		// Check if file/directory exists
 		info, err := os.Stat(srcPath)
@@ -122,7 +128,13 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 	// Copy static files
 	for _, static := range manifest.Files.Static {
 		srcPath := filepath.Join(ritualPath, static.Source)
-		destPath := filepath.Join(outputPath, static.Destination)
+		
+		// Render destination path (it may contain template variables)
+		destPathRendered, err := g.engine.Render(static.Destination, g.variables.All())
+		if err != nil {
+			return fmt.Errorf("failed to render destination path %s: %w", static.Destination, err)
+		}
+		destPath := filepath.Join(outputPath, destPathRendered)
 
 		// Check if file/directory exists
 		info, err := os.Stat(srcPath)
