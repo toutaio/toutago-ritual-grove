@@ -3,19 +3,21 @@ package migration
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
 
 func TestNewRunner(t *testing.T) {
-	runner := NewRunner("/tmp/test-project")
+	testPath := filepath.Join(os.TempDir(), "test-project")
+	runner := NewRunner(testPath)
 	if runner == nil {
 		t.Fatal("NewRunner returned nil")
 	}
 
-	if runner.projectPath != "/tmp/test-project" {
-		t.Errorf("projectPath = %s, want /tmp/test-project", runner.projectPath)
+	if runner.projectPath != testPath {
+		t.Errorf("projectPath = %s, want %s", runner.projectPath, testPath)
 	}
 
 	if runner.dryRun {
@@ -28,7 +30,7 @@ func TestNewRunner(t *testing.T) {
 }
 
 func TestSetDryRun(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	runner.SetDryRun(true)
 	if !runner.dryRun {
@@ -42,7 +44,7 @@ func TestSetDryRun(t *testing.T) {
 }
 
 func TestRunUpDryRun(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 	runner.SetDryRun(true)
 
 	migration := &ritual.Migration{
@@ -70,7 +72,7 @@ func TestRunUpDryRun(t *testing.T) {
 }
 
 func TestRunUpWithSQL(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	migration := &ritual.Migration{
 		FromVersion: "1.0.0",
@@ -107,7 +109,7 @@ func TestRunUpWithSQL(t *testing.T) {
 }
 
 func TestRunUpWithEmptySQL(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	migration := &ritual.Migration{
 		FromVersion: "1.0.0",
@@ -130,6 +132,10 @@ func TestRunUpWithEmptySQL(t *testing.T) {
 }
 
 func TestRunUpWithScript(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping shell script test on Windows")
+	}
+
 	tmpDir, err := os.MkdirTemp("", "migration-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
@@ -166,7 +172,7 @@ func TestRunUpWithScript(t *testing.T) {
 }
 
 func TestRunUpWithMissingScript(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	migration := &ritual.Migration{
 		FromVersion: "1.0.0",
@@ -189,7 +195,7 @@ func TestRunUpWithMissingScript(t *testing.T) {
 }
 
 func TestRunDown(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	migration := &ritual.Migration{
 		FromVersion: "1.0.0",
@@ -223,7 +229,7 @@ func TestRunDown(t *testing.T) {
 }
 
 func TestRunMigrationChainUp(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	migrations := []*ritual.Migration{
 		{
@@ -275,7 +281,7 @@ func TestRunMigrationChainUp(t *testing.T) {
 }
 
 func TestRunMigrationChainDown(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	migrations := []*ritual.Migration{
 		{
@@ -314,7 +320,7 @@ func TestRunMigrationChainDown(t *testing.T) {
 }
 
 func TestRunMigrationChainInvalidDirection(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	err := runner.RunMigrationChain([]*ritual.Migration{}, "sideways")
 	if err == nil {
@@ -323,7 +329,7 @@ func TestRunMigrationChainInvalidDirection(t *testing.T) {
 }
 
 func TestValidateMigration(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	tests := []struct {
 		name        string
@@ -403,7 +409,7 @@ func TestValidateMigration(t *testing.T) {
 }
 
 func TestGetRecords(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	// Run some migrations
 	migration1 := &ritual.Migration{
@@ -432,7 +438,7 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestGetAppliedMigrations(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 	runner.SetDryRun(true) // Use dry run to control statuses
 
 	migration := &ritual.Migration{
@@ -452,7 +458,7 @@ func TestGetAppliedMigrations(t *testing.T) {
 	}
 
 	// Test with actual execution
-	runner2 := NewRunner("/tmp/test")
+	runner2 := NewRunner(filepath.Join(os.TempDir(), "test"))
 	_ = runner2.RunUp(migration)
 
 	applied2 := runner2.GetAppliedMigrations()
@@ -462,7 +468,7 @@ func TestGetAppliedMigrations(t *testing.T) {
 }
 
 func TestGetFailedMigrations(t *testing.T) {
-	runner := NewRunner("/tmp/test")
+	runner := NewRunner(filepath.Join(os.TempDir(), "test"))
 
 	// Create a migration that will fail
 	migration := &ritual.Migration{
