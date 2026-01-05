@@ -29,11 +29,19 @@ questions:
     prompt: "Enable database support?"
     type: boolean
     default: false
+    
+  - name: go_version
+    prompt: "Go version?"
+    type: text
+    default: "1.22"
 
 files:
   templates:
     - src: templates/main.go.tmpl
       dest: main.go
+      
+    - src: templates/go.mod.tmpl
+      dest: go.mod
       
     - src: templates/handlers/
       dest: handlers/
