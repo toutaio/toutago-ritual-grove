@@ -5,7 +5,7 @@
 package ritual
 
 // Version is the current version of Ritual Grove
-const Version = "0.1.0"
+const Version = "0.2.0"
 
 // Ritual represents a complete application recipe/template (for backward compatibility)
 // Use Manifest for the full ritual definition
