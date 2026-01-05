@@ -12,7 +12,7 @@ import (
 
 func TestUpdateHandler_Execute(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Create project structure
 	ritualDir := filepath.Join(tmpDir, ".ritual")
 	if err := os.MkdirAll(ritualDir, 0750); err != nil {
@@ -21,8 +21,8 @@ func TestUpdateHandler_Execute(t *testing.T) {
 
 	// Create initial state
 	state := &storage.State{
-		RitualName:    "test-ritual",
-		RitualVersion: "1.0.0",
+		RitualName:     "test-ritual",
+		RitualVersion:  "1.0.0",
 		GeneratedFiles: []string{"main.go"},
 	}
 	if err := state.Save(tmpDir); err != nil {
@@ -36,7 +36,7 @@ func TestUpdateHandler_Execute(t *testing.T) {
 			ToVersion: "1.1.0",
 			DryRun:    true,
 		})
-		
+
 		// Dry run should not error on missing ritual
 		// It just shows what would happen
 		if err != nil {
@@ -48,7 +48,7 @@ func TestUpdateHandler_Execute(t *testing.T) {
 		err := handler.Execute(tmpDir, UpdateOptions{
 			ToVersion: "1.0.0",
 		})
-		
+
 		if err != nil {
 			t.Errorf("Should succeed when already at target version: %v", err)
 		}
@@ -56,7 +56,7 @@ func TestUpdateHandler_Execute(t *testing.T) {
 
 	t.Run("no target version specified", func(t *testing.T) {
 		err := handler.Execute(tmpDir, UpdateOptions{})
-		
+
 		if err == nil {
 			t.Error("Should error when no target version specified")
 		}
@@ -129,7 +129,7 @@ func TestUpdateHandler_GetMigrationsToRun(t *testing.T) {
 
 func TestUpdateHandler_CanUpdate(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	ritualDir := filepath.Join(tmpDir, ".ritual")
 	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatal(err)
@@ -144,7 +144,7 @@ func TestUpdateHandler_CanUpdate(t *testing.T) {
 	}
 
 	handler := NewUpdateHandler()
-	
+
 	canUpdate, version, err := handler.CanUpdate(tmpDir)
 	if err != nil {
 		t.Fatalf("CanUpdate() error = %v", err)
@@ -162,7 +162,7 @@ func TestUpdateHandler_CanUpdate(t *testing.T) {
 
 func TestUpdateHandler_ShowUpdateInfo(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	ritualDir := filepath.Join(tmpDir, ".ritual")
 	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatal(err)
@@ -177,7 +177,7 @@ func TestUpdateHandler_ShowUpdateInfo(t *testing.T) {
 	}
 
 	handler := NewUpdateHandler()
-	
+
 	err := handler.ShowUpdateInfo(tmpDir, "1.1.0")
 	if err != nil {
 		t.Errorf("ShowUpdateInfo() error = %v", err)
@@ -191,7 +191,7 @@ func TestUpdateHandler_EmptyPath(t *testing.T) {
 	err := handler.Execute("", UpdateOptions{
 		ToVersion: "1.0.0",
 	})
-	
+
 	// Will fail on state load, but shows path handling works
 	if err == nil {
 		t.Log("Note: Execute with empty path didn't error (no state file expected)")

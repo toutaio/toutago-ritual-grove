@@ -83,15 +83,15 @@ func main() {
 
 func TestRitualCommand(t *testing.T) {
 	cmd := RitualCommand()
-	
+
 	if cmd == nil {
 		t.Fatal("RitualCommand() returned nil")
 	}
-	
+
 	if cmd.Use != "ritual" {
 		t.Errorf("Expected Use='ritual', got %s", cmd.Use)
 	}
-	
+
 	// Check subcommands exist
 	subcommands := []string{"init", "list", "info", "validate", "create", "plan"}
 	for _, subcmd := range subcommands {
@@ -117,17 +117,17 @@ func TestInitCommand(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if initCmd == nil {
 		t.Fatal("init command not found")
 	}
-	
+
 	// Check flags
 	outputFlag := initCmd.Flags().Lookup("output")
 	if outputFlag == nil {
 		t.Error("Expected --output flag")
 	}
-	
+
 	yesFlag := initCmd.Flags().Lookup("yes")
 	if yesFlag == nil {
 		t.Error("Expected --yes flag")
@@ -143,11 +143,11 @@ func TestListCommand(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if listCmd == nil {
 		t.Fatal("list command not found")
 	}
-	
+
 	if listCmd.Use != "list" {
 		t.Errorf("Expected Use='list', got %s", listCmd.Use)
 	}
@@ -162,7 +162,7 @@ func TestInfoCommand(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if infoCmd == nil {
 		t.Fatal("info command not found")
 	}
@@ -177,7 +177,7 @@ func TestValidateCommand(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if validateCmd == nil {
 		t.Fatal("validate command not found")
 	}
@@ -192,7 +192,7 @@ func TestPlanCommand(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if planCmd == nil {
 		t.Fatal("plan command not found")
 	}

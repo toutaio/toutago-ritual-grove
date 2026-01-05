@@ -1,6 +1,18 @@
-# Ritual Grove
+# Ritual Grove - Application Recipe System for Toutā
 
-**Application recipe system for Toutā framework** - Create, manage, and deploy complete applications from templates.
+[![CI](https://github.com/toutaio/toutago-ritual-grove/actions/workflows/ci.yml/badge.svg)](https://github.com/toutaio/toutago-ritual-grove/actions/workflows/ci.yml)
+[![Lint](https://github.com/toutaio/toutago-ritual-grove/actions/workflows/lint.yml/badge.svg)](https://github.com/toutaio/toutago-ritual-grove/actions/workflows/lint.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/toutaio/toutago-ritual-grove.svg)](https://pkg.go.dev/github.com/toutaio/toutago-ritual-grove)
+[![Go Report Card](https://goreportcard.com/badge/github.com/toutaio/toutago-ritual-grove)](https://goreportcard.com/report/github.com/toutaio/toutago-ritual-grove)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> **Ritual Grove** - Create, manage, and deploy complete applications from templates and recipes.
+
+## Status
+
+✅ **Production Ready** - Stable v1.0+ releases  
+📦 [View Releases](https://github.com/toutaio/toutago-ritual-grove/releases) for the latest version  
+📖 [Changelog](CHANGELOG.md) - Full version history
 
 ## Overview
 

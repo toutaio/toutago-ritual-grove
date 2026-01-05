@@ -80,7 +80,7 @@ func (h *UpdateHandler) Execute(projectPath string, opts UpdateOptions) error {
 
 	// Create rollback manager for backup
 	rollbackMgr := deployment.NewRollbackManager()
-	
+
 	// Create backup before updating
 	backupPath, err := rollbackMgr.CreateBackup(projectPath)
 	if err != nil {
@@ -100,7 +100,7 @@ func (h *UpdateHandler) Execute(projectPath string, opts UpdateOptions) error {
 	// Run migrations
 	migrationRunner := migration.NewRunner(projectPath)
 	migrations := h.getMigrationsToRun(state, newManifest)
-	
+
 	fmt.Printf("\nRunning %d migration(s)...\n", len(migrations))
 	for _, mig := range migrations {
 		fmt.Printf("  - %s\n", mig.ToVersion)
@@ -121,7 +121,7 @@ func (h *UpdateHandler) Execute(projectPath string, opts UpdateOptions) error {
 
 	// Update state version
 	state.RitualVersion = targetVersion
-	
+
 	if err := state.Save(projectPath); err != nil {
 		return fmt.Errorf("failed to save state: %w", err)
 	}
@@ -137,7 +137,7 @@ func (h *UpdateHandler) getMigrationsToRun(state *storage.State, manifest *ritua
 	// Get all migrations from manifest
 	for i := range manifest.Migrations {
 		mig := &manifest.Migrations[i]
-		
+
 		// Skip if already applied
 		if state.IsMigrationApplied(mig.ToVersion) {
 			continue
