@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
@@ -385,4 +386,16 @@ func getDefaultSearchPaths() []string {
 	}
 
 	return paths
+}
+
+// SortByName sorts rituals alphabetically by name
+func (r *Registry) SortByName(rituals []*RitualMetadata) []*RitualMetadata {
+	sorted := make([]*RitualMetadata, len(rituals))
+	copy(sorted, rituals)
+	
+	sort.Slice(sorted, func(i, j int) bool {
+		return strings.ToLower(sorted[i].Name) < strings.ToLower(sorted[j].Name)
+	})
+	
+	return sorted
 }

@@ -253,6 +253,28 @@ func TestFilterByCompatibility(t *testing.T) {
 	_ = results
 }
 
+func TestSortByName(t *testing.T) {
+	reg := NewRegistry()
+	
+	rituals := []*RitualMetadata{
+		{Name: "zebra"},
+		{Name: "apple"},
+		{Name: "mango"},
+	}
+	
+	sorted := reg.SortByName(rituals)
+	
+	if sorted[0].Name != "apple" {
+		t.Errorf("expected first to be 'apple', got '%s'", sorted[0].Name)
+	}
+	if sorted[1].Name != "mango" {
+		t.Errorf("expected second to be 'mango', got '%s'", sorted[1].Name)
+	}
+	if sorted[2].Name != "zebra" {
+		t.Errorf("expected third to be 'zebra', got '%s'", sorted[2].Name)
+	}
+}
+
 // Helper function to create a test ritual
 func createTestRitual(dir, name, version string) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
