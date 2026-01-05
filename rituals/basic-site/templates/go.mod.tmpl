@@ -3,7 +3,11 @@ module {{ .module_path }}
 go {{ .go_version }}
 
 require (
-	github.com/toutaio/toutago v0.1.0
-	github.com/toutaio/toutago-cosan-router v0.1.0
-	github.com/toutaio/toutago-fith-renderer v0.1.0
+	github.com/toutaio/toutago-cosan-router v1.0.5
+	github.com/toutaio/toutago-fith-renderer v1.0.6
 )
+
+// For local development, uncomment these replace directives:
+// replace github.com/toutaio/toutago => ../toutago
+// replace github.com/toutaio/toutago-cosan-router => ../toutago-cosan-router
+// replace github.com/toutaio/toutago-fith-renderer => ../toutago-fith-renderer

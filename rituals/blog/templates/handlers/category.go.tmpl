@@ -1,0 +1,36 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"{{ .module_path }}/internal/models"
+	"github.com/toutaio/toutago-nasc-dependency-injector"
+)
+
+// CategoryHandler handles category operations
+type CategoryHandler struct {
+	container *nasc.Container
+}
+
+// NewCategoryHandler creates a new category handler
+func NewCategoryHandler(container *nasc.Container) *CategoryHandler {
+	return &CategoryHandler{container: container}
+}
+
+// List shows all categories
+func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
+	categories := []models.Category{
+		// Mock data for now
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(categories)
+}
+
+// Show displays a single category with its posts
+func (h *CategoryHandler) Show(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement category detail view
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "not implemented"})
+}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{`{{ .Title }}`}} - {{ .app_name }}</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{ .app_name }}</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/categories">Categories</a>
+        </nav>
+    </header>
+
+    <main>
+        {{`{{ template "content" . }}`}}
+    </main>
+
+    <footer>
+        <p>&copy; 2024 {{ .app_name }}. Powered by Toutā.</p>
+    </footer>
+</body>
+</html>

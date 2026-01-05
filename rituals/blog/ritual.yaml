@@ -1,0 +1,184 @@
+name: blog
+version: 1.0.0
+description: A full-featured blog with posts, comments, and categories
+author: Toutā Team
+license: MIT
+tags:
+  - blog
+  - content
+  - cms
+
+compatibility:
+  min_touta_version: "0.1.0"
+  go_version: ">=1.21"
+
+dependencies:
+  packages:
+    - github.com/toutaio/toutago-cosan-router
+    - github.com/toutaio/toutago-fith-renderer
+    - github.com/toutaio/toutago-datamapper
+    - github.com/toutaio/toutago-nasc-dependency-injector
+
+questions:
+  - id: app_name
+    type: text
+    prompt: "What is your blog name?"
+    default: "My Blog"
+    required: true
+    validation:
+      min_length: 1
+      max_length: 100
+
+  - id: module_path
+    type: text
+    prompt: "What is your Go module path (e.g., github.com/user/myblog)?"
+    default: "example.com/myblog"
+    required: true
+    validation:
+      pattern: "^[a-z0-9._/-]+$"
+
+  - id: port
+    type: number
+    prompt: "Which port should the blog run on?"
+    default: 8080
+    required: true
+    validation:
+      min: 1024
+      max: 65535
+
+  - id: database_type
+    type: choice
+    prompt: "Select database type:"
+    choices:
+      - mysql
+      - postgres
+    default: postgres
+    required: true
+
+  - id: db_host
+    type: text
+    prompt: "Database host:"
+    default: "localhost"
+    required: true
+
+  - id: db_port
+    type: number
+    prompt: "Database port:"
+    default: 5432
+    required: true
+    show_if:
+      field: database_type
+      value: postgres
+
+  - id: db_port
+    type: number
+    prompt: "Database port:"
+    default: 3306
+    required: true
+    show_if:
+      field: database_type
+      value: mysql
+
+  - id: db_name
+    type: text
+    prompt: "Database name:"
+    default: "blog_db"
+    required: true
+    validation:
+      pattern: "^[a-zA-Z0-9_]+$"
+
+  - id: db_user
+    type: text
+    prompt: "Database user:"
+    default: "blog_user"
+    required: true
+
+  - id: db_password
+    type: password
+    prompt: "Database password:"
+    required: true
+
+  - id: enable_comments
+    type: boolean
+    prompt: "Enable comments on posts?"
+    default: true
+
+  - id: posts_per_page
+    type: number
+    prompt: "How many posts per page?"
+    default: 10
+    validation:
+      min: 1
+      max: 100
+
+  - id: enable_markdown
+    type: boolean
+    prompt: "Enable Markdown support for posts?"
+    default: true
+
+files:
+  templates:
+    - src: templates/main.go.tmpl
+      dest: main.go
+
+    - src: templates/go.mod.tmpl
+      dest: go.mod
+
+    - src: templates/models/post.go.tmpl
+      dest: internal/models/post.go
+
+    - src: templates/models/category.go.tmpl
+      dest: internal/models/category.go
+
+    - src: templates/models/comment.go.tmpl
+      dest: internal/models/comment.go
+      condition:
+        field: enable_comments
+        value: true
+
+    - src: templates/handlers/post.go.tmpl
+      dest: internal/handlers/post.go
+
+    - src: templates/handlers/category.go.tmpl
+      dest: internal/handlers/category.go
+
+    - src: templates/handlers/comment.go.tmpl
+      dest: internal/handlers/comment.go
+      condition:
+        field: enable_comments
+        value: true
+
+    - src: templates/views/layout.html.tmpl
+      dest: views/layout.html
+
+    - src: templates/views/post_list.html.tmpl
+      dest: views/post_list.html
+
+    - src: templates/views/post_detail.html.tmpl
+      dest: views/post_detail.html
+
+    - src: templates/views/category_list.html.tmpl
+      dest: views/category_list.html
+
+    - src: templates/.env.example.tmpl
+      dest: .env.example
+
+    - src: templates/README.md.tmpl
+      dest: README.md
+
+  static:
+    - src: static/style.css
+      dest: public/css/style.css
+
+migrations:
+  - version: 1.0.0
+    description: "Initial schema with posts, categories, and comments"
+    up:
+      - file: migrations/001_initial_schema.sql
+    down:
+      - file: migrations/001_initial_schema_down.sql
+
+hooks:
+  post_install:
+    - command: go mod tidy
+      description: "Install dependencies"

@@ -1,0 +1,59 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"{{ .module_path }}/internal/models"
+	"github.com/toutaio/toutago-nasc-dependency-injector"
+)
+
+// CommentHandler handles comment operations
+type CommentHandler struct {
+	container *nasc.Container
+}
+
+// NewCommentHandler creates a new comment handler
+func NewCommentHandler(container *nasc.Container) *CommentHandler {
+	return &CommentHandler{container: container}
+}
+
+// Create adds a new comment to a post
+func (h *CommentHandler) Create(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	postID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	var comment models.Comment
+	if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	comment.PostID = postID
+	comment.Status = models.CommentStatusPending
+
+	// TODO: Validate and save to database
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(comment)
+}
+
+// Delete removes a comment
+func (h *CommentHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Delete from database
+	_ = id
+
+	w.WriteHeader(http.StatusNoContent)
+}

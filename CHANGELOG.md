@@ -5,6 +5,23 @@ All notable changes to the Toutago Ritual Grove project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-01-05
+
+### Added
+- **Blog ritual**: Full-featured blog with posts, categories, and comments
+  - CRUD operations for posts
+  - Category organization  
+  - Optional comment system with moderation
+  - Optional Markdown support
+  - Database migrations included
+  - Multi-database support (PostgreSQL/MySQL)
+  - RESTful API endpoints
+  - Responsive CSS styling
+  - Comprehensive documentation
+
+### Changed
+- Enhanced ritual catalog with domain-specific examples
+
 ## [0.1.0] - 2026-01-05
 
 ### Added
@@ -19,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hook system (pre/post install, update)
 - Dependency resolution and circular dependency detection
 - Comprehensive test suite with >80% coverage across all packages
-- Built-in rituals: minimal, basic-site
+- Built-in rituals: minimal, basic-site, hello-world
 - Documentation: README, CONTRIBUTING, ritual format guide
 - Environment variable `TOUTA_RITUALS_PATH` for custom ritual paths
 

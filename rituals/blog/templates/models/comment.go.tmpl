@@ -1,0 +1,24 @@
+package models
+
+import (
+	"time"
+)
+
+// Comment represents a comment on a blog post
+type Comment struct {
+	ID        int64     `json:"id" db:"id"`
+	PostID    int64     `json:"post_id" db:"post_id" validate:"required"`
+	Author    string    `json:"author" db:"author" validate:"required,min=1,max=100"`
+	Email     string    `json:"email" db:"email" validate:"required,email"`
+	Content   string    `json:"content" db:"content" validate:"required,min=1,max=1000"`
+	Status    string    `json:"status" db:"status" validate:"required,oneof=pending approved spam"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// CommentStatus constants
+const (
+	CommentStatusPending  = "pending"
+	CommentStatusApproved = "approved"
+	CommentStatusSpam     = "spam"
+)

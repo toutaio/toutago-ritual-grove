@@ -1,0 +1,93 @@
+# {{ .app_name }}
+
+A blog application built with the Toutā framework.
+
+## Features
+
+- ✅ Post management (CRUD operations)
+- ✅ Category organization
+{{- if .enable_comments }}
+- ✅ Comment system
+{{- end }}
+{{- if .enable_markdown }}
+- ✅ Markdown support
+{{- end }}
+- ✅ RESTful API
+- ✅ Responsive design
+
+## Getting Started
+
+### Prerequisites
+
+- Go {{ .compatibility.go_version }} or higher
+- {{ .database_type | title }} database
+
+### Installation
+
+1. Install dependencies:
+```bash
+go mod tidy
+```
+
+2. Set up your environment:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+3. Run database migrations:
+```bash
+# Run migration scripts in migrations/
+```
+
+4. Start the server:
+```bash
+go run main.go
+```
+
+The blog will be available at `http://localhost:{{ .port }}`
+
+## API Endpoints
+
+### Posts
+- `GET /posts` - List all posts
+- `GET /posts/:id` - Get a specific post
+- `POST /posts` - Create a new post
+- `PUT /posts/:id` - Update a post
+- `DELETE /posts/:id` - Delete a post
+
+### Categories
+- `GET /categories` - List all categories
+- `GET /categories/:id` - Get a specific category
+
+{{- if .enable_comments }}
+### Comments
+- `POST /posts/:id/comments` - Add a comment to a post
+- `DELETE /comments/:id` - Delete a comment
+{{- end }}
+
+## Configuration
+
+See `.env.example` for all configuration options.
+
+## Project Structure
+
+```
+.
+├── main.go              # Application entry point
+├── internal/
+│   ├── models/          # Data models
+│   └── handlers/        # HTTP handlers
+├── views/               # HTML templates
+├── public/              # Static assets
+└── migrations/          # Database migrations
+```
+
+## License
+
+{{ .license }}
+
+## Generated with Toutā Ritual Grove
+
+This project was generated using the blog ritual.
+Ritual version: {{ .version }}

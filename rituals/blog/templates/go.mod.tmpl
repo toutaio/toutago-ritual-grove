@@ -1,0 +1,15 @@
+module {{ .module_path }}
+
+go 1.21
+
+require (
+	github.com/toutaio/toutago-cosan-router v0.1.0
+	github.com/toutaio/toutago-fith-renderer v0.1.0
+	github.com/toutaio/toutago-datamapper v0.1.0
+	github.com/toutaio/toutago-nasc-dependency-injector v0.1.0
+{{- if eq .database_type "postgres" }}
+	github.com/lib/pq v1.10.9
+{{- else if eq .database_type "mysql" }}
+	github.com/go-sql-driver/mysql v1.7.1
+{{- end }}
+)

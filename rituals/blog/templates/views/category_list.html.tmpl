@@ -1,0 +1,13 @@
+{{`{{ define "content" }}
+<div class="categories">
+    <h2>Categories</h2>
+    <ul class="category-list">
+        {{ range .Categories }}
+        <li>
+            <a href="/categories/{{ .ID }}">{{ .Name }}</a>
+            <span class="post-count">({{ .PostCount }} posts)</span>
+        </li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}`}}

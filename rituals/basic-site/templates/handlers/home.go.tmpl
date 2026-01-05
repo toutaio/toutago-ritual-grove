@@ -2,14 +2,17 @@ package handlers
 
 import (
 	"github.com/toutaio/toutago-cosan-router/pkg/cosan"
+	"github.com/toutaio/toutago-fith-renderer"
 )
 
 // HomeHandler handles homepage requests
-type HomeHandler struct{}
+type HomeHandler struct{
+	renderer *fith.Engine
+}
 
 // NewHomeHandler creates a new home handler
-func NewHomeHandler() *HomeHandler {
-	return &HomeHandler{}
+func NewHomeHandler(renderer *fith.Engine) *HomeHandler {
+	return &HomeHandler{renderer: renderer}
 }
 
 // Index renders the homepage
@@ -19,5 +22,11 @@ func (h *HomeHandler) Index(ctx cosan.Context) error {
 		"message":   "Welcome to your new Toutā site!",
 	}
 
-	return ctx.Render(200, "home.html", data)
+	// Render template using fith renderer
+	output, err := h.renderer.Render("home.html", data)
+	if err != nil {
+		return err
+	}
+
+	return ctx.HTML(200, string(output))
 }

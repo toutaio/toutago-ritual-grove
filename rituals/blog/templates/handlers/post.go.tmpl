@@ -1,0 +1,104 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"{{ .module_path }}/internal/models"
+	"github.com/toutaio/toutago-nasc-dependency-injector"
+)
+
+// PostHandler handles blog post operations
+type PostHandler struct {
+	container *nasc.Container
+}
+
+// NewPostHandler creates a new post handler
+func NewPostHandler(container *nasc.Container) *PostHandler {
+	return &PostHandler{container: container}
+}
+
+// List shows all posts
+func (h *PostHandler) List(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement pagination
+	posts := []models.Post{
+		// Mock data for now
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(posts)
+}
+
+// Show displays a single post
+func (h *PostHandler) Show(w http.ResponseWriter, r *http.Request) {
+	// Get ID from URL parameter
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Fetch post from database
+	post := models.Post{
+		ID:     id,
+		Title:  "Sample Post",
+		Status: models.PostStatusPublished,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
+// Create creates a new post
+func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var post models.Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Validate and save to database
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(post)
+}
+
+// Update updates an existing post
+func (h *PostHandler) Update(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	var post models.Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	post.ID = id
+
+	// TODO: Update in database
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
+// Delete removes a post
+func (h *PostHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Delete from database
+	_ = id
+
+	w.WriteHeader(http.StatusNoContent)
+}

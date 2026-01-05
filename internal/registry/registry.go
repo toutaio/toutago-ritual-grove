@@ -5,11 +5,13 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	embedded "github.com/toutaio/toutago-ritual-grove"
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
 
@@ -17,10 +19,11 @@ import (
 type Source string
 
 const (
-	SourceLocal   Source = "local"
-	SourceGit     Source = "git"
-	SourceTarball Source = "tarball"
-	SourceBuiltin Source = "builtin"
+	SourceLocal    Source = "local"
+	SourceGit      Source = "git"
+	SourceTarball  Source = "tarball"
+	SourceBuiltin  Source = "builtin"
+	SourceEmbedded Source = "embedded"
 )
 
 // RitualMetadata contains information about an available ritual
@@ -66,6 +69,12 @@ func (r *Registry) Scan() error {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
+	// First, scan embedded rituals
+	if err := r.scanEmbedded(); err != nil {
+		// Log but don't fail on embedded ritual errors
+		_ = err
+	}
+
 	for _, searchPath := range r.searchPaths {
 		if _, err := os.Stat(searchPath); os.IsNotExist(err) {
 			continue // Skip non-existent paths
@@ -100,6 +109,82 @@ func (r *Registry) Scan() error {
 	}
 
 	return nil
+}
+
+// scanEmbedded scans and indexes embedded rituals
+func (r *Registry) scanEmbedded() error {
+	ritualNames, err := embedded.List()
+	if err != nil {
+		return fmt.Errorf("failed to list embedded rituals: %w", err)
+	}
+
+	// Extract embedded rituals to cache if not already present
+	embeddedDir := filepath.Join(r.cacheDir, "embedded")
+	
+	for _, name := range ritualNames {
+		ritualPath := filepath.Join(embeddedDir, name)
+		
+		// Check if already extracted and valid
+		ritualFile := filepath.Join(ritualPath, "ritual.yaml")
+		if _, err := os.Stat(ritualFile); os.IsNotExist(err) {
+			// Need to extract this ritual
+			if err := r.extractEmbeddedRitual(name, embeddedDir); err != nil {
+				continue // Skip rituals that fail to extract
+			}
+		}
+		
+		// Index the ritual
+		if err := r.indexRitual(ritualPath, SourceEmbedded); err != nil {
+			continue // Skip rituals that fail to index
+		}
+	}
+
+	return nil
+}
+
+// extractEmbeddedRitual extracts a single embedded ritual to the cache
+func (r *Registry) extractEmbeddedRitual(name, destDir string) error {
+	ritualFS := embedded.GetFS()
+	ritualPath := filepath.Join(destDir, name)
+	
+	// Ensure destination exists
+	if err := os.MkdirAll(ritualPath, 0755); err != nil {
+		return fmt.Errorf("failed to create ritual directory: %w", err)
+	}
+	
+	// Walk the embedded ritual files
+	return fs.WalkDir(ritualFS, name, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		
+		destPath := filepath.Join(destDir, path)
+		
+		if d.IsDir() {
+			return os.MkdirAll(destPath, 0755)
+		}
+		
+		// Create parent directory
+		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+			return err
+		}
+		
+		// Copy file
+		srcFile, err := ritualFS.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+		
+		destFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer destFile.Close()
+		
+		_, err = io.Copy(destFile, srcFile)
+		return err
+	})
 }
 
 // handleTarball extracts and indexes a ritual tarball
