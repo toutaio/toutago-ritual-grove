@@ -1,19 +1,18 @@
+version: "2"
+
 run:
-  deadline: 5m
+  timeout: 5m
   tests: true
   modules-download-mode: readonly
 
 linters:
+  default: none
   enable:
-    - gofmt
-    - goimports
     - govet
     - errcheck
     - staticcheck
     - unused
-    - gosimple
     - ineffassign
-    - typecheck
     - gosec
     - gocyclo
     - dupl
@@ -25,85 +24,91 @@ linters:
     - prealloc
     - nolintlint
 
-linters-settings:
-  gofmt:
-    simplify: true
-  
-  goimports:
-    local-prefixes: github.com/toutaio/toutago-cosan-router
-  
-  gocyclo:
-    min-complexity: 15
-  
-  dupl:
-    threshold: 100
-  
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-  
-  lll:
-    line-length: 120
-  
-  misspell:
-    locale: US
-  
-  nakedret:
-    max-func-lines: 30
+  settings:
+    gocyclo:
+      min-complexity: 15
+
+    dupl:
+      threshold: 100
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+
+    lll:
+      line-length: 120
+
+    misspell:
+      locale: US
+
+    nakedret:
+      max-func-lines: 30
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
+          - lll
+
+      # Exclude complexity warnings for intentionally complex functions
+      - path: "(validator|condition|loader|registry|scaffolder|main|helpers)\\.go"
+        linters:
+          - gocyclo
+
+      # Exclude duplication warnings - would require significant refactoring
+      - path: "\\.(go)$"
+        linters:
+          - dupl
+
+      # Exclude string constant suggestions
+      - path: "\\.(go)$"
+        linters:
+          - goconst
+
+      # Exclude line length for generated/formatted strings
+      - path: "\\.(go)$"
+        linters:
+          - lll
+
+      # Exclude pre-allocation suggestions
+      - path: "\\.(go)$"
+        linters:
+          - prealloc
+
+      # Exclude unused parameter warnings - often needed for interface compliance
+      - path: "\\.(go)$"
+        linters:
+          - unparam
+
+      # Exclude empty branch warnings - intentional error handling
+      - path: "\\.(go)$"
+        linters:
+          - staticcheck
+        text: "SA9003"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    gofmt:
+      simplify: true
+
+    goimports:
+      local-prefixes:
+        - github.com/toutaio/toutago-ritual-grove
 
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-  
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - lll
-    
-    # Exclude complexity warnings for intentionally complex functions
-    - path: "(validator|condition|loader|registry|scaffolder|main|helpers)\\.go"
-      linters:
-        - gocyclo
-    
-    # Exclude duplication warnings - would require significant refactoring
-    - path: "\\.(go)$"
-      linters:
-        - dupl
-    
-    # Exclude string constant suggestions
-    - path: "\\.(go)$"
-      linters:
-        - goconst
-    
-    # Exclude line length for generated/formatted strings
-    - path: "\\.(go)$"
-      linters:
-        - lll
-    
-    # Exclude pre-allocation suggestions
-    - path: "\\.(go)$"
-      linters:
-        - prealloc
-    
-    # Exclude unused parameter warnings - often needed for interface compliance
-    - path: "\\.(go)$"
-      linters:
-        - unparam
-    
-    # Exclude empty branch warnings - intentional error handling
-    - path: "\\.(go)$"
-      linters:
-        - staticcheck
-      text: "SA9003"
 
 output:
   formats:
-    - format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
+    json:
+      path: stdout

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/semver/v3"
+
 	"github.com/toutaio/toutago-ritual-grove/internal/deployment"
 	"github.com/toutaio/toutago-ritual-grove/internal/migration"
 	"github.com/toutaio/toutago-ritual-grove/internal/storage"

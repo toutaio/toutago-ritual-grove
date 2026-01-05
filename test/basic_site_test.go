@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/toutaio/toutago-ritual-grove/internal/generator"
 	"github.com/toutaio/toutago-ritual-grove/internal/questionnaire"
 	"github.com/toutaio/toutago-ritual-grove/internal/registry"

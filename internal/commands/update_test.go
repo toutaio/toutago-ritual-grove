@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
+
 	"github.com/toutaio/toutago-ritual-grove/internal/storage"
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
@@ -196,4 +198,120 @@ func TestUpdateHandler_EmptyPath(t *testing.T) {
 	if err == nil {
 		t.Log("Note: Execute with empty path didn't error (no state file expected)")
 	}
+}
+
+func TestUpdateHandler_CreateBackup(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a simple project structure
+	if err := os.MkdirAll(filepath.Join(tmpDir, ".ritual"), 0750); err != nil {
+		t.Fatal(err)
+	}
+
+	testFile := filepath.Join(tmpDir, "test.txt")
+	if err := os.WriteFile(testFile, []byte("test content"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	handler := NewUpdateHandler()
+
+	backupPath, err := handler.createBackup(tmpDir)
+	if err != nil {
+		t.Fatalf("createBackup() error = %v", err)
+	}
+
+	if backupPath == "" {
+		t.Error("Expected non-empty backup path")
+	}
+
+	// Check that backup was created
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		t.Error("Backup file was not created")
+	}
+}
+
+func TestUpdateHandler_LoadNewRitual(t *testing.T) {
+	handler := NewUpdateHandler()
+
+	// Try to load a non-existent ritual
+	_, err := handler.loadNewRitual("nonexistent-ritual-xyz")
+	if err == nil {
+		t.Error("Expected error when loading non-existent ritual")
+	}
+}
+
+func TestUpdateHandler_SaveUpdatedState(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create .ritual directory
+	if err := os.MkdirAll(filepath.Join(tmpDir, ".ritual"), 0750); err != nil {
+		t.Fatal(err)
+	}
+
+	state := &storage.State{
+		RitualName:    "test",
+		RitualVersion: "1.0.0",
+	}
+
+	handler := NewUpdateHandler()
+
+	err := handler.saveUpdatedState(state, "1.1.0", tmpDir)
+	if err != nil {
+		t.Fatalf("saveUpdatedState() error = %v", err)
+	}
+
+	// Verify state was updated
+	if state.RitualVersion != "1.1.0" {
+		t.Errorf("Expected version 1.1.0, got %s", state.RitualVersion)
+	}
+
+	// Verify state was saved
+	loadedState, err := storage.LoadState(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to load saved state: %v", err)
+	}
+
+	if loadedState.RitualVersion != "1.1.0" {
+		t.Errorf("Expected saved version 1.1.0, got %s", loadedState.RitualVersion)
+	}
+}
+
+func TestUpdateHandler_ParseVersions(t *testing.T) {
+	tests := []struct {
+		name        string
+		from        string
+		to          string
+		expectError bool
+	}{
+		{"valid versions", "1.0.0", "2.0.0", false},
+		{"same version", "1.0.0", "1.0.0", false},
+		{"invalid from version", "invalid", "1.0.0", true},
+		{"invalid to version", "1.0.0", "invalid", true},
+	}
+
+	handler := NewUpdateHandler()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := handler.parseVersions(tt.from, tt.to)
+			hasError := err != nil
+			if hasError != tt.expectError {
+				t.Errorf("parseVersions() error = %v, expectError %v", err, tt.expectError)
+			}
+		})
+	}
+}
+
+func TestUpdateHandler_DisplayUpdateInfo(t *testing.T) {
+	handler := NewUpdateHandler()
+
+	// Create versions
+	v1, _ := semver.NewVersion("1.0.0")
+	v2, _ := semver.NewVersion("2.0.0")
+
+	// Just verify it doesn't panic
+	handler.displayUpdateInfo("1.0.0", "2.0.0", v1, v2)
+
+	// With same version
+	handler.displayUpdateInfo("1.0.0", "1.0.0", v1, v1)
 }

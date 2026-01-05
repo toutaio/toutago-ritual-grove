@@ -375,3 +375,76 @@ func TestMigrateCommand(t *testing.T) {
 		t.Error("Expected --to flag")
 	}
 }
+
+func TestListRituals(t *testing.T) {
+	// listRituals should work with the built-in rituals
+	err := listRituals()
+	if err != nil {
+		t.Errorf("listRituals() failed: %v", err)
+	}
+}
+
+func TestShowRitualInfo_ValidRitual(t *testing.T) {
+	// Test with a known built-in ritual
+	err := showRitualInfo("basic-site")
+	if err != nil {
+		t.Errorf("showRitualInfo('basic-site') failed: %v", err)
+	}
+}
+
+func TestShowRitualInfo_InvalidRitual(t *testing.T) {
+	// Test with non-existent ritual
+	err := showRitualInfo("nonexistent-ritual")
+	if err == nil {
+		t.Error("Expected error for non-existent ritual")
+	}
+}
+
+func TestSearchRituals(t *testing.T) {
+	// Test search functionality
+	err := searchRituals("basic")
+	if err != nil {
+		t.Errorf("searchRituals('basic') failed: %v", err)
+	}
+}
+
+func TestSearchRituals_NoResults(t *testing.T) {
+	// Test search with no results
+	err := searchRituals("zzznonexistentzz")
+	// Should not error, just show no results
+	if err != nil {
+		t.Errorf("searchRituals() should not error on no results: %v", err)
+	}
+}
+
+func TestInitRitual_InvalidRitual(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Test with non-existent ritual
+	err := initRitual("nonexistent-ritual", tmpDir, true)
+	if err == nil {
+		t.Error("Expected error for non-existent ritual")
+	}
+}
+
+func TestInitRitual_ValidRitual(t *testing.T) {
+	tmpDir := t.TempDir()
+	outputDir := filepath.Join(tmpDir, "my-site")
+
+	// Test with a valid built-in ritual (basic-site exists)
+	err := initRitual("basic-site", outputDir, true)
+	if err != nil {
+		t.Errorf("initRitual('basic-site') failed: %v", err)
+	}
+
+	// Check that project was created
+	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
+		t.Error("Project directory was not created")
+	}
+
+	// Check that main.go was generated
+	mainPath := filepath.Join(outputDir, "main.go")
+	if _, err := os.Stat(mainPath); os.IsNotExist(err) {
+		t.Error("main.go was not generated")
+	}
+}

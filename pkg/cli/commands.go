@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+
 	"github.com/toutaio/toutago-ritual-grove/internal/commands"
 	"github.com/toutaio/toutago-ritual-grove/internal/generator"
 	"github.com/toutaio/toutago-ritual-grove/internal/questionnaire"
@@ -522,7 +523,9 @@ Example:
 	cmd.Flags().StringVar(&toVersion, "to", "", "Target version to update to (required)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would happen without making changes")
 	cmd.Flags().BoolVar(&force, "force", false, "Force update even if migrations fail")
-	cmd.MarkFlagRequired("to")
+	if err := cmd.MarkFlagRequired("to"); err != nil {
+		panic(fmt.Sprintf("failed to mark flag as required: %v", err))
+	}
 
 	return cmd
 }

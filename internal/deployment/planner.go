@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
 

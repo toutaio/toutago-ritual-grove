@@ -133,7 +133,7 @@ func (r *Runner) executeHandler(handler *ritual.MigrationHandler) error {
 	// Execute Go code
 	if handler.GoCode != "" {
 		if err := r.executeGoCode(handler.GoCode); err != nil {
-			return fmt.Errorf("Go code execution failed: %w", err)
+			return fmt.Errorf("go code execution failed: %w", err)
 		}
 	}
 
@@ -195,7 +195,7 @@ func (r *Runner) executeGoCode(goCodePath string) error {
 	// 3. Executing the migration function
 	// For now, return not implemented
 
-	return fmt.Errorf("Go code execution not yet implemented")
+	return fmt.Errorf("go code execution not yet implemented")
 }
 
 // GetRecords returns all migration records

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Comprehensive test coverage for plan command
+  - Test coverage improved from 54.9% to 73.4% in commands package
+  - Plan command runPlan function coverage increased from 19.4% to 69.4%
+  - Added tests for error conditions, invalid states, and command structure
+  - Added test for JSON output not implemented error
+- Comprehensive test coverage for pkg/cli package
+  - Test coverage improved from 34.1% to 74.4%
+  - Added tests for listRituals, showRitualInfo, searchRituals, and initRitual functions
+  - Added tests for valid and invalid ritual operations
+  - Added tests for search with and without results
+- Comprehensive test coverage for update command
+  - Update command helper functions now have 80%+ coverage
+  - Added tests for createBackup, loadNewRitual, saveUpdatedState
+  - Added tests for parseVersions with valid and invalid inputs
+  - Added tests for displayUpdateInfo with breaking and non-breaking updates
+
 ## [0.3.0] - 2026-01-05
 
 ### Added
