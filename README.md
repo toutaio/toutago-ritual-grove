@@ -164,3 +164,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 - [toutago-fith-renderer](https://github.com/toutaio/toutago-fith-renderer) - Template engine (Jinja2-style)
 - [toutago-nasc-dependency-injector](https://github.com/toutaio/toutago-nasc-dependency-injector) - Dependency injection
 - [toutago-scela-bus](https://github.com/toutaio/toutago-scela-bus) - Message bus
+
+The CI should now pass with commit 052ed8a which includes all lint fixes.
