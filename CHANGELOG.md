@@ -7,21 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Deployment planner**: Analyze and preview deployment changes
-  - Automatic detection of file additions, modifications, and deletions
-  - Conflict identification for user-modified files
-  - Deployment step estimation with time estimates
-  - Human-readable deployment plan reports
-  - Breaking change detection via semantic versioning
-  - Migration tracking and execution planning
-- **Plan command**: `touta ritual plan` - Preview ritual updates before applying
-  - Shows differences between current and latest ritual versions
-  - Displays files that will be added, modified, or deleted
-  - Lists migrations that will be executed
-  - Warns about potential conflicts with user-modified files
-  - Supports `--to-version` flag for targeting specific versions (planned)
-  - Supports `--json` flag for machine-readable output (planned)
+### Changed
+- Improved test coverage for pkg/cli package (16.9% → 31.4%)
+- Enhanced command structure validation tests
 
 ## [0.2.0] - 2026-01-05
 

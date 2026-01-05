@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 func TestInitRitual(t *testing.T) {
@@ -79,15 +81,121 @@ func main() {
 	t.Log("Init ritual test setup complete")
 }
 
-func TestListRituals(t *testing.T) {
-	// This test requires a registry with rituals
-	// For unit testing, we would mock the registry
-	t.Skip("Requires mocked registry - integration test")
+func TestRitualCommand(t *testing.T) {
+	cmd := RitualCommand()
+	
+	if cmd == nil {
+		t.Fatal("RitualCommand() returned nil")
+	}
+	
+	if cmd.Use != "ritual" {
+		t.Errorf("Expected Use='ritual', got %s", cmd.Use)
+	}
+	
+	// Check subcommands exist
+	subcommands := []string{"init", "list", "info", "validate", "create", "plan"}
+	for _, subcmd := range subcommands {
+		found := false
+		for _, c := range cmd.Commands() {
+			if c.Use == subcmd || c.Use == subcmd+" <ritual-name>" || c.Use == subcmd+" <name>" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Subcommand %s not found", subcmd)
+		}
+	}
 }
 
-func TestShowRitualInfo(t *testing.T) {
-	// This test requires a registry with a ritual
-	t.Skip("Requires mocked registry - integration test")
+func TestInitCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var initCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "init" {
+			initCmd = cmd
+			break
+		}
+	}
+	
+	if initCmd == nil {
+		t.Fatal("init command not found")
+	}
+	
+	// Check flags
+	outputFlag := initCmd.Flags().Lookup("output")
+	if outputFlag == nil {
+		t.Error("Expected --output flag")
+	}
+	
+	yesFlag := initCmd.Flags().Lookup("yes")
+	if yesFlag == nil {
+		t.Error("Expected --yes flag")
+	}
+}
+
+func TestListCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var listCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "list" {
+			listCmd = cmd
+			break
+		}
+	}
+	
+	if listCmd == nil {
+		t.Fatal("list command not found")
+	}
+	
+	if listCmd.Use != "list" {
+		t.Errorf("Expected Use='list', got %s", listCmd.Use)
+	}
+}
+
+func TestInfoCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var infoCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "info" {
+			infoCmd = cmd
+			break
+		}
+	}
+	
+	if infoCmd == nil {
+		t.Fatal("info command not found")
+	}
+}
+
+func TestValidateCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var validateCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "validate" {
+			validateCmd = cmd
+			break
+		}
+	}
+	
+	if validateCmd == nil {
+		t.Fatal("validate command not found")
+	}
+}
+
+func TestPlanCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var planCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "plan" {
+			planCmd = cmd
+			break
+		}
+	}
+	
+	if planCmd == nil {
+		t.Fatal("plan command not found")
+	}
 }
 
 func TestValidateRitual(t *testing.T) {
