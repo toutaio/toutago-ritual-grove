@@ -14,10 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Rollback on migration failure
   - Dry-run mode for preview
   - Breaking change detection
+- Etymology section in README explaining name origins and philosophy
 
 ### Changed
 - Improved test coverage for pkg/cli package (16.9% → 31.4%)
 - Enhanced command structure validation tests
+- **Refactored update handler**: Reduced cyclomatic complexity from 16 to <10
+  - Split Execute method into smaller, focused helper methods
+  - Improved code maintainability and readability
+  - All tests pass without changes to behavior
 
 ## [0.2.0] - 2026-01-05
 

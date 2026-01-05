@@ -158,6 +158,16 @@ toutago-ritual-grove/
 
 This project is under active development.
 
+## Etymology
+
+**Ritual Grove** combines two meaningful concepts:
+
+- **Ritual**: A ceremonial act or series of acts performed according to a prescribed order. In software development, rituals are established patterns and procedures for creating applications—blueprints that encode best practices and architectural decisions.
+
+- **Grove**: A sacred space in Celtic tradition where druids gathered for ceremonies and knowledge sharing. In our context, it represents a curated collection of application templates and recipes, a sanctuary of proven patterns where developers can find and share project archetypes.
+
+Together, **Ritual Grove** symbolizes a sacred space where application creation rituals (templates) are preserved, shared, and performed—a garden of recipes for growing robust software projects.
+
 ## Documentation
 
 See [docs/](docs/) for detailed documentation on ritual format, examples, and usage.

@@ -27,105 +27,139 @@ func NewUpdateHandler() *UpdateHandler {
 
 // Execute updates a project to a new ritual version
 func (h *UpdateHandler) Execute(projectPath string, opts UpdateOptions) error {
-	// Validate project path
 	if projectPath == "" {
 		projectPath = "."
 	}
 
-	// Load current state
 	state, err := storage.LoadState(projectPath)
 	if err != nil {
 		return fmt.Errorf("failed to load project state: %w", err)
 	}
 
-	// Determine target version
-	targetVersion := opts.ToVersion
-	if targetVersion == "" {
-		// TODO: Get latest version from registry
-		return fmt.Errorf("target version not specified and auto-detection not yet implemented")
+	targetVersion, err := h.determineTargetVersion(opts.ToVersion)
+	if err != nil {
+		return err
 	}
 
-	// Check if already at target version
 	if state.RitualVersion == targetVersion {
 		fmt.Printf("Project is already at version %s\n", targetVersion)
 		return nil
 	}
 
-	// Parse versions for comparison
-	currentVer, err := semver.NewVersion(state.RitualVersion)
+	currentVer, targetVer, err := h.parseVersions(state.RitualVersion, targetVersion)
 	if err != nil {
-		return fmt.Errorf("invalid current version: %w", err)
-	}
-	targetVer, err := semver.NewVersion(targetVersion)
-	if err != nil {
-		return fmt.Errorf("invalid target version: %w", err)
+		return err
 	}
 
-	// Create update detector
+	h.displayUpdateInfo(state.RitualVersion, targetVersion, currentVer, targetVer)
+
+	if opts.DryRun {
+		return h.handleDryRun()
+	}
+
+	backupPath, err := h.createBackup(projectPath)
+	if err != nil {
+		return err
+	}
+
+	newManifest, err := h.loadNewRitual(state.RitualName)
+	if err != nil {
+		return err
+	}
+
+	if err := h.runMigrations(projectPath, state, newManifest, backupPath, opts.Force); err != nil {
+		return err
+	}
+
+	return h.saveUpdatedState(state, targetVersion, projectPath)
+}
+
+func (h *UpdateHandler) determineTargetVersion(toVersion string) (string, error) {
+	if toVersion == "" {
+		return "", fmt.Errorf("target version not specified and auto-detection not yet implemented")
+	}
+	return toVersion, nil
+}
+
+func (h *UpdateHandler) parseVersions(current, target string) (*semver.Version, *semver.Version, error) {
+	currentVer, err := semver.NewVersion(current)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid current version: %w", err)
+	}
+	targetVer, err := semver.NewVersion(target)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid target version: %w", err)
+	}
+	return currentVer, targetVer, nil
+}
+
+func (h *UpdateHandler) displayUpdateInfo(current, target string, currentVer, targetVer *semver.Version) {
 	detector := deployment.NewUpdateDetector()
 	updateInfo := detector.GetUpdateInfo(currentVer, targetVer)
 
-	// Show update information
-	fmt.Printf("Updating from %s to %s\n", state.RitualVersion, targetVersion)
+	fmt.Printf("Updating from %s to %s\n", current, target)
 	if updateInfo.IsBreaking {
 		fmt.Println("⚠️  This is a BREAKING update")
 	}
+}
 
-	// In dry-run mode, just show what would happen
-	if opts.DryRun {
-		fmt.Println("\n=== DRY RUN MODE ===")
-		fmt.Println("No changes will be applied")
-		return nil
-	}
+func (h *UpdateHandler) handleDryRun() error {
+	fmt.Println("\n=== DRY RUN MODE ===")
+	fmt.Println("No changes will be applied")
+	return nil
+}
 
-	// Create rollback manager for backup
+func (h *UpdateHandler) createBackup(projectPath string) (string, error) {
 	rollbackMgr := deployment.NewRollbackManager()
-
-	// Create backup before updating
 	backupPath, err := rollbackMgr.CreateBackup(projectPath)
 	if err != nil {
-		return fmt.Errorf("failed to create backup: %w", err)
+		return "", fmt.Errorf("failed to create backup: %w", err)
 	}
 	fmt.Printf("✓ Backup created at: %s\n", backupPath)
+	return backupPath, nil
+}
 
-	// Load new ritual manifest
-	// TODO: Get ritual path from registry
-	ritualPath := state.RitualName
-	loader := ritual.NewLoader(ritualPath)
-	newManifest, err := loader.Load(ritualPath)
+func (h *UpdateHandler) loadNewRitual(ritualName string) (*ritual.Manifest, error) {
+	loader := ritual.NewLoader(ritualName)
+	newManifest, err := loader.Load(ritualName)
 	if err != nil {
-		return fmt.Errorf("failed to load new ritual: %w", err)
+		return nil, fmt.Errorf("failed to load new ritual: %w", err)
 	}
+	return newManifest, nil
+}
 
-	// Run migrations
+func (h *UpdateHandler) runMigrations(projectPath string, state *storage.State, manifest *ritual.Manifest, backupPath string, force bool) error {
 	migrationRunner := migration.NewRunner(projectPath)
-	migrations := h.getMigrationsToRun(state, newManifest)
+	migrations := h.getMigrationsToRun(state, manifest)
 
 	fmt.Printf("\nRunning %d migration(s)...\n", len(migrations))
 	for _, mig := range migrations {
 		fmt.Printf("  - %s\n", mig.ToVersion)
 		if err := migrationRunner.RunUp(mig); err != nil {
-			// Rollback on error if not forced
-			if !opts.Force {
-				fmt.Println("\n⚠️  Migration failed, rolling back...")
-				if rbErr := rollbackMgr.RestoreFromBackup(backupPath, projectPath); rbErr != nil {
-					return fmt.Errorf("migration failed and rollback failed: %w (rollback error: %v)", err, rbErr)
-				}
-				return fmt.Errorf("migration failed, changes rolled back: %w", err)
-			}
-			return fmt.Errorf("migration failed: %w", err)
+			return h.handleMigrationError(err, backupPath, projectPath, force)
 		}
-		// Track migration in state
 		state.AddMigration(mig.ToVersion)
 	}
+	return nil
+}
 
-	// Update state version
+func (h *UpdateHandler) handleMigrationError(err error, backupPath, projectPath string, force bool) error {
+	if !force {
+		fmt.Println("\n⚠️  Migration failed, rolling back...")
+		rollbackMgr := deployment.NewRollbackManager()
+		if rbErr := rollbackMgr.RestoreFromBackup(backupPath, projectPath); rbErr != nil {
+			return fmt.Errorf("migration failed and rollback failed: %w (rollback error: %v)", err, rbErr)
+		}
+		return fmt.Errorf("migration failed, changes rolled back: %w", err)
+	}
+	return fmt.Errorf("migration failed: %w", err)
+}
+
+func (h *UpdateHandler) saveUpdatedState(state *storage.State, targetVersion, projectPath string) error {
 	state.RitualVersion = targetVersion
-
 	if err := state.Save(projectPath); err != nil {
 		return fmt.Errorf("failed to save state: %w", err)
 	}
-
 	fmt.Println("\n✓ Update completed successfully")
 	return nil
 }
