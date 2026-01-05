@@ -1,7 +1,8 @@
-name: hello-world
-version: 1.0.0
-description: A simple Hello World Toutā application
-author: Toutā Team
+ritual:
+  name: hello-world
+  version: 1.0.0
+  description: A simple Hello World Toutā application
+  author: Toutā Team
 
 compatibility:
   min_touta_version: "0.1.0"
@@ -18,26 +19,27 @@ questions:
     type: number
     prompt: "Which port should the server run on?"
     default: 8080
-    validation:
+    validate:
       min: 1024
       max: 65535
 
 files:
-  - source: templates/main.go.tmpl
-    destination: cmd/{{.app_name}}/main.go
-  - source: templates/handler.go.tmpl
-    destination: internal/handlers/hello.go
-  - source: templates/go.mod.tmpl
-    destination: go.mod
-  - source: templates/README.md.tmpl
-    destination: README.md
+  templates:
+    - src: templates/main.go.tmpl
+      dest: main.go
+    - src: templates/handler.go.tmpl
+      dest: internal/handlers/hello.go
+    - src: templates/go.mod.tmpl
+      dest: go.mod
+    - src: templates/README.md.tmpl
+      dest: README.md
 
 dependencies:
-  go_packages:
+  packages:
     - github.com/toutaio/toutago
     - github.com/toutaio/toutago-cosan-router
 
 hooks:
   post_install:
-    - go mod tidy
-    - go fmt ./...
+    - "go mod tidy"
+    - "go fmt ./..."

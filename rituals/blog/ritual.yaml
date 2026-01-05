@@ -1,12 +1,13 @@
-name: blog
-version: 1.0.0
-description: A full-featured blog with posts, comments, and categories
-author: Toutā Team
-license: MIT
-tags:
-  - blog
-  - content
-  - cms
+ritual:
+  name: blog
+  version: 1.0.0
+  description: A full-featured blog with posts, comments, and categories
+  author: Toutā Team
+  license: MIT
+  tags:
+    - blog
+    - content
+    - cms
 
 compatibility:
   min_touta_version: "0.1.0"
@@ -20,98 +21,98 @@ dependencies:
     - github.com/toutaio/toutago-nasc-dependency-injector
 
 questions:
-  - id: app_name
+  - name: app_name
     type: text
     prompt: "What is your blog name?"
     default: "My Blog"
     required: true
-    validation:
-      min_length: 1
-      max_length: 100
+    validate:
+      min_len: 1
+      max_len: 100
 
-  - id: module_path
+  - name: module_path
     type: text
     prompt: "What is your Go module path (e.g., github.com/user/myblog)?"
     default: "example.com/myblog"
     required: true
-    validation:
+    validate:
       pattern: "^[a-z0-9._/-]+$"
 
-  - id: port
+  - name: port
     type: number
     prompt: "Which port should the blog run on?"
     default: 8080
     required: true
-    validation:
+    validate:
       min: 1024
       max: 65535
 
-  - id: database_type
+  - name: database_type
     type: choice
     prompt: "Select database type:"
     choices:
-      - mysql
       - postgres
+      - mysql
     default: postgres
     required: true
 
-  - id: db_host
+  - name: db_host
     type: text
     prompt: "Database host:"
     default: "localhost"
     required: true
 
-  - id: db_port
+  - name: db_port
     type: number
     prompt: "Database port:"
     default: 5432
     required: true
-    show_if:
+    condition:
       field: database_type
-      value: postgres
+      equals: postgres
 
-  - id: db_port
+  - name: db_port_mysql
     type: number
     prompt: "Database port:"
     default: 3306
     required: true
-    show_if:
+    condition:
       field: database_type
-      value: mysql
+      equals: mysql
 
-  - id: db_name
+  - name: db_name
     type: text
     prompt: "Database name:"
     default: "blog_db"
     required: true
-    validation:
+    validate:
       pattern: "^[a-zA-Z0-9_]+$"
 
-  - id: db_user
+  - name: db_user
     type: text
     prompt: "Database user:"
     default: "blog_user"
     required: true
 
-  - id: db_password
+  - name: db_password
     type: password
     prompt: "Database password:"
     required: true
 
-  - id: enable_comments
+  - name: enable_comments
     type: boolean
     prompt: "Enable comments on posts?"
     default: true
 
-  - id: posts_per_page
+  - name: posts_per_page
     type: number
     prompt: "How many posts per page?"
     default: 10
-    validation:
+    validate:
       min: 1
       max: 100
 
-  - id: enable_markdown
+  - name: enable_markdown
     type: boolean
     prompt: "Enable Markdown support for posts?"
     default: true
@@ -132,9 +133,7 @@ files:
 
     - src: templates/models/comment.go.tmpl
       dest: internal/models/comment.go
-      condition:
-        field: enable_comments
-        value: true
+      condition: "enable_comments == true"
 
     - src: templates/handlers/post.go.tmpl
       dest: internal/handlers/post.go
@@ -144,9 +143,7 @@ files:
 
     - src: templates/handlers/comment.go.tmpl
       dest: internal/handlers/comment.go
-      condition:
-        field: enable_comments
-        value: true
+      condition: "enable_comments == true"
 
     - src: templates/views/layout.html.tmpl
       dest: views/layout.html
@@ -171,14 +168,20 @@ files:
       dest: public/css/style.css
 
 migrations:
-  - version: 1.0.0
+  - from_version: "0.0.0"
+    to_version: "1.0.0"
     description: "Initial schema with posts, categories, and comments"
     up:
-      - file: migrations/001_initial_schema.sql
+      sql:
+        - "CREATE TABLE IF NOT EXISTS posts (...)"
+      script: "migrations/001_initial_schema.sql"
     down:
-      - file: migrations/001_initial_schema_down.sql
+      sql:
+        - "DROP TABLE IF EXISTS comments"
+        - "DROP TABLE IF EXISTS posts"  
+        - "DROP TABLE IF NOT EXISTS categories"
+      script: "migrations/001_initial_schema_down.sql"
 
 hooks:
   post_install:
-    - command: go mod tidy
-      description: "Install dependencies"
+    - "go mod tidy"
