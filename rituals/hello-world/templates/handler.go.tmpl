@@ -1,0 +1,21 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+)
+
+type HelloResponse struct {
+	Message string `json:"message"`
+	App     string `json:"app"`
+}
+
+func HelloHandler(w http.ResponseWriter, r *http.Request) {
+	response := HelloResponse{
+		Message: "Welcome to your Toutā application!",
+		App:     "{{ .app_name }}",
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
