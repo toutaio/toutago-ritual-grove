@@ -53,6 +53,27 @@ touta ritual deploy
 touta ritual update
 ```
 
+## Configuration
+
+### Ritual Search Paths
+
+Ritual Grove searches for rituals in the following locations (in order):
+
+1. **Environment variable:** `TOUTA_RITUALS_PATH` - Custom path for development
+2. **Built-in:** `<executable-dir>/rituals/` - Bundled with touta binary
+3. **Current directory:** `./rituals/` - Project-local rituals
+4. **Current directory:** `./.ritual/` - Alternative local path
+5. **User home:** `~/.toutago/rituals/` - User-installed rituals
+
+### Development Setup
+
+For development, set the `TOUTA_RITUALS_PATH` environment variable to point to your ritual-grove repository:
+
+```bash
+export TOUTA_RITUALS_PATH=/path/to/toutago-ritual-grove/rituals
+touta ritual list  # Now finds rituals from development directory
+```
+
 ## Ritual Format
 
 A ritual is a YAML-based definition with templates and logic:

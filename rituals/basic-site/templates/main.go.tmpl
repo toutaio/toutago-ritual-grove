@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -11,29 +10,27 @@ import (
 )
 
 func main() {
-	// Initialize router
-	router := cosan.New()
-
 	// Initialize template renderer
-	renderer, err := fith.New(&fith.Config{
+	renderer, err := fith.New(fith.Config{
 		TemplateDir: "views",
 	})
 	if err != nil {
 		log.Fatalf("Failed to initialize renderer: %v", err)
 	}
 
+	// Initialize router with renderer
+	router := cosan.New(
+		cosan.WithRenderer(renderer),
+	)
+
 	// Register routes
-	homeHandler := handlers.NewHomeHandler(renderer)
+	homeHandler := handlers.NewHomeHandler()
 	router.GET("/", homeHandler.Index)
 
 	// Static files
 	fileServer := http.FileServer(http.Dir("./static"))
-	router.Handler("GET", "/static/*filepath", http.StripPrefix("/static/", fileServer))
+	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static/", fileServer))
 
 	// Start server
-	addr := fmt.Sprintf(":%d", {{ .port }})
-	log.Printf("{{ .site_name }} starting on %s", addr)
-	if err := http.ListenAndServe(addr, router); err != nil {
-		log.Fatalf("Server failed: %v", err)
-	}
-}
+	log.Printf("{{ .site_name }} starting on :%d", {{ .port }})
+	log.Fatal(router.Listen(":{{ .port }}"))

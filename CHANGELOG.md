@@ -5,7 +5,7 @@ All notable changes to the Toutago Ritual Grove project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-01-05
 
 ### Added
 - Core ritual engine with YAML manifest parsing
@@ -19,8 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hook system (pre/post install, update)
 - Dependency resolution and circular dependency detection
 - Comprehensive test suite with >80% coverage across all packages
-- Built-in rituals: minimal, hello-world, basic-site
+- Built-in rituals: minimal, basic-site
 - Documentation: README, CONTRIBUTING, ritual format guide
+- Environment variable `TOUTA_RITUALS_PATH` for custom ritual paths
 
 ### Architecture
 - Plugin-based design: ritual-grove integrates into touta binary
@@ -35,16 +36,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `touta ritual validate` - Validate ritual.yaml
 - `touta ritual create <name>` - Create new ritual template
 
+### Templates
+- Updated basic-site ritual to use current Cosan Context API
+- Updated basic-site ritual to use current Fíth renderer configuration
+- Handlers now use `cosan.Context` instead of `http.ResponseWriter/Request`
+- Renderer integrated via `cosan.WithRenderer()` functional option
+
 ### Testing
 - Unit tests for all core packages
-- Integration tests for end-to-end workflows
-- Test coverage tracking with coverage reports
+- Integration tests for end-to-end workflows  
+- Test coverage >80% across all packages
 - GitHub Actions CI/CD pipeline
 
-## [0.1.0] - 2026-01-05
-
-### Added
-- Initial release of ritual-grove
-- Basic ritual system functionality
-- Integration with toutago framework
+### Fixed
+- Ritual templates now match current Cosan v0.1.0+ API
+- Ritual templates now match current Fíth v0.1.0+ API
 

@@ -1,36 +1,23 @@
 package handlers
 
 import (
-	"net/http"
-
-	fith "github.com/toutaio/toutago-fith-renderer"
+	"github.com/toutaio/toutago-cosan-router/pkg/cosan"
 )
 
 // HomeHandler handles homepage requests
-type HomeHandler struct {
-	renderer *fith.Engine
-}
+type HomeHandler struct{}
 
 // NewHomeHandler creates a new home handler
-func NewHomeHandler(renderer *fith.Engine) *HomeHandler {
-	return &HomeHandler{
-		renderer: renderer,
-	}
+func NewHomeHandler() *HomeHandler {
+	return &HomeHandler{}
 }
 
 // Index renders the homepage
-func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
+func (h *HomeHandler) Index(ctx cosan.Context) error {
 	data := map[string]interface{}{
 		"site_name": "{{ .site_name }}",
 		"message":   "Welcome to your new Toutā site!",
 	}
 
-	html, err := h.renderer.Render("home.html", data)
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	return ctx.Render(200, "home.html", data)
 }

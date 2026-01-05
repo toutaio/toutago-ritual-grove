@@ -360,6 +360,13 @@ func (r *Registry) FilterByCompatibility(toutaVersion string) []*RitualMetadata 
 func getDefaultSearchPaths() []string {
 	var paths []string
 
+	// Environment variable override
+	if envPath := os.Getenv("TOUTA_RITUALS_PATH"); envPath != "" {
+		if _, err := os.Stat(envPath); err == nil {
+			paths = append(paths, envPath)
+		}
+	}
+
 	// Built-in rituals (relative to executable or in rituals/ directory)
 	if exePath, err := os.Executable(); err == nil {
 		exeDir := filepath.Dir(exePath)
