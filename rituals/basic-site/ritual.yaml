@@ -1,0 +1,53 @@
+ritual:
+  name: basic-site
+  version: 1.0.0
+  description: Basic Toutā website with homepage
+  author: Toutā Team
+  template_engine: fith
+
+compatibility:
+  touta_min: 0.2.0
+  touta_max: 1.0.0
+  go_min: "1.21"
+
+questions:
+  - name: site_name
+    prompt: "What is your site name?"
+    type: text
+    required: true
+    default: "My Toutā Site"
+    
+  - name: port
+    prompt: "Which port should the server listen on?"
+    type: number
+    default: 8080
+    validation:
+      min: 1024
+      max: 65535
+      
+  - name: enable_database
+    prompt: "Enable database support?"
+    type: boolean
+    default: false
+
+files:
+  templates:
+    - src: templates/main.go.tmpl
+      dest: main.go
+      
+    - src: templates/handlers/
+      dest: handlers/
+      
+    - src: templates/views/base.html.tmpl
+      dest: views/home.html
+      
+  directories:
+    - handlers
+    - views
+    - static
+    - config
+
+packages:
+  - github.com/toutaio/toutago
+  - github.com/toutaio/toutago-cosan-router
+  - github.com/toutaio/toutago-fith-renderer

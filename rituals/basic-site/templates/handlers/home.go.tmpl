@@ -1,0 +1,32 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/toutaio/toutago-fith-renderer"
+)
+
+// HomeHandler handles homepage requests
+type HomeHandler struct {
+	renderer fith.Renderer
+}
+
+// NewHomeHandler creates a new home handler
+func NewHomeHandler(renderer fith.Renderer) *HomeHandler {
+	return &HomeHandler{
+		renderer: renderer,
+	}
+}
+
+// Index renders the homepage
+func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
+	data := map[string]interface{}{
+		"site_name": "{{ .site_name }}",
+		"message":   "Welcome to your new Toutā site!",
+	}
+
+	if err := h.renderer.Render(w, "home.html", data); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}

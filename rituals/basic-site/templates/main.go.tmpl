@@ -1,0 +1,40 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/toutaio/toutago-cosan-router"
+	"github.com/toutaio/toutago-fith-renderer"
+	"{{ .module_path }}/handlers"
+)
+
+func main() {
+	// Initialize router
+	router := cosan.NewRouter()
+
+	// Initialize template renderer
+	renderer, err := fith.NewRenderer(fith.Config{
+		TemplateDir: "views",
+		AutoReload:  true,
+	})
+	if err != nil {
+		log.Fatalf("Failed to initialize renderer: %v", err)
+	}
+
+	// Register routes
+	homeHandler := handlers.NewHomeHandler(renderer)
+	router.GET("/", homeHandler.Index)
+
+	// Static files
+	fileServer := http.FileServer(http.Dir("./static"))
+	router.Handler("GET", "/static/*filepath", http.StripPrefix("/static/", fileServer))
+
+	// Start server
+	addr := fmt.Sprintf(":%d", {{ .port }})
+	log.Printf("{{ .site_name }} starting on %s", addr)
+	if err := http.ListenAndServe(addr, router); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
+}

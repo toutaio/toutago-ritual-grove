@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
@@ -179,7 +180,12 @@ func (g *FileGenerator) generateDirectory(srcDir, destDir string, isTemplate boo
 			return err
 		}
 
+		// Strip .tmpl extension for template files
 		destPath := filepath.Join(destDir, relPath)
+		if isTemplate && strings.HasSuffix(destPath, ".tmpl") {
+			destPath = strings.TrimSuffix(destPath, ".tmpl")
+		}
+		
 		return g.GenerateFile(path, destPath, isTemplate)
 	})
 }

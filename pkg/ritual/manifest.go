@@ -108,9 +108,10 @@ type QuestionHelper struct {
 
 // FilesSection defines template and static files
 type FilesSection struct {
-	Templates []FileMapping `yaml:"templates,omitempty"`
-	Static    []FileMapping `yaml:"static,omitempty"`
-	Protected []string      `yaml:"protected,omitempty"` // files to never overwrite
+	Templates   []FileMapping `yaml:"templates,omitempty"`
+	Static      []FileMapping `yaml:"static,omitempty"`
+	Directories []string      `yaml:"directories,omitempty"` // directories to create
+	Protected   []string      `yaml:"protected,omitempty"`   // files to never overwrite
 }
 
 // FileMapping maps source to destination
