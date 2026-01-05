@@ -5,19 +5,18 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/toutaio/toutago-cosan-router"
+	"github.com/toutaio/toutago-cosan-router/pkg/cosan"
 	"github.com/toutaio/toutago-fith-renderer"
 	"{{ .module_path }}/handlers"
 )
 
 func main() {
 	// Initialize router
-	router := cosan.NewRouter()
+	router := cosan.New()
 
 	// Initialize template renderer
-	renderer, err := fith.NewRenderer(fith.Config{
+	renderer, err := fith.New(&fith.Config{
 		TemplateDir: "views",
-		AutoReload:  true,
 	})
 	if err != nil {
 		log.Fatalf("Failed to initialize renderer: %v", err)

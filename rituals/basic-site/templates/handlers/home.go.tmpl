@@ -3,16 +3,16 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/toutaio/toutago-fith-renderer"
+	fith "github.com/toutaio/toutago-fith-renderer"
 )
 
 // HomeHandler handles homepage requests
 type HomeHandler struct {
-	renderer fith.Renderer
+	renderer *fith.Engine
 }
 
 // NewHomeHandler creates a new home handler
-func NewHomeHandler(renderer fith.Renderer) *HomeHandler {
+func NewHomeHandler(renderer *fith.Engine) *HomeHandler {
 	return &HomeHandler{
 		renderer: renderer,
 	}
@@ -25,8 +25,12 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 		"message":   "Welcome to your new Toutā site!",
 	}
 
-	if err := h.renderer.Render(w, "home.html", data); err != nil {
+	html, err := h.renderer.Render("home.html", data)
+	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(html))
 }
