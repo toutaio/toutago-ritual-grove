@@ -195,7 +195,7 @@ files:
 
 	// Execute with dry-run to test hooks
 	targetDir := filepath.Join(tmpDir, "target")
-	
+
 	ctx := &executor.ExecutionContext{
 		RitualPath: ritualDir,
 		OutputPath: targetDir,

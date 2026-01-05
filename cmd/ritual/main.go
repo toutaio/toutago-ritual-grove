@@ -34,14 +34,14 @@ func main() {
 		if flags.Path != "" {
 			paths = []string{flags.Path}
 		}
-		
+
 		var err error
 		if flags.JSON {
 			err = runListCommandJSON(paths)
 		} else {
 			err = runListCommand(paths)
 		}
-		
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
@@ -94,7 +94,7 @@ func printUsage() {
 // parseFlags parses command line flags
 func parseFlags(args []string) Flags {
 	flags := Flags{}
-	
+
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--json":
@@ -106,7 +106,7 @@ func parseFlags(args []string) Flags {
 			}
 		}
 	}
-	
+
 	return flags
 }
 
@@ -119,27 +119,27 @@ func runVersionCommand() {
 // runListCommand lists available rituals
 func runListCommand(customPaths []string) error {
 	reg := registry.NewRegistry()
-	
+
 	// Add custom paths if provided
 	for _, path := range customPaths {
 		reg.AddSearchPath(path)
 	}
-	
+
 	// Scan for rituals
 	if err := reg.Scan(); err != nil {
 		return fmt.Errorf("failed to scan rituals: %w", err)
 	}
-	
+
 	// Get all rituals
 	rituals := reg.List()
-	
+
 	if len(rituals) == 0 {
 		fmt.Println("No rituals found")
 		return nil
 	}
-	
+
 	fmt.Printf("Available Rituals (%d found):\n\n", len(rituals))
-	
+
 	for _, meta := range rituals {
 		fmt.Printf("  %s (v%s)\n", meta.Name, meta.Version)
 		if meta.Description != "" {
@@ -154,24 +154,24 @@ func runListCommand(customPaths []string) error {
 		fmt.Printf("    Source: %s\n", meta.Source)
 		fmt.Println()
 	}
-	
+
 	return nil
 }
 
 // runListCommandJSON lists rituals in JSON format
 func runListCommandJSON(customPaths []string) error {
 	reg := registry.NewRegistry()
-	
+
 	for _, path := range customPaths {
 		reg.AddSearchPath(path)
 	}
-	
+
 	if err := reg.Scan(); err != nil {
 		return fmt.Errorf("failed to scan rituals: %w", err)
 	}
-	
+
 	rituals := reg.List()
-	
+
 	// Convert to JSON-friendly format
 	type RitualJSON struct {
 		Name        string   `json:"name"`
@@ -181,7 +181,7 @@ func runListCommandJSON(customPaths []string) error {
 		Tags        []string `json:"tags,omitempty"`
 		Source      string   `json:"source"`
 	}
-	
+
 	jsonRituals := make([]RitualJSON, len(rituals))
 	for i, meta := range rituals {
 		jsonRituals[i] = RitualJSON{
@@ -193,7 +193,7 @@ func runListCommandJSON(customPaths []string) error {
 			Source:      string(meta.Source),
 		}
 	}
-	
+
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(jsonRituals)
@@ -207,21 +207,21 @@ func runCreateCommand(ritualPath, targetPath string, answers map[string]interfac
 	if err != nil {
 		return fmt.Errorf("failed to load ritual: %w", err)
 	}
-	
+
 	// Create scaffolder
 	scaffolder := generator.NewProjectScaffolder()
-	
+
 	// Convert answers to Variables
 	vars := generator.NewVariables()
 	for key, value := range answers {
 		vars.Set(key, value)
 	}
-	
+
 	// Generate project
 	if err := scaffolder.GenerateFromRitual(targetPath, ritualPath, manifest, vars); err != nil {
 		return fmt.Errorf("failed to generate project: %w", err)
 	}
-	
+
 	fmt.Printf("Project created successfully at: %s\n", targetPath)
 	return nil
 }

@@ -25,12 +25,12 @@ func (d *CircularDependencyDetector) DetectCycle(startID string) ([]string, erro
 	visited := make(map[string]bool)
 	recStack := make(map[string]bool)
 	var path []string
-	
+
 	cycle := d.detectCycleUtil(startID, visited, recStack, &path)
 	if cycle != nil {
 		return cycle, fmt.Errorf("circular dependency detected: %s", strings.Join(cycle, " -> "))
 	}
-	
+
 	return nil, nil
 }
 
@@ -42,11 +42,11 @@ func (d *CircularDependencyDetector) detectCycleUtil(
 ) []string {
 	// Add to path
 	*path = append(*path, manifestID)
-	
+
 	// Mark as visited and in recursion stack
 	visited[manifestID] = true
 	recStack[manifestID] = true
-	
+
 	// Get manifest
 	m, exists := d.manifests[manifestID]
 	if !exists {
@@ -55,7 +55,7 @@ func (d *CircularDependencyDetector) detectCycleUtil(
 		*path = (*path)[:len(*path)-1]
 		return nil
 	}
-	
+
 	// Check dependencies
 	for _, depID := range m.Dependencies.Rituals {
 		// If dependency is in recursion stack, we found a cycle
@@ -68,7 +68,7 @@ func (d *CircularDependencyDetector) detectCycleUtil(
 					break
 				}
 			}
-			
+
 			// Build cycle path
 			var cycle []string
 			if cycleStart >= 0 {
@@ -77,7 +77,7 @@ func (d *CircularDependencyDetector) detectCycleUtil(
 			cycle = append(cycle, depID)
 			return cycle
 		}
-		
+
 		// If not visited, recurse
 		if !visited[depID] {
 			if cycle := d.detectCycleUtil(depID, visited, recStack, path); cycle != nil {
@@ -85,41 +85,41 @@ func (d *CircularDependencyDetector) detectCycleUtil(
 			}
 		}
 	}
-	
+
 	// Remove from recursion stack
 	recStack[manifestID] = false
-	
+
 	// Remove from path
 	*path = (*path)[:len(*path)-1]
-	
+
 	return nil
 }
 
 // ValidateCircularDependencies validates that a manifest has no circular dependencies
 func (v *Validator) ValidateCircularDependencies(m *ritual.Manifest, context map[string]*ritual.Manifest) []error {
 	var errs []error
-	
+
 	// If no dependencies, no cycles possible
 	if len(m.Dependencies.Rituals) == 0 {
 		return nil
 	}
-	
+
 	// Build manifest map including the manifest being validated
 	manifests := make(map[string]*ritual.Manifest)
 	for k, val := range context {
 		manifests[k] = val
 	}
 	manifests[m.Ritual.Name] = m
-	
+
 	// Create detector
 	detector := NewCircularDependencyDetector(manifests)
-	
+
 	// Check for cycles starting from this manifest
 	cycle, err := detector.DetectCycle(m.Ritual.Name)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("circular dependency detected in ritual '%s': %s",
 			m.Ritual.Name, strings.Join(cycle, " -> ")))
 	}
-	
+
 	return errs
 }

@@ -10,14 +10,14 @@ import (
 
 func TestGenerateFile(t *testing.T) {
 	gen := NewFileGenerator("go-template")
-	
+
 	vars := NewVariables()
 	vars.Set("app_name", "test-app")
 	vars.Set("port", 8080)
 	gen.SetVariables(vars)
 
 	tmpDir := t.TempDir()
-	
+
 	// Create a template file
 	templatePath := filepath.Join(tmpDir, "src.tmpl")
 	templateContent := "App: {{ .app_name }}\nPort: {{ .port }}"
@@ -47,7 +47,7 @@ func TestGenerateFileStatic(t *testing.T) {
 	gen := NewFileGenerator("go-template")
 
 	tmpDir := t.TempDir()
-	
+
 	// Create a static file
 	staticPath := filepath.Join(tmpDir, "static.txt")
 	staticContent := "This is static content"
@@ -74,13 +74,13 @@ func TestGenerateFileStatic(t *testing.T) {
 
 func TestProtectedFiles(t *testing.T) {
 	gen := NewFileGenerator("go-template")
-	
+
 	vars := NewVariables()
 	vars.Set("app_name", "test-app")
 	gen.SetVariables(vars)
 
 	tmpDir := t.TempDir()
-	
+
 	// Create existing protected file
 	protectedPath := filepath.Join(tmpDir, "config.yaml")
 	originalContent := "original content"
@@ -118,7 +118,7 @@ func TestCreateDirectoryStructure(t *testing.T) {
 	gen := NewFileGenerator("go-template")
 
 	tmpDir := t.TempDir()
-	
+
 	dirs := []string{
 		"cmd/app",
 		"internal/handler",
@@ -207,7 +207,7 @@ func TestGenerateFiles(t *testing.T) {
 func TestGenerateFile_MissingSource(t *testing.T) {
 	gen := NewFileGenerator("go-template")
 	tmpDir := t.TempDir()
-	
+
 	destPath := filepath.Join(tmpDir, "output.txt")
 	err := gen.GenerateFile("/nonexistent/file.txt", destPath, false)
 	if err == nil {
@@ -220,16 +220,16 @@ func TestGenerateFile_InvalidTemplate(t *testing.T) {
 	vars := NewVariables()
 	vars.Set("app_name", "test")
 	gen.SetVariables(vars)
-	
+
 	tmpDir := t.TempDir()
-	
+
 	// Create invalid template
 	templatePath := filepath.Join(tmpDir, "bad.tmpl")
-	templateContent := "{{ .app_name"  // Missing closing }}
+	templateContent := "{{ .app_name" // Missing closing }}
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}
-	
+
 	destPath := filepath.Join(tmpDir, "output.txt")
 	err := gen.GenerateFile(templatePath, destPath, true)
 	if err == nil {
@@ -239,13 +239,13 @@ func TestGenerateFile_InvalidTemplate(t *testing.T) {
 
 func TestGenerateFiles_MissingSourceFile(t *testing.T) {
 	gen := NewFileGenerator("go-template")
-	
+
 	tmpDir := t.TempDir()
 	ritualDir := filepath.Join(tmpDir, "ritual")
 	outputDir := filepath.Join(tmpDir, "output")
-	
+
 	os.MkdirAll(ritualDir, 0755)
-	
+
 	manifest := &ritual.Manifest{
 		Files: ritual.FilesSection{
 			Templates: []ritual.FileMapping{
@@ -253,7 +253,7 @@ func TestGenerateFiles_MissingSourceFile(t *testing.T) {
 			},
 		},
 	}
-	
+
 	err := gen.GenerateFiles(manifest, ritualDir, outputDir)
 	if err == nil {
 		t.Error("Expected error for missing source file, got nil")
@@ -262,13 +262,13 @@ func TestGenerateFiles_MissingSourceFile(t *testing.T) {
 
 func TestGenerateFiles_OptionalMissingFile(t *testing.T) {
 	gen := NewFileGenerator("go-template")
-	
+
 	tmpDir := t.TempDir()
 	ritualDir := filepath.Join(tmpDir, "ritual")
 	outputDir := filepath.Join(tmpDir, "output")
-	
+
 	os.MkdirAll(ritualDir, 0755)
-	
+
 	manifest := &ritual.Manifest{
 		Files: ritual.FilesSection{
 			Templates: []ritual.FileMapping{
@@ -276,7 +276,7 @@ func TestGenerateFiles_OptionalMissingFile(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Should not error for optional missing file
 	err := gen.GenerateFiles(manifest, ritualDir, outputDir)
 	if err != nil {

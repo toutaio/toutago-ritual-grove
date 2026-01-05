@@ -347,7 +347,7 @@ func TestValidator_OptionalField(t *testing.T) {
 
 func TestValidator_toNumber(t *testing.T) {
 	v := &Validator{}
-	
+
 	tests := []struct {
 		name      string
 		input     interface{}
@@ -361,7 +361,7 @@ func TestValidator_toNumber(t *testing.T) {
 		{"string invalid", "abc", 0, true},
 		{"bool", true, 0, true},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotFloat, gotErr := v.toNumber(tt.input)
@@ -383,7 +383,7 @@ func TestValidatePath(t *testing.T) {
 	if err := os.WriteFile(tmpFile, []byte("test"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	tests := []struct {
 		name    string
 		path    string
@@ -394,7 +394,7 @@ func TestValidatePath(t *testing.T) {
 		{"invalid path with null", "/tmp/test\x00", true},
 		{"empty path", "", true},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidatePath(tt.path)
@@ -408,7 +408,7 @@ func TestValidatePath(t *testing.T) {
 func TestValidateWritablePath(t *testing.T) {
 	// Create a temporary directory
 	tmpDir := t.TempDir()
-	
+
 	tests := []struct {
 		name    string
 		path    string
@@ -417,7 +417,7 @@ func TestValidateWritablePath(t *testing.T) {
 		{"writable dir", tmpDir, false},
 		{"non-existent path", "/nonexistent/path/that/does/not/exist", true},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateWritablePath(tt.path)

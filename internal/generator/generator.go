@@ -42,7 +42,7 @@ func (g *FileGenerator) SetProtectedFiles(files []string) {
 func (g *FileGenerator) GenerateFile(srcPath, destPath string, isTemplate bool) error {
 	// Normalize destPath for comparison with protected files
 	normalizedDest := filepath.ToSlash(destPath)
-	
+
 	// Check if destination is protected and exists
 	for protectedPath := range g.protected {
 		normalizedProtected := filepath.ToSlash(protectedPath)

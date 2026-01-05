@@ -43,7 +43,7 @@ func main() {
 			content: `package main
 
 func main() {}`,
-			wantMeta:     nil,
+			wantMeta: nil,
 			wantTemplate: `package main
 
 func main() {}`,
@@ -109,20 +109,20 @@ package main`,
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			meta, template, err := ParseFrontmatter(tt.content)
-			
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
-			
+
 			if tt.wantMeta == nil {
 				assert.Nil(t, meta)
 			} else {
 				assert.Equal(t, tt.wantMeta, meta)
 			}
-			
+
 			assert.Equal(t, tt.wantTemplate, template)
 		})
 	}
@@ -133,7 +133,7 @@ func TestTemplateFrontmatter_GetString(t *testing.T) {
 		"output": "file.go",
 		"number": 123,
 	}
-	
+
 	assert.Equal(t, "file.go", fm.GetString("output"))
 	assert.Equal(t, "", fm.GetString("nonexistent"))
 	assert.Equal(t, "", fm.GetString("number")) // Not a string
@@ -144,7 +144,7 @@ func TestTemplateFrontmatter_GetInt(t *testing.T) {
 		"mode":   0755,
 		"string": "hello",
 	}
-	
+
 	assert.Equal(t, 0755, fm.GetInt("mode"))
 	assert.Equal(t, 0, fm.GetInt("nonexistent"))
 	assert.Equal(t, 0, fm.GetInt("string")) // Not an int
@@ -156,7 +156,7 @@ func TestTemplateFrontmatter_GetBool(t *testing.T) {
 		"skip":      false,
 		"string":    "hello",
 	}
-	
+
 	assert.True(t, fm.GetBool("overwrite"))
 	assert.False(t, fm.GetBool("skip"))
 	assert.False(t, fm.GetBool("nonexistent"))
@@ -168,10 +168,10 @@ func TestTemplateFrontmatter_GetStringSlice(t *testing.T) {
 		"tags": []interface{}{"tag1", "tag2"},
 		"none": nil,
 	}
-	
+
 	tags := fm.GetStringSlice("tags")
 	assert.Equal(t, []string{"tag1", "tag2"}, tags)
-	
+
 	none := fm.GetStringSlice("none")
 	assert.Empty(t, none)
 }
@@ -181,7 +181,7 @@ func TestTemplateFrontmatter_Has(t *testing.T) {
 		"output": "file.go",
 		"empty":  nil,
 	}
-	
+
 	assert.True(t, fm.Has("output"))
 	assert.True(t, fm.Has("empty"))
 	assert.False(t, fm.Has("nonexistent"))
@@ -218,15 +218,15 @@ func (h *{{ .Resource | pascal_case }}Handler) List(w http.ResponseWriter, r *ht
 
 	meta, template, err := ParseFrontmatter(content)
 	require.NoError(t, err)
-	
+
 	fm := TemplateFrontmatter(meta)
 	assert.Equal(t, "internal/handlers/{{ .Resource | snake_case }}_handler.go", fm.GetString("output"))
 	assert.Equal(t, 0644, fm.GetInt("mode"))
 	assert.False(t, fm.GetBool("overwrite"))
-	
+
 	tags := fm.GetStringSlice("tags")
 	assert.Equal(t, []string{"handler", "api"}, tags)
-	
+
 	assert.Contains(t, template, "package handlers")
 	assert.Contains(t, template, "type {{ .Resource | pascal_case }}Handler struct {}")
 }

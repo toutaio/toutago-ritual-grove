@@ -143,7 +143,7 @@ func TestCircularDependencyDetector(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			detector := NewCircularDependencyDetector(tt.manifests)
 			cycle, err := detector.DetectCycle(tt.startID)
-			
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.wantCycle != nil {
@@ -159,7 +159,7 @@ func TestCircularDependencyDetector(t *testing.T) {
 
 func TestCircularDependencyValidator(t *testing.T) {
 	v := &Validator{}
-	
+
 	tests := []struct {
 		name      string
 		manifest  *ritual.Manifest
@@ -214,7 +214,7 @@ func TestCircularDependencyValidator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			errs := v.ValidateCircularDependencies(tt.manifest, tt.context)
-			
+
 			if tt.wantError {
 				assert.NotEmpty(t, errs)
 				if tt.errorMsg != "" {

@@ -23,7 +23,7 @@ func NewLoader(basePath string) *Loader {
 // Load loads a ritual manifest from a directory
 func (l *Loader) Load(ritualPath string) (*Manifest, error) {
 	manifestPath := filepath.Join(ritualPath, "ritual.yaml")
-	
+
 	data, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read ritual.yaml: %w", err)

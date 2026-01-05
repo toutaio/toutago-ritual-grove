@@ -108,7 +108,7 @@ func (c *Container) Close() error {
 `
 
 	w.generator.SetVariables(vars)
-	
+
 	// Add placeholder data for repositories, services, and handlers
 	varsMap := vars.All()
 	if varsMap["repositories"] == nil {
@@ -120,7 +120,7 @@ func (c *Container) Close() error {
 	if varsMap["handlers"] == nil {
 		varsMap["handlers"] = []map[string]string{}
 	}
-	
+
 	content, err := w.generator.engine.Render(template, varsMap)
 	if err != nil {
 		return err
@@ -170,12 +170,12 @@ func Setup(c *container.Container) *http.ServeMux {
 `
 
 	w.generator.SetVariables(vars)
-	
+
 	varsMap := vars.All()
 	if varsMap["routes"] == nil {
 		varsMap["routes"] = []map[string]string{}
 	}
-	
+
 	content, err := w.generator.engine.Render(template, varsMap)
 	if err != nil {
 		return err
@@ -262,7 +262,7 @@ func CORS(next http.HandlerFunc) http.HandlerFunc {
 // updateMainWithWiring updates main.go to use the wired components
 func (w *ComponentWiring) updateMainWithWiring(projectPath string, vars *Variables) error {
 	mainPath := filepath.Join(projectPath, "cmd", "server", "main.go")
-	
+
 	// Check if main.go exists
 	if _, err := os.Stat(mainPath); os.IsNotExist(err) {
 		// If main.go doesn't exist yet, skip this step
@@ -340,7 +340,7 @@ func main() {
 `
 
 	w.generator.SetVariables(vars)
-	
+
 	newContent, err := w.generator.engine.Render(template, vars.All())
 	if err != nil {
 		return err

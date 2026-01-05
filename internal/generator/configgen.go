@@ -94,7 +94,7 @@ LOG_FORMAT=json
 		getStrOrDefault(config.Database.User, config.AppName),
 		getStrOrDefault(config.Database.Password, ""),
 	)
-	
+
 	envPath := filepath.Join(targetPath, ".env.example")
 	return os.WriteFile(envPath, []byte(content), 0644)
 }
@@ -136,12 +136,12 @@ logging:
 		getStrOrDefault(config.Database.Name, config.AppName+"_db"),
 		getStrOrDefault(config.Database.User, config.AppName),
 	)
-	
+
 	configDir := filepath.Join(targetPath, "config")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return err
 	}
-	
+
 	configPath := filepath.Join(configDir, "config.yaml")
 	return os.WriteFile(configPath, []byte(content), 0644)
 }
@@ -149,7 +149,7 @@ logging:
 // GenerateDockerCompose generates a docker-compose.yml file
 func (g *ConfigGenerator) GenerateDockerCompose(targetPath string, config DockerConfig) error {
 	var dbService string
-	
+
 	switch config.Database {
 	case "postgres":
 		dbService = `  db:
@@ -170,7 +170,7 @@ func (g *ConfigGenerator) GenerateDockerCompose(targetPath string, config Docker
 
 volumes:
   postgres_data:`
-	
+
 	case "mysql":
 		dbService = `  db:
     image: mysql:8
@@ -191,11 +191,11 @@ volumes:
 
 volumes:
   mysql_data:`
-	
+
 	default:
 		dbService = ""
 	}
-	
+
 	content := fmt.Sprintf(`version: '3.8'
 
 services:
@@ -222,7 +222,7 @@ services:
 		config.AppName,
 		dbService,
 	)
-	
+
 	composePath := filepath.Join(targetPath, "docker-compose.yml")
 	return os.WriteFile(composePath, []byte(content), 0644)
 }
@@ -263,7 +263,7 @@ CMD ["./main"]
 		config.GoVersion,
 		config.Port,
 	)
-	
+
 	dockerfilePath := filepath.Join(targetPath, "Dockerfile")
 	return os.WriteFile(dockerfilePath, []byte(content), 0644)
 }
@@ -326,7 +326,7 @@ logs/
 *.tar.gz
 *.zip
 `
-	
+
 	gitignorePath := filepath.Join(targetPath, ".gitignore")
 	return os.WriteFile(gitignorePath, []byte(content), 0644)
 }
@@ -357,7 +357,7 @@ trim_trailing_whitespace = false
 [Makefile]
 indent_style = tab
 `
-	
+
 	editorconfigPath := filepath.Join(targetPath, ".editorconfig")
 	return os.WriteFile(editorconfigPath, []byte(content), 0644)
 }
@@ -368,7 +368,7 @@ func (g *ConfigGenerator) GenerateMakefile(targetPath string, config MakefileCon
 	if binaryName == "" {
 		binaryName = config.AppName
 	}
-	
+
 	content := fmt.Sprintf(`.PHONY: build test run clean install lint fmt vet
 
 BINARY_NAME=%s
@@ -418,7 +418,7 @@ dev:
 `,
 		binaryName,
 	)
-	
+
 	makefilePath := filepath.Join(targetPath, "Makefile")
 	return os.WriteFile(makefilePath, []byte(content), 0644)
 }
@@ -429,12 +429,12 @@ func (g *ConfigGenerator) GenerateAll(targetPath string, config FullConfig) erro
 	if err := g.GenerateEnvExample(targetPath, config.AppConfig); err != nil {
 		return fmt.Errorf("failed to generate .env.example: %w", err)
 	}
-	
+
 	// Always generate YAML config
 	if err := g.GenerateYAMLConfig(targetPath, config.AppConfig); err != nil {
 		return fmt.Errorf("failed to generate config.yaml: %w", err)
 	}
-	
+
 	// Optional configurations
 	if config.GenerateDocker {
 		dockerConfig := DockerConfig{
@@ -442,45 +442,45 @@ func (g *ConfigGenerator) GenerateAll(targetPath string, config FullConfig) erro
 			Port:     config.AppConfig.Port,
 			Database: config.AppConfig.Database.Type,
 		}
-		
+
 		if err := g.GenerateDockerCompose(targetPath, dockerConfig); err != nil {
 			return fmt.Errorf("failed to generate docker-compose.yml: %w", err)
 		}
-		
+
 		dockerfileConfig := DockerfileConfig{
 			GoVersion: "1.21",
 			AppName:   config.AppConfig.AppName,
 			Port:      config.AppConfig.Port,
 		}
-		
+
 		if err := g.GenerateDockerfile(targetPath, dockerfileConfig); err != nil {
 			return fmt.Errorf("failed to generate Dockerfile: %w", err)
 		}
 	}
-	
+
 	if config.GenerateGitignore {
 		if err := g.GenerateGitignore(targetPath); err != nil {
 			return fmt.Errorf("failed to generate .gitignore: %w", err)
 		}
 	}
-	
+
 	if config.GenerateEditorConfig {
 		if err := g.GenerateEditorConfig(targetPath); err != nil {
 			return fmt.Errorf("failed to generate .editorconfig: %w", err)
 		}
 	}
-	
+
 	if config.GenerateMakefile {
 		makefileConfig := MakefileConfig{
 			AppName:    config.AppConfig.AppName,
 			BinaryName: config.AppConfig.AppName,
 		}
-		
+
 		if err := g.GenerateMakefile(targetPath, makefileConfig); err != nil {
 			return fmt.Errorf("failed to generate Makefile: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 

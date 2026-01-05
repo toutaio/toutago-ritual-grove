@@ -29,44 +29,44 @@ func (h *CreateHandler) Execute(ritualPath, targetPath string, answers map[strin
 	if ritualPath == "" {
 		return fmt.Errorf("ritual path is required")
 	}
-	
+
 	if targetPath == "" {
 		return fmt.Errorf("target path is required")
 	}
-	
+
 	// Check ritual exists
 	if _, err := os.Stat(ritualPath); os.IsNotExist(err) {
 		return fmt.Errorf("ritual not found: %s", ritualPath)
 	}
-	
+
 	// Load ritual
 	loader := ritual.NewLoader(ritualPath)
 	manifest, err := loader.Load(ritualPath)
 	if err != nil {
 		return fmt.Errorf("failed to load ritual: %w", err)
 	}
-	
+
 	// Get default answers if needed
 	defaultAnswers, err := h.ExtractDefaultAnswers(ritualPath)
 	if err != nil {
 		return fmt.Errorf("failed to extract defaults: %w", err)
 	}
-	
+
 	// Merge user answers with defaults
 	finalAnswers := h.MergeAnswersWithDefaults(answers, defaultAnswers)
-	
+
 	// Convert to Variables
 	vars := generator.NewVariables()
 	for key, value := range finalAnswers {
 		vars.Set(key, value)
 	}
-	
+
 	// Generate project
 	scaffolder := generator.NewProjectScaffolder()
 	if err := scaffolder.GenerateFromRitual(targetPath, ritualPath, manifest, vars); err != nil {
 		return fmt.Errorf("failed to generate project: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -84,15 +84,15 @@ func (h *CreateHandler) ExtractDefaultAnswers(ritualPath string) (map[string]int
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defaults := make(map[string]interface{})
-	
+
 	for _, question := range manifest.Questions {
 		if question.Default != nil {
 			defaults[question.Name] = question.Default
 		}
 	}
-	
+
 	return defaults, nil
 }
 
@@ -100,16 +100,16 @@ func (h *CreateHandler) ExtractDefaultAnswers(ritualPath string) (map[string]int
 // User answers take precedence over defaults
 func (h *CreateHandler) MergeAnswersWithDefaults(userAnswers, defaults map[string]interface{}) map[string]interface{} {
 	merged := make(map[string]interface{})
-	
+
 	// Add all defaults
 	for key, value := range defaults {
 		merged[key] = value
 	}
-	
+
 	// Override with user answers
 	for key, value := range userAnswers {
 		merged[key] = value
 	}
-	
+
 	return merged
 }

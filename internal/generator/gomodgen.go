@@ -124,12 +124,12 @@ func (g *GoModGenerator) AddToutaDependencies(projectPath string, vars *Variable
 func (g *GoModGenerator) RunGoModTidy(projectPath string) error {
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Dir = projectPath
-	
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("go mod tidy failed: %w\nOutput: %s", err, string(output))
 	}
-	
+
 	return nil
 }
 
@@ -137,12 +137,12 @@ func (g *GoModGenerator) RunGoModTidy(projectPath string) error {
 func (g *GoModGenerator) RunGoModDownload(projectPath string) error {
 	cmd := exec.Command("go", "mod", "download")
 	cmd.Dir = projectPath
-	
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("go mod download failed: %w\nOutput: %s", err, string(output))
 	}
-	
+
 	return nil
 }
 

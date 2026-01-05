@@ -217,7 +217,7 @@ func (ce *ConditionEvaluator) EvaluateDefault(defaultVal interface{}, answers ma
 				return val
 			}
 		}
-		
+
 		// Check for simple template-like substitution
 		if strings.Contains(strVal, "{{") && strings.Contains(strVal, "}}") {
 			return ce.substituteTemplateVars(strVal, answers)
@@ -229,11 +229,11 @@ func (ce *ConditionEvaluator) EvaluateDefault(defaultVal interface{}, answers ma
 
 func (ce *ConditionEvaluator) substituteTemplateVars(template string, answers map[string]interface{}) string {
 	result := template
-	
+
 	// Find all {{var}} patterns
 	re := regexp.MustCompile(`\{\{\.?([a-zA-Z_][a-zA-Z0-9_]*)\}\}`)
 	matches := re.FindAllStringSubmatch(template, -1)
-	
+
 	for _, match := range matches {
 		if len(match) >= 2 {
 			varName := match[1]
@@ -244,7 +244,7 @@ func (ce *ConditionEvaluator) substituteTemplateVars(template string, answers ma
 			}
 		}
 	}
-	
+
 	return result
 }
 

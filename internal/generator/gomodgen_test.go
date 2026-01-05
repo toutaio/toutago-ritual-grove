@@ -216,7 +216,7 @@ func main() {
 
 	gen := NewGoModGenerator()
 	err := gen.RunGoModTidy(tempDir)
-	
+
 	// Note: This test might fail in environments without network access
 	// or without Go installed. We'll make it lenient.
 	if err != nil {
@@ -248,7 +248,7 @@ func TestGoModGenerator_GenerateComplete(t *testing.T) {
 	}
 
 	gen := NewGoModGenerator()
-	
+
 	// Generate go.mod
 	if err := gen.Generate(tempDir, manifest, vars); err != nil {
 		t.Fatalf("Generate failed: %v", err)
@@ -267,7 +267,7 @@ func TestGoModGenerator_GenerateComplete(t *testing.T) {
 	}
 
 	contentStr := string(content)
-	
+
 	requiredElements := []string{
 		"module github.com/test/complete",
 		"github.com/gorilla/mux",

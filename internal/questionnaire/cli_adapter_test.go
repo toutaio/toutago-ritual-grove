@@ -18,7 +18,7 @@ func TestCLIAdapter_SimpleTextQuestion(t *testing.T) {
 
 	input := "John Doe\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -42,7 +42,7 @@ func TestCLIAdapter_RequiredQuestion(t *testing.T) {
 	// Empty input should fail
 	input := "\ntest@example.com\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -65,7 +65,7 @@ func TestCLIAdapter_ChoiceQuestion(t *testing.T) {
 
 	input := "green\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -87,7 +87,7 @@ func TestCLIAdapter_BooleanQuestion(t *testing.T) {
 
 	input := "yes\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -109,7 +109,7 @@ func TestCLIAdapter_NumberQuestion(t *testing.T) {
 
 	input := "8080\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -132,7 +132,7 @@ func TestCLIAdapter_DefaultValue(t *testing.T) {
 
 	input := "\n" // Just press enter to use default
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -151,9 +151,9 @@ func TestCLIAdapter_ConditionalQuestion(t *testing.T) {
 			Type:   ritual.QuestionTypeBoolean,
 		},
 		{
-			Name:   "db_type",
-			Prompt: "Database type:",
-			Type:   ritual.QuestionTypeChoice,
+			Name:    "db_type",
+			Prompt:  "Database type:",
+			Type:    ritual.QuestionTypeChoice,
 			Choices: []string{"postgres", "mysql"},
 			Condition: &ritual.QuestionCondition{
 				Field:  "use_db",
@@ -165,7 +165,7 @@ func TestCLIAdapter_ConditionalQuestion(t *testing.T) {
 	// Answer yes to database, choose postgres
 	input := "yes\npostgres\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -188,9 +188,9 @@ func TestCLIAdapter_SkipConditionalQuestion(t *testing.T) {
 			Type:   ritual.QuestionTypeBoolean,
 		},
 		{
-			Name:   "db_type",
-			Prompt: "Database type:",
-			Type:   ritual.QuestionTypeChoice,
+			Name:    "db_type",
+			Prompt:  "Database type:",
+			Type:    ritual.QuestionTypeChoice,
 			Choices: []string{"postgres", "mysql"},
 			Condition: &ritual.QuestionCondition{
 				Field:  "use_db",
@@ -202,7 +202,7 @@ func TestCLIAdapter_SkipConditionalQuestion(t *testing.T) {
 	// Answer no to database - db_type should be skipped
 	input := "no\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	answers, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -225,18 +225,18 @@ func TestCLIAdapter_SetWriter(t *testing.T) {
 			Type:   ritual.QuestionTypeText,
 		},
 	}
-	
+
 	input := "value\n"
 	adapter := NewCLIAdapter(questions, strings.NewReader(input))
-	
+
 	var buf strings.Builder
 	adapter.SetWriter(&buf)
-	
+
 	_, err := adapter.Run()
 	if err != nil {
 		t.Fatalf("Run() failed: %v", err)
 	}
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "Test:") {
 		t.Errorf("Expected output to contain prompt, got: %s", output)
@@ -245,7 +245,7 @@ func TestCLIAdapter_SetWriter(t *testing.T) {
 
 func TestConvertAnswer_EdgeCases(t *testing.T) {
 	adapter := &CLIAdapter{}
-	
+
 	tests := []struct {
 		name      string
 		question  *ritual.Question
@@ -262,7 +262,7 @@ func TestConvertAnswer_EdgeCases(t *testing.T) {
 		{"multi-choice type", &ritual.Question{Type: ritual.QuestionTypeMultiChoice}, "a,b,c", []string{"a", "b", "c"}, false},
 		{"invalid number", &ritual.Question{Type: ritual.QuestionTypeNumber}, "abc", nil, true},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := adapter.convertAnswer(tt.question, tt.value)
@@ -276,7 +276,7 @@ func TestConvertAnswer_EdgeCases(t *testing.T) {
 				t.Errorf("convertAnswer() unexpected error: %v", err)
 				return
 			}
-			
+
 			// Special handling for slices
 			if tt.question.Type == ritual.QuestionTypeMultiChoice {
 				resultSlice, ok := result.([]string)

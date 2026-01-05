@@ -14,28 +14,28 @@ type TemplateFrontmatter map[string]interface{}
 // Frontmatter is delimited by --- at the start and end
 func ParseFrontmatter(content string) (map[string]interface{}, string, error) {
 	const delimiter = "---"
-	
+
 	// Check if content starts with frontmatter delimiter
 	if !strings.HasPrefix(content, delimiter) {
 		// No frontmatter, return entire content as template
 		return nil, content, nil
 	}
-	
+
 	// Find closing delimiter
 	rest := content[len(delimiter):]
 	endIndex := strings.Index(rest, "\n"+delimiter)
-	
+
 	if endIndex == -1 {
 		return nil, "", fmt.Errorf("frontmatter opening delimiter found but no closing delimiter")
 	}
-	
+
 	// Extract frontmatter and template
 	frontmatterContent := rest[:endIndex]
 	templateContent := rest[endIndex+len(delimiter)+1:]
-	
+
 	// Trim leading newline from template if present
 	templateContent = strings.TrimPrefix(templateContent, "\n")
-	
+
 	// Parse frontmatter YAML
 	var frontmatter map[string]interface{}
 	if strings.TrimSpace(frontmatterContent) != "" {
@@ -45,7 +45,7 @@ func ParseFrontmatter(content string) (map[string]interface{}, string, error) {
 	} else {
 		frontmatter = make(map[string]interface{})
 	}
-	
+
 	return frontmatter, templateContent, nil
 }
 

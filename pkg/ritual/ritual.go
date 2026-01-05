@@ -15,18 +15,18 @@ type Ritual struct {
 	Version     string
 	Description string
 	Author      string
-	
+
 	// Configuration
-	TemplateEngine string
+	TemplateEngine  string
 	MinToutaVersion string
 	MaxToutaVersion string
-	
+
 	// Components
 	Questions []Question
 	Templates []Template
 	Packages  []string
 	Mixins    []Mixin
-	
+
 	// Lifecycle
 	Hooks Hooks
 }
@@ -48,22 +48,22 @@ type Mixin struct {
 
 // Hooks contains lifecycle hooks for rituals
 type Hooks struct {
-	PreInstall   []string
-	PostInstall  []string
-	PreUpdate    []string
-	PostUpdate   []string
-	PreDeploy    []string
-	PostDeploy   []string
+	PreInstall  []string
+	PostInstall []string
+	PreUpdate   []string
+	PostUpdate  []string
+	PreDeploy   []string
+	PostDeploy  []string
 }
 
 // Registry manages ritual discovery and loading
 type Registry interface {
 	// List returns all available rituals
 	List() ([]Ritual, error)
-	
+
 	// Get retrieves a specific ritual by name
 	Get(name string) (*Ritual, error)
-	
+
 	// Install downloads and installs a ritual from a source
 	Install(source string) error
 }
@@ -72,7 +72,7 @@ type Registry interface {
 type Generator interface {
 	// Generate creates files from ritual templates
 	Generate(ritual *Ritual, answers map[string]interface{}) error
-	
+
 	// ApplyMixin adds a mixin to an existing project
 	ApplyMixin(mixin *Mixin, answers map[string]interface{}) error
 }
@@ -81,7 +81,7 @@ type Generator interface {
 type TemplateEngine interface {
 	// Render renders a template string with data
 	Render(template string, data map[string]interface{}) (string, error)
-	
+
 	// RenderFile renders a template file with data
 	RenderFile(path string, data map[string]interface{}) (string, error)
 }

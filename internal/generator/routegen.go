@@ -48,23 +48,23 @@ func (g *RouteGenerator) GenerateRoutes(targetPath string, config RouteConfig) e
 	if config.Package == "" {
 		config.Package = "routes"
 	}
-	
+
 	var routes []Route
-	
+
 	// Generate RESTful routes if configured
 	if config.RESTful && config.Resource != "" {
 		routes = g.generateRESTfulRoutes(config.Resource, config.Handler)
 	} else {
 		routes = config.Routes
 	}
-	
+
 	content := g.generateRouteContent(config, routes)
-	
+
 	routeDir := filepath.Join(targetPath, "internal", config.Package)
 	if err := os.MkdirAll(routeDir, 0755); err != nil {
 		return err
 	}
-	
+
 	routePath := filepath.Join(routeDir, "routes.go")
 	return os.WriteFile(routePath, []byte(content), 0644)
 }
@@ -106,7 +106,7 @@ func (g *RouteGenerator) generateRESTfulRoutes(resource, handler string) []Route
 
 func (g *RouteGenerator) generateRouteContent(config RouteConfig, routes []Route) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`package %s
 
 import (
@@ -114,18 +114,18 @@ import (
 	
 	"github.com/gorilla/mux"
 `, config.Package))
-	
+
 	if config.EnableCORS {
 		sb.WriteString("\t\"github.com/rs/cors\"\n")
 	}
-	
+
 	sb.WriteString(")\n\n")
-	
+
 	// Generate SetupRoutes function
 	sb.WriteString("// SetupRoutes configures all application routes\n")
 	sb.WriteString("func SetupRoutes() *mux.Router {\n")
 	sb.WriteString("\trouter := mux.NewRouter()\n\n")
-	
+
 	// Add CORS if enabled
 	if config.EnableCORS {
 		sb.WriteString("\t// Configure CORS\n")
@@ -136,7 +136,7 @@ import (
 		sb.WriteString("\t})\n")
 		sb.WriteString("\trouter.Use(c.Handler)\n\n")
 	}
-	
+
 	// Generate routes
 	if len(config.Groups) > 0 {
 		for _, group := range config.Groups {
@@ -147,57 +147,57 @@ import (
 			sb.WriteString(g.generateRoute(route, config.Documentation, "\t"))
 		}
 	}
-	
+
 	sb.WriteString("\n\treturn router\n")
 	sb.WriteString("}\n")
-	
+
 	return sb.String()
 }
 
 func (g *RouteGenerator) generateGroupRoutes(group RouteGroup, withDoc bool) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf("\t// %s routes\n", group.Prefix))
 	sb.WriteString(fmt.Sprintf("\t%sRouter := router.PathPrefix(\"%s\").Subrouter()\n",
 		sanitizePrefix(group.Prefix), group.Prefix))
-	
+
 	// Add group middlewares
 	for _, mw := range group.Middlewares {
 		sb.WriteString(fmt.Sprintf("\t%sRouter.Use(%s)\n", sanitizePrefix(group.Prefix), mw))
 	}
-	
+
 	sb.WriteString("\n")
-	
+
 	// Add routes to group
 	for _, route := range group.Routes {
 		routeLine := g.generateRoute(route, withDoc, "\t")
 		routeLine = strings.ReplaceAll(routeLine, "router.", sanitizePrefix(group.Prefix)+"Router.")
 		sb.WriteString(routeLine)
 	}
-	
+
 	sb.WriteString("\n")
 	return sb.String()
 }
 
 func (g *RouteGenerator) generateRoute(route Route, withDoc bool, indent string) string {
 	var sb strings.Builder
-	
+
 	if withDoc && route.Description != "" {
 		sb.WriteString(fmt.Sprintf("%s// %s\n", indent, route.Description))
 	}
-	
+
 	handler := route.Handler
-	
+
 	// Wrap with middlewares if any
 	if len(route.Middlewares) > 0 {
 		for i := len(route.Middlewares) - 1; i >= 0; i-- {
 			handler = route.Middlewares[i] + "(" + handler + ")"
 		}
 	}
-	
+
 	sb.WriteString(fmt.Sprintf("%srouter.HandleFunc(\"%s\", %s).Methods(\"%s\")\n",
 		indent, route.Path, handler, route.Method))
-	
+
 	return sb.String()
 }
 

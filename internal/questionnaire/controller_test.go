@@ -108,9 +108,9 @@ func TestController_ConditionalQuestions(t *testing.T) {
 			Type:   ritual.QuestionTypeBoolean,
 		},
 		{
-			Name:   "database_type",
-			Prompt: "Database type?",
-			Type:   ritual.QuestionTypeChoice,
+			Name:    "database_type",
+			Prompt:  "Database type?",
+			Type:    ritual.QuestionTypeChoice,
 			Choices: []string{"postgres", "mysql"},
 			Condition: &ritual.QuestionCondition{
 				Field:  "use_database",
@@ -242,7 +242,7 @@ func TestQuestionFlow_AnswerValidation(t *testing.T) {
 
 func TestController_GetStateEdgeCases(t *testing.T) {
 	flow := NewQuestionFlow()
-	
+
 	// Get non-existent state
 	state := flow.GetState("nonexistent")
 	if state != StateNotReached {
@@ -252,7 +252,7 @@ func TestController_GetStateEdgeCases(t *testing.T) {
 
 func TestController_GetAnswerEdgeCases(t *testing.T) {
 	flow := NewQuestionFlow()
-	
+
 	// Get non-existent answer
 	_, exists := flow.GetAnswer("nonexistent")
 	if exists {
@@ -288,7 +288,7 @@ func TestController_IsComplete_WithSkippedQuestions(t *testing.T) {
 
 	// Answer q1
 	ctrl.SubmitAnswer("q1", "value1")
-	
+
 	// q2 should be skipped due to condition
 	q, _ := ctrl.GetNextQuestion()
 	if q.Name != "q3" {

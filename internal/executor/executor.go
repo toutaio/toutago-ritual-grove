@@ -42,7 +42,7 @@ func NewExecutor(context *ExecutionContext) *Executor {
 
 // Execute executes a ritual installation
 func (e *Executor) Execute(manifest *ritual.Manifest) error {
-	e.context.Logger.Printf("Starting ritual installation: %s v%s", 
+	e.context.Logger.Printf("Starting ritual installation: %s v%s",
 		manifest.Ritual.Name, manifest.Ritual.Version)
 
 	// Step 1: Validate dependencies
@@ -76,7 +76,7 @@ func (e *Executor) Execute(manifest *ritual.Manifest) error {
 
 func (e *Executor) validateDependencies(manifest *ritual.Manifest) error {
 	e.context.Logger.Println("Validating dependencies...")
-	
+
 	if e.context.DryRun {
 		e.context.Logger.Println("[DRY RUN] Would validate dependencies")
 		return nil
@@ -87,7 +87,7 @@ func (e *Executor) validateDependencies(manifest *ritual.Manifest) error {
 
 func (e *Executor) generateFiles(manifest *ritual.Manifest) error {
 	e.context.Logger.Println("Generating files...")
-	
+
 	if e.context.DryRun {
 		e.context.Logger.Println("[DRY RUN] Would generate files:")
 		for _, tmpl := range manifest.Files.Templates {
@@ -109,7 +109,7 @@ func (e *Executor) installPackages(manifest *ritual.Manifest) error {
 	}
 
 	e.context.Logger.Printf("Installing %d Go packages...", len(manifest.Dependencies.Packages))
-	
+
 	if e.context.DryRun {
 		e.context.Logger.Println("[DRY RUN] Would install packages:")
 		for _, pkg := range manifest.Dependencies.Packages {
@@ -121,7 +121,7 @@ func (e *Executor) installPackages(manifest *ritual.Manifest) error {
 	// Run go get for each package
 	for _, pkg := range manifest.Dependencies.Packages {
 		e.context.Logger.Printf("  Installing %s...", pkg)
-		
+
 		cmd := exec.Command("go", "get", pkg)
 		cmd.Dir = e.context.OutputPath
 		cmd.Stdout = os.Stdout
@@ -141,10 +141,10 @@ func (e *Executor) runHooks(hooks []string, phase string) error {
 	}
 
 	e.context.Logger.Printf("Running %s hooks (%d)...", phase, len(hooks))
-	
+
 	for i, command := range hooks {
 		e.context.Logger.Printf("  Hook %d/%d: %s", i+1, len(hooks), command)
-		
+
 		if e.context.DryRun {
 			e.context.Logger.Printf("  [DRY RUN] Would run: %s", command)
 			continue
@@ -177,7 +177,7 @@ func (e *Executor) executeCommand(command string) error {
 // Rollback attempts to rollback a failed installation
 func (e *Executor) Rollback() error {
 	e.context.Logger.Println("Rolling back installation...")
-	
+
 	if e.context.DryRun {
 		e.context.Logger.Println("[DRY RUN] Would rollback changes")
 		return nil
@@ -186,6 +186,6 @@ func (e *Executor) Rollback() error {
 	// For now, just log
 	// TODO: Implement proper rollback (remove generated files, restore backups)
 	e.context.Logger.Println("Rollback not yet implemented")
-	
+
 	return nil
 }

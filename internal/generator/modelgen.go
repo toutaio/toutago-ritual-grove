@@ -47,24 +47,24 @@ func (g *ModelGenerator) GenerateModel(targetPath string, config ModelConfig) er
 	if config.Package == "" {
 		config.Package = "models"
 	}
-	
+
 	modelName := strings.ToLower(config.Name)
 	fileName := modelName + ".go"
-	
+
 	content := g.generateModelContent(config)
-	
+
 	modelDir := filepath.Join(targetPath, "internal", config.Package)
 	if err := os.MkdirAll(modelDir, 0755); err != nil {
 		return err
 	}
-	
+
 	modelPath := filepath.Join(modelDir, fileName)
 	return os.WriteFile(modelPath, []byte(content), 0644)
 }
 
 func (g *ModelGenerator) generateModelContent(config ModelConfig) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`package %s
 
 import (
@@ -72,14 +72,14 @@ import (
 )
 
 `, config.Package))
-	
+
 	// Generate struct
 	sb.WriteString(fmt.Sprintf("// %s represents a %s entity\n", config.Name, strings.ToLower(config.Name)))
 	sb.WriteString(fmt.Sprintf("type %s struct {\n", config.Name))
-	
+
 	// Add ID field
 	sb.WriteString("\tID uint `json:\"id\" db:\"id\"`\n")
-	
+
 	// Add regular fields
 	for _, field := range config.Fields {
 		sb.WriteString(fmt.Sprintf("\t%s %s", field.Name, field.Type))
@@ -88,7 +88,7 @@ import (
 		}
 		sb.WriteString("\n")
 	}
-	
+
 	// Add relationship foreign keys
 	for _, rel := range config.Relationships {
 		if rel.Type == "BelongsTo" {
@@ -99,30 +99,30 @@ import (
 				toSnakeCase(fkName)))
 		}
 	}
-	
+
 	// Add timestamps
 	if config.Timestamps {
 		sb.WriteString("\tCreatedAt time.Time `json:\"created_at\" db:\"created_at\"`\n")
 		sb.WriteString("\tUpdatedAt time.Time `json:\"updated_at\" db:\"updated_at\"`\n")
 	}
-	
+
 	// Add soft delete
 	if config.SoftDelete {
 		sb.WriteString("\tDeletedAt *time.Time `json:\"deleted_at,omitempty\" db:\"deleted_at\"`\n")
 	}
-	
+
 	sb.WriteString("}\n\n")
-	
+
 	// Generate validation method
 	if config.Validation {
 		sb.WriteString(g.generateValidationMethod(config))
 	}
-	
+
 	// Generate JSON methods
 	if config.JSONMethods {
 		sb.WriteString(g.generateJSONMethods(config))
 	}
-	
+
 	return sb.String()
 }
 
@@ -156,7 +156,7 @@ func (m *%s) UnmarshalJSON(data []byte) error {
 func (g *ModelGenerator) GenerateRepository(targetPath string, config ModelConfig) error {
 	repoName := config.Name + "Repository"
 	fileName := strings.ToLower(config.Name) + "_repository.go"
-	
+
 	content := fmt.Sprintf(`package repository
 
 import (
@@ -224,12 +224,12 @@ func (r *%sImpl) Delete(ctx context.Context, id string) error {
 		config.Name, config.Name, config.Name, config.Name,
 		config.Name, config.Name,
 	)
-	
+
 	repoDir := filepath.Join(targetPath, "internal", "repository")
 	if err := os.MkdirAll(repoDir, 0755); err != nil {
 		return err
 	}
-	
+
 	repoPath := filepath.Join(repoDir, fileName)
 	return os.WriteFile(repoPath, []byte(content), 0644)
 }

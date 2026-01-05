@@ -24,7 +24,7 @@ func NewCLIAdapter(questions []ritual.Question, reader io.Reader) *CLIAdapter {
 	if reader == nil {
 		reader = os.Stdin
 	}
-	
+
 	return &CLIAdapter{
 		controller: NewController(questions),
 		reader:     reader,
@@ -45,7 +45,7 @@ func (a *CLIAdapter) Run() (map[string]interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get next question: %w", err)
 		}
-		
+
 		if question == nil {
 			// No more questions
 			break
@@ -99,8 +99,8 @@ func (a *CLIAdapter) askQuestion(q *ritual.Question) (interface{}, error) {
 // convertAnswer converts string input to the appropriate type
 func (a *CLIAdapter) convertAnswer(q *ritual.Question, input string) (interface{}, error) {
 	switch q.Type {
-	case ritual.QuestionTypeText, ritual.QuestionTypePassword, 
-	     ritual.QuestionTypePath, ritual.QuestionTypeURL, ritual.QuestionTypeEmail:
+	case ritual.QuestionTypeText, ritual.QuestionTypePassword,
+		ritual.QuestionTypePath, ritual.QuestionTypeURL, ritual.QuestionTypeEmail:
 		return input, nil
 
 	case ritual.QuestionTypeBoolean:

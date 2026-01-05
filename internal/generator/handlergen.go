@@ -17,14 +17,14 @@ func NewHandlerGenerator() *HandlerGenerator {
 
 // HandlerConfig configures handler generation
 type HandlerConfig struct {
-	Name         string
-	Package      string
-	Model        string
-	Operations   []string
-	CRUD         bool
-	Validation   bool
-	Repository   string
-	CustomLogic  bool
+	Name        string
+	Package     string
+	Model       string
+	Operations  []string
+	CRUD        bool
+	Validation  bool
+	Repository  string
+	CustomLogic bool
 }
 
 // GenerateHandler generates a handler file
@@ -32,35 +32,35 @@ func (g *HandlerGenerator) GenerateHandler(targetPath string, config HandlerConf
 	if config.Package == "" {
 		config.Package = "handlers"
 	}
-	
+
 	if config.Repository == "" {
 		config.Repository = config.Model + "Repository"
 	}
-	
+
 	var operations []string
 	if config.CRUD {
 		operations = []string{"Create", "Get", "List", "Update", "Delete"}
 	} else {
 		operations = config.Operations
 	}
-	
+
 	handlerName := strings.ToLower(config.Name)
 	fileName := handlerName + "_handler.go"
-	
+
 	content := g.generateHandlerContent(config, operations)
-	
+
 	handlerDir := filepath.Join(targetPath, "internal", config.Package)
 	if err := os.MkdirAll(handlerDir, 0755); err != nil {
 		return err
 	}
-	
+
 	handlerPath := filepath.Join(handlerDir, fileName)
 	return os.WriteFile(handlerPath, []byte(content), 0644)
 }
 
 func (g *HandlerGenerator) generateHandlerContent(config HandlerConfig, operations []string) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`package %s
 
 import (
@@ -95,23 +95,23 @@ func New%sHandler(repo %s) *%sHandler {
 		config.Name,
 		config.Name,
 	))
-	
+
 	for _, op := range operations {
 		sb.WriteString(g.generateMethod(config, op))
 		sb.WriteString("\n")
 	}
-	
+
 	return sb.String()
 }
 
 func (g *HandlerGenerator) generateMethod(config HandlerConfig, operation string) string {
 	methodName := operation + config.Name
-	
+
 	// Pluralize List method names
 	if operation == "List" {
 		methodName = operation + config.Name + "s"
 	}
-	
+
 	switch operation {
 	case "Create":
 		return g.generateCreateMethod(config, methodName)
@@ -139,7 +139,7 @@ func (g *HandlerGenerator) generateCreateMethod(config HandlerConfig, methodName
 	}
 `
 	}
-	
+
 	return fmt.Sprintf(`// %s creates a new %s
 func (h *%sHandler) %s(w http.ResponseWriter, r *http.Request) {
 	var item %s
@@ -223,7 +223,7 @@ func (g *HandlerGenerator) generateUpdateMethod(config HandlerConfig, methodName
 	}
 `
 	}
-	
+
 	return fmt.Sprintf(`// %s updates a %s
 func (h *%sHandler) %s(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -280,7 +280,7 @@ func (g *HandlerGenerator) generateCustomMethod(config HandlerConfig, methodName
 	if config.CustomLogic {
 		todoComment = "\n\t// TODO: Implement custom logic for " + operation
 	}
-	
+
 	return fmt.Sprintf(`// %s handles %s operation
 func (h *%sHandler) %s(w http.ResponseWriter, r *http.Request) {%s
 	w.Header().Set("Content-Type", "application/json")
@@ -301,10 +301,10 @@ func (g *HandlerGenerator) GenerateHandlerTests(targetPath string, config Handle
 	if config.Package == "" {
 		config.Package = "handlers"
 	}
-	
+
 	handlerName := strings.ToLower(config.Name)
 	fileName := handlerName + "_handler_test.go"
-	
+
 	content := fmt.Sprintf(`package %s
 
 import (
@@ -372,12 +372,12 @@ func Test%sHandler_List(t *testing.T) {
 		strings.ToLower(config.Name),
 		config.Name,
 	)
-	
+
 	handlerDir := filepath.Join(targetPath, "internal", config.Package)
 	if err := os.MkdirAll(handlerDir, 0755); err != nil {
 		return err
 	}
-	
+
 	testPath := filepath.Join(handlerDir, fileName)
 	return os.WriteFile(testPath, []byte(content), 0644)
 }

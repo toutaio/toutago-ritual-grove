@@ -128,7 +128,7 @@ func NewController(questions []ritual.Question) *Controller {
 func (c *Controller) GetNextQuestion() (*ritual.Question, error) {
 	for _, q := range c.questions {
 		state := c.flow.GetState(q.Name)
-		
+
 		// Skip already answered questions
 		if state == StateAnswered {
 			continue
@@ -197,7 +197,7 @@ func (c *Controller) GetProgress() (answered int, total int) {
 func (c *Controller) IsComplete() bool {
 	for _, q := range c.questions {
 		state := c.flow.GetState(q.Name)
-		
+
 		// Skip questions with unmet conditions
 		if q.Condition != nil {
 			shouldShow, _ := c.condEvaluator.Evaluate(q.Condition, c.flow.AllAnswers())

@@ -85,7 +85,7 @@ func main() {
 `
 
 	s.generator.SetVariables(vars)
-	
+
 	content, err := s.generator.engine.Render(template, vars.All())
 	if err != nil {
 		return fmt.Errorf("failed to render main.go: %w", err)
@@ -170,7 +170,7 @@ LOG_LEVEL=info
 `
 
 	s.generator.SetVariables(vars)
-	
+
 	content, err := s.generator.engine.Render(template, vars.All())
 	if err != nil {
 		return fmt.Errorf("failed to render .env.example: %w", err)
@@ -413,7 +413,7 @@ func (s *ProjectScaffolder) ExecutePostGenerateHooks(projectPath string, hookCom
 	if len(hookCommands) == 0 {
 		return nil
 	}
-	
+
 	hookExecutor := hooks.NewHookExecutor(projectPath)
 	return hookExecutor.ExecutePostInstall(hookCommands)
 }
@@ -427,12 +427,12 @@ func (s *ProjectScaffolder) GenerateFromRitualWithHooks(projectPath, ritualPath 
 			return fmt.Errorf("pre-install hooks failed: %w", err)
 		}
 	}
-	
+
 	// Generate project
 	if err := s.GenerateFromRitual(projectPath, ritualPath, manifest, vars); err != nil {
 		return err
 	}
-	
+
 	// Execute post-install hooks
 	if len(manifest.Hooks.PostInstall) > 0 {
 		hookExecutor := hooks.NewHookExecutor(projectPath)
@@ -440,6 +440,6 @@ func (s *ProjectScaffolder) GenerateFromRitualWithHooks(projectPath, ritualPath 
 			return fmt.Errorf("post-install hooks failed: %w", err)
 		}
 	}
-	
+
 	return nil
 }

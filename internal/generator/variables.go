@@ -98,7 +98,7 @@ func (v *Variables) AddComputed() {
 	// Add common transformations for each variable
 	for key, value := range v.data {
 		strValue := fmt.Sprintf("%v", value)
-		
+
 		// Add case transformations
 		v.data[key+"_upper"] = strings.ToUpper(strValue)
 		v.data[key+"_lower"] = strings.ToLower(strValue)
@@ -128,9 +128,9 @@ func (v *Variables) MaskSecrets(secretKeys []string) map[string]interface{} {
 	}
 
 	for k, val := range v.data {
-		if secretSet[k] || strings.Contains(strings.ToLower(k), "password") || 
-		   strings.Contains(strings.ToLower(k), "secret") ||
-		   strings.Contains(strings.ToLower(k), "token") {
+		if secretSet[k] || strings.Contains(strings.ToLower(k), "password") ||
+			strings.Contains(strings.ToLower(k), "secret") ||
+			strings.Contains(strings.ToLower(k), "token") {
 			result[k] = "***"
 		} else {
 			result[k] = val
@@ -179,11 +179,11 @@ func splitWords(s string) []string {
 	// Split on common delimiters
 	s = strings.ReplaceAll(s, "-", " ")
 	s = strings.ReplaceAll(s, "_", " ")
-	
+
 	// Split on uppercase letters (camelCase/PascalCase)
 	var words []string
 	var currentWord strings.Builder
-	
+
 	for i, r := range s {
 		if i > 0 && r >= 'A' && r <= 'Z' {
 			if currentWord.Len() > 0 {
@@ -198,10 +198,10 @@ func splitWords(s string) []string {
 			currentWord.Reset()
 		}
 	}
-	
+
 	if currentWord.Len() > 0 {
 		words = append(words, currentWord.String())
 	}
-	
+
 	return words
 }

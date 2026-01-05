@@ -149,7 +149,7 @@ func TestDependencyGraph_TopologicalSort(t *testing.T) {
 			}
 
 			order, err := graph.TopologicalSort()
-			
+
 			if tt.wantError {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -180,8 +180,8 @@ func TestDependencyResolver_ResolveDependencies(t *testing.T) {
 				"base-ritual",
 			},
 			Database: &ritual.DatabaseRequirement{
-				Required: true,
-				Types: []string{"postgres"},
+				Required:   true,
+				Types:      []string{"postgres"},
 				MinVersion: "13.0",
 			},
 		},
@@ -253,7 +253,7 @@ func TestDependencyResolver_ValidateDependencies(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resolver := NewDependencyResolver()
 			err := resolver.ValidateDependencies(tt.manifest)
-			
+
 			if tt.wantError && err == nil {
 				t.Error("Expected error but got none")
 			}
@@ -266,29 +266,29 @@ func TestDependencyResolver_ValidateDependencies(t *testing.T) {
 
 func TestDependencyResolver_GetInstallationOrder(t *testing.T) {
 	resolver := NewDependencyResolver()
-	
+
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
 			Name:    "test-project",
 			Version: "1.0.0",
 		},
 	}
-	
+
 	err := resolver.BuildGraph(manifest)
 	if err != nil {
 		t.Fatalf("BuildGraph failed: %v", err)
 	}
-	
+
 	order, err := resolver.GetInstallationOrder()
 	if err != nil {
 		t.Fatalf("GetInstallationOrder failed: %v", err)
 	}
-	
+
 	// Should have the main ritual node
 	if len(order) != 1 {
 		t.Errorf("Expected 1 ritual, got %d", len(order))
 	}
-	
+
 	if len(order) > 0 && order[0] != "test-project" {
 		t.Errorf("Expected test-project, got %s", order[0])
 	}
@@ -296,14 +296,14 @@ func TestDependencyResolver_GetInstallationOrder(t *testing.T) {
 
 func TestDependencyResolver_ValidateDependenciesExtra(t *testing.T) {
 	resolver := NewDependencyResolver()
-	
+
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
 			Name:    "test-project",
 			Version: "1.0.0",
 		},
 	}
-	
+
 	err := resolver.ValidateDependencies(manifest)
 	if err != nil {
 		t.Errorf("ValidateDependencies failed: %v", err)

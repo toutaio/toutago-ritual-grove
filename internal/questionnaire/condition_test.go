@@ -322,7 +322,7 @@ func TestConvertValue(t *testing.T) {
 
 func TestConditionEvaluator_toBool(t *testing.T) {
 	ce := NewConditionEvaluator()
-	
+
 	tests := []struct {
 		name     string
 		input    interface{}
@@ -341,13 +341,13 @@ func TestConditionEvaluator_toBool(t *testing.T) {
 		{"string no", "no", false},
 		{"int 0", 0, false},
 		{"int 1", 1, true},
-		{"int64 0", int64(0), true},  // Bug: type switch compares type, not value
+		{"int64 0", int64(0), true}, // Bug: type switch compares type, not value
 		{"int64 5", int64(5), true},
 		{"float64 0.0", 0.0, false},
 		{"float64 1.5", 1.5, true},
 		{"other type", []string{}, false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ce.toBool(tt.input)

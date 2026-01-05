@@ -36,7 +36,7 @@ func TestExecutor_Execute_DryRun(t *testing.T) {
 	os.WriteFile(templatePath, []byte("package main"), 0644)
 
 	vars := generator.NewVariables()
-	
+
 	context := &ExecutionContext{
 		RitualPath: ritualDir,
 		OutputPath: outputDir,
@@ -46,7 +46,7 @@ func TestExecutor_Execute_DryRun(t *testing.T) {
 	}
 
 	executor := NewExecutor(context)
-	
+
 	// Should not error in dry run
 	if err := executor.Execute(manifest); err != nil {
 		t.Errorf("Execute failed in dry run: %v", err)
@@ -85,7 +85,7 @@ func TestExecutor_Execute_Real(t *testing.T) {
 
 	vars := generator.NewVariables()
 	vars.Set("app_name", "test-app")
-	
+
 	context := &ExecutionContext{
 		RitualPath: ritualDir,
 		OutputPath: outputDir,
@@ -95,7 +95,7 @@ func TestExecutor_Execute_Real(t *testing.T) {
 	}
 
 	executor := NewExecutor(context)
-	
+
 	if err := executor.Execute(manifest); err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -115,20 +115,20 @@ func TestExecutor_Execute_Real(t *testing.T) {
 
 func TestExecutor_RunHooks_DryRun(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
 			Name:    "test-ritual",
 			Version: "1.0.0",
 		},
 		Hooks: ritual.ManifestHooks{
-			PreInstall: []string{"echo 'Setting up'"},
+			PreInstall:  []string{"echo 'Setting up'"},
 			PostInstall: []string{"echo 'Cleaning up'"},
 		},
 	}
 
 	vars := generator.NewVariables()
-	
+
 	context := &ExecutionContext{
 		RitualPath: tmpDir,
 		OutputPath: tmpDir,
@@ -138,7 +138,7 @@ func TestExecutor_RunHooks_DryRun(t *testing.T) {
 	}
 
 	executor := NewExecutor(context)
-	
+
 	// Should not error in dry run
 	if err := executor.Execute(manifest); err != nil {
 		t.Errorf("Execute with hooks failed in dry run: %v", err)
@@ -147,7 +147,7 @@ func TestExecutor_RunHooks_DryRun(t *testing.T) {
 
 func TestExecutor_InstallPackages_DryRun(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
 			Name:    "test-ritual",
@@ -159,7 +159,7 @@ func TestExecutor_InstallPackages_DryRun(t *testing.T) {
 	}
 
 	vars := generator.NewVariables()
-	
+
 	context := &ExecutionContext{
 		RitualPath: tmpDir,
 		OutputPath: tmpDir,
@@ -169,7 +169,7 @@ func TestExecutor_InstallPackages_DryRun(t *testing.T) {
 	}
 
 	executor := NewExecutor(context)
-	
+
 	// Should not error in dry run
 	if err := executor.Execute(manifest); err != nil {
 		t.Errorf("Execute with packages failed in dry run: %v", err)
@@ -178,9 +178,9 @@ func TestExecutor_InstallPackages_DryRun(t *testing.T) {
 
 func TestExecutor_Rollback(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	vars := generator.NewVariables()
-	
+
 	context := &ExecutionContext{
 		RitualPath: tmpDir,
 		OutputPath: tmpDir,
@@ -190,7 +190,7 @@ func TestExecutor_Rollback(t *testing.T) {
 	}
 
 	executor := NewExecutor(context)
-	
+
 	// Should not error (even though not fully implemented)
 	if err := executor.Rollback(); err != nil {
 		t.Errorf("Rollback failed: %v", err)
@@ -222,7 +222,7 @@ func TestExecutor_Execute_WithStaticFiles(t *testing.T) {
 	os.WriteFile(staticPath, []byte(`{"app": "test"}`), 0644)
 
 	vars := generator.NewVariables()
-	
+
 	context := &ExecutionContext{
 		RitualPath: ritualDir,
 		OutputPath: outputDir,
@@ -232,7 +232,7 @@ func TestExecutor_Execute_WithStaticFiles(t *testing.T) {
 	}
 
 	executor := NewExecutor(context)
-	
+
 	if err := executor.Execute(manifest); err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -268,7 +268,7 @@ func TestExecutor_Execute_MissingSourceFile(t *testing.T) {
 	}
 
 	vars := generator.NewVariables()
-	
+
 	context := &ExecutionContext{
 		RitualPath: ritualDir,
 		OutputPath: outputDir,
@@ -278,7 +278,7 @@ func TestExecutor_Execute_MissingSourceFile(t *testing.T) {
 	}
 
 	executor := NewExecutor(context)
-	
+
 	// Should error when source file doesn't exist
 	if err := executor.Execute(manifest); err == nil {
 		t.Error("Expected error for missing source file, got nil")

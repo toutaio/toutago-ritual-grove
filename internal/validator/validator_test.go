@@ -324,7 +324,7 @@ func TestIsValidGoVersion(t *testing.T) {
 
 func TestValidator_validateFiles_Comprehensive(t *testing.T) {
 	v := NewValidator()
-	
+
 	tests := []struct {
 		name      string
 		manifest  *ritual.Manifest
@@ -367,7 +367,7 @@ func TestValidator_validateFiles_Comprehensive(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := v.validateFiles(tt.manifest)
@@ -384,7 +384,7 @@ func TestValidator_validateFiles_Comprehensive(t *testing.T) {
 
 func TestValidator_validateCompatibility_Comprehensive(t *testing.T) {
 	v := NewValidator()
-	
+
 	tests := []struct {
 		name     string
 		manifest *ritual.Manifest
@@ -408,7 +408,7 @@ func TestValidator_validateCompatibility_Comprehensive(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := v.validateCompatibility(tt.manifest)

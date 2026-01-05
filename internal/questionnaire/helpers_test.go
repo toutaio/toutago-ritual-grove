@@ -12,11 +12,11 @@ import (
 
 func TestDatabaseConnectionHelper(t *testing.T) {
 	tests := []struct {
-		name     string
-		dsn      string
-		dbType   string
-		wantErr  bool
-		errMsg   string
+		name    string
+		dsn     string
+		dbType  string
+		wantErr bool
+		errMsg  string
 	}{
 		{
 			name:    "empty DSN",

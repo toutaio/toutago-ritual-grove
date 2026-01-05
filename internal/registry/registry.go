@@ -372,7 +372,7 @@ func getDefaultSearchPaths() []string {
 	// Current directory .ritual/
 	if cwd, err := os.Getwd(); err == nil {
 		paths = append(paths, filepath.Join(cwd, ".ritual"))
-		
+
 		// Also check for rituals/ in current directory (for development)
 		ritualsPath := filepath.Join(cwd, "rituals")
 		if _, err := os.Stat(ritualsPath); err == nil {
@@ -392,10 +392,10 @@ func getDefaultSearchPaths() []string {
 func (r *Registry) SortByName(rituals []*RitualMetadata) []*RitualMetadata {
 	sorted := make([]*RitualMetadata, len(rituals))
 	copy(sorted, rituals)
-	
+
 	sort.Slice(sorted, func(i, j int) bool {
 		return strings.ToLower(sorted[i].Name) < strings.ToLower(sorted[j].Name)
 	})
-	
+
 	return sorted
 }

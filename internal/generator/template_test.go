@@ -73,7 +73,7 @@ func TestGoTemplateEngineRender(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := engine.Render(tt.template, tt.data)
-			
+
 			if tt.wantErr {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -99,7 +99,7 @@ func TestGoTemplateEngineRenderFile(t *testing.T) {
 	// Create a temporary template file
 	tmpDir := t.TempDir()
 	templatePath := filepath.Join(tmpDir, "test.tmpl")
-	
+
 	templateContent := "Hello {{ .name }}!\nPort: {{ .port }}"
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
 		t.Fatalf("Failed to create test template: %v", err)
@@ -128,7 +128,7 @@ func TestNewTemplateEngine(t *testing.T) {
 	}{
 		{"go-template", "*generator.GoTemplateEngine"},
 		{"fith", "*generator.FithTemplateEngine"},
-		{"", "*generator.FithTemplateEngine"}, // default
+		{"", "*generator.FithTemplateEngine"},        // default
 		{"unknown", "*generator.FithTemplateEngine"}, // fallback to default
 	}
 

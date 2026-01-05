@@ -81,31 +81,31 @@ func (g *DocGenerator) GenerateREADME(targetPath string, info ProjectInfo) error
 
 ## Installation
 
-` + "```bash" + `
+`+"```bash"+`
 git clone <repository-url>
 cd %s
 go mod download
-` + "```" + `
+`+"```"+`
 
 ## Configuration
 
 Copy the example configuration file and edit as needed:
 
-` + "```bash" + `
+`+"```bash"+`
 cp .env.example .env
-` + "```" + `
+`+"```"+`
 
 ## Running
 
-` + "```bash" + `
+`+"```bash"+`
 go run cmd/main.go
-` + "```" + `
+`+"```"+`
 
 ## Testing
 
-` + "```bash" + `
+`+"```bash"+`
 go test ./...
-` + "```" + `
+`+"```"+`
 
 ## Documentation
 
@@ -133,7 +133,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 		info.License,
 		info.Author,
 	)
-	
+
 	readmePath := filepath.Join(targetPath, "README.md")
 	return os.WriteFile(readmePath, []byte(content), 0644)
 }
@@ -141,30 +141,30 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 // GenerateAPIDoc generates API documentation
 func (g *DocGenerator) GenerateAPIDoc(targetPath string, endpoints []APIEndpoint) error {
 	var sb strings.Builder
-	
+
 	sb.WriteString("# API Documentation\n\n")
 	sb.WriteString("## Endpoints\n\n")
-	
+
 	for _, ep := range endpoints {
 		sb.WriteString(fmt.Sprintf("### %s %s\n\n", ep.Method, ep.Path))
 		sb.WriteString(fmt.Sprintf("%s\n\n", ep.Description))
-		
+
 		if ep.Request != "" {
 			sb.WriteString(fmt.Sprintf("**Request Body:** `%s`\n\n", ep.Request))
 		}
-		
+
 		if ep.Response != "" {
 			sb.WriteString(fmt.Sprintf("**Response:** `%s`\n\n", ep.Response))
 		}
-		
+
 		sb.WriteString("---\n\n")
 	}
-	
+
 	docsDir := filepath.Join(targetPath, "docs")
 	if err := os.MkdirAll(docsDir, 0755); err != nil {
 		return err
 	}
-	
+
 	apiDocPath := filepath.Join(docsDir, "API.md")
 	return os.WriteFile(apiDocPath, []byte(sb.String()), 0644)
 }
@@ -201,7 +201,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 		version,
 		time.Now().Format("2006-01-02"),
 	)
-	
+
 	changelogPath := filepath.Join(targetPath, "CHANGELOG.md")
 	return os.WriteFile(changelogPath, []byte(content), 0644)
 }
@@ -262,7 +262,7 @@ go test ./...
 
 Be respectful and professional in all interactions.
 `
-	
+
 	contributingPath := filepath.Join(targetPath, "CONTRIBUTING.md")
 	return os.WriteFile(contributingPath, []byte(content), 0644)
 }
@@ -270,7 +270,7 @@ Be respectful and professional in all interactions.
 // GenerateLicense generates a LICENSE file
 func (g *DocGenerator) GenerateLicense(targetPath, licenseType, author, year string) error {
 	var content string
-	
+
 	switch licenseType {
 	case "MIT":
 		content = fmt.Sprintf(`MIT License
@@ -295,7 +295,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 `, year, author)
-	
+
 	case "Apache-2.0":
 		content = fmt.Sprintf(`Apache License
 Version 2.0, January 2004
@@ -315,11 +315,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 `, year, author)
-	
+
 	default:
 		return fmt.Errorf("unsupported license type: %s", licenseType)
 	}
-	
+
 	licensePath := filepath.Join(targetPath, "LICENSE")
 	return os.WriteFile(licensePath, []byte(content), 0644)
 }
@@ -327,29 +327,29 @@ limitations under the License.
 // GenerateArchitectureDoc generates architecture documentation
 func (g *DocGenerator) GenerateArchitectureDoc(targetPath string, components []Component) error {
 	var sb strings.Builder
-	
+
 	sb.WriteString("# Architecture\n\n")
 	sb.WriteString("## Overview\n\n")
 	sb.WriteString("This document describes the system architecture.\n\n")
 	sb.WriteString("## Components\n\n")
-	
+
 	for _, comp := range components {
 		sb.WriteString(fmt.Sprintf("### %s\n\n", comp.Name))
 		sb.WriteString(fmt.Sprintf("%s\n\n", comp.Description))
 	}
-	
+
 	sb.WriteString("## Data Flow\n\n")
 	sb.WriteString("1. Request received by router\n")
 	sb.WriteString("2. Authentication/authorization checked\n")
 	sb.WriteString("3. Handler processes request\n")
 	sb.WriteString("4. Database operations performed\n")
 	sb.WriteString("5. Response returned to client\n\n")
-	
+
 	docsDir := filepath.Join(targetPath, "docs")
 	if err := os.MkdirAll(docsDir, 0755); err != nil {
 		return err
 	}
-	
+
 	archPath := filepath.Join(docsDir, "ARCHITECTURE.md")
 	return os.WriteFile(archPath, []byte(sb.String()), 0644)
 }
@@ -357,12 +357,12 @@ func (g *DocGenerator) GenerateArchitectureDoc(targetPath string, components []C
 // GenerateDeploymentGuide generates deployment documentation
 func (g *DocGenerator) GenerateDeploymentGuide(targetPath string, config DeploymentConfig) error {
 	var sb strings.Builder
-	
+
 	sb.WriteString("# Deployment Guide\n\n")
 	sb.WriteString(fmt.Sprintf("## Platform: %s\n\n", config.Platform))
 	sb.WriteString(fmt.Sprintf("## Database: %s\n\n", config.Database))
 	sb.WriteString(fmt.Sprintf("## Environment: %s\n\n", config.Environment))
-	
+
 	if config.Platform == "docker" {
 		sb.WriteString("## Docker Deployment\n\n")
 		sb.WriteString("```bash\n")
@@ -370,7 +370,7 @@ func (g *DocGenerator) GenerateDeploymentGuide(targetPath string, config Deploym
 		sb.WriteString("docker run -p 8080:8080 myapp\n")
 		sb.WriteString("```\n\n")
 	}
-	
+
 	sb.WriteString("## Environment Variables\n\n")
 	sb.WriteString("- `PORT`: Server port (default: 8080)\n")
 	sb.WriteString(fmt.Sprintf("- `DB_HOST`: %s host\n", config.Database))
@@ -378,16 +378,16 @@ func (g *DocGenerator) GenerateDeploymentGuide(targetPath string, config Deploym
 	sb.WriteString("- `DB_NAME`: Database name\n")
 	sb.WriteString("- `DB_USER`: Database user\n")
 	sb.WriteString("- `DB_PASSWORD`: Database password\n\n")
-	
+
 	sb.WriteString("## Health Checks\n\n")
 	sb.WriteString("- Health endpoint: `/health`\n")
 	sb.WriteString("- Readiness endpoint: `/ready`\n\n")
-	
+
 	docsDir := filepath.Join(targetPath, "docs")
 	if err := os.MkdirAll(docsDir, 0755); err != nil {
 		return err
 	}
-	
+
 	deployPath := filepath.Join(docsDir, "DEPLOYMENT.md")
 	return os.WriteFile(deployPath, []byte(sb.String()), 0644)
 }
@@ -398,44 +398,44 @@ func (g *DocGenerator) GenerateAll(targetPath string, config DocConfig) error {
 	if err := g.GenerateREADME(targetPath, config.ProjectInfo); err != nil {
 		return fmt.Errorf("failed to generate README: %w", err)
 	}
-	
+
 	// Generate optional docs
 	if config.GenerateChangelog {
 		if err := g.GenerateChangelog(targetPath, config.ProjectInfo.Version); err != nil {
 			return fmt.Errorf("failed to generate CHANGELOG: %w", err)
 		}
 	}
-	
+
 	if config.GenerateContributing {
 		if err := g.GenerateContributing(targetPath); err != nil {
 			return fmt.Errorf("failed to generate CONTRIBUTING: %w", err)
 		}
 	}
-	
+
 	if config.License != "" {
 		year := time.Now().Format("2006")
 		if err := g.GenerateLicense(targetPath, config.License, config.ProjectInfo.Author, year); err != nil {
 			return fmt.Errorf("failed to generate LICENSE: %w", err)
 		}
 	}
-	
+
 	if config.GenerateAPI {
 		if err := g.GenerateAPIDoc(targetPath, config.APIEndpoints); err != nil {
 			return fmt.Errorf("failed to generate API doc: %w", err)
 		}
 	}
-	
+
 	if config.GenerateArchitecture {
 		if err := g.GenerateArchitectureDoc(targetPath, config.Components); err != nil {
 			return fmt.Errorf("failed to generate architecture doc: %w", err)
 		}
 	}
-	
+
 	if config.GenerateDeployment {
 		if err := g.GenerateDeploymentGuide(targetPath, config.DeploymentConfig); err != nil {
 			return fmt.Errorf("failed to generate deployment guide: %w", err)
 		}
 	}
-	
+
 	return nil
 }

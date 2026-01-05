@@ -2,16 +2,16 @@ package ritual
 
 // Manifest represents the complete ritual.yaml definition
 type Manifest struct {
-	Ritual       RitualMeta       `yaml:"ritual"`
-	Compatibility Compatibility    `yaml:"compatibility,omitempty"`
-	Dependencies Dependencies     `yaml:"dependencies,omitempty"`
-	Questions    []Question       `yaml:"questions,omitempty"`
-	Files        FilesSection     `yaml:"files,omitempty"`
-	Migrations   []Migration      `yaml:"migrations,omitempty"`
-	Hooks        ManifestHooks    `yaml:"hooks,omitempty"`
-	MultiTenancy *MultiTenancy    `yaml:"multi_tenancy,omitempty"`
-	Telemetry    *Telemetry       `yaml:"telemetry,omitempty"`
-	Parent       *ParentRitual    `yaml:"parent,omitempty"`
+	Ritual        RitualMeta    `yaml:"ritual"`
+	Compatibility Compatibility `yaml:"compatibility,omitempty"`
+	Dependencies  Dependencies  `yaml:"dependencies,omitempty"`
+	Questions     []Question    `yaml:"questions,omitempty"`
+	Files         FilesSection  `yaml:"files,omitempty"`
+	Migrations    []Migration   `yaml:"migrations,omitempty"`
+	Hooks         ManifestHooks `yaml:"hooks,omitempty"`
+	MultiTenancy  *MultiTenancy `yaml:"multi_tenancy,omitempty"`
+	Telemetry     *Telemetry    `yaml:"telemetry,omitempty"`
+	Parent        *ParentRitual `yaml:"parent,omitempty"`
 }
 
 // RitualMeta contains ritual metadata
@@ -37,16 +37,16 @@ type Compatibility struct {
 
 // Dependencies defines required packages and rituals
 type Dependencies struct {
-	Packages []string          `yaml:"packages,omitempty"`
-	Rituals  []string          `yaml:"rituals,omitempty"`
+	Packages []string             `yaml:"packages,omitempty"`
+	Rituals  []string             `yaml:"rituals,omitempty"`
 	Database *DatabaseRequirement `yaml:"database,omitempty"`
 }
 
 // DatabaseRequirement specifies database needs
 type DatabaseRequirement struct {
-	Required bool     `yaml:"required"`
-	Types    []string `yaml:"types,omitempty"` // postgres, mysql, sqlite
-	MinVersion string `yaml:"min_version,omitempty"`
+	Required   bool     `yaml:"required"`
+	Types      []string `yaml:"types,omitempty"` // postgres, mysql, sqlite
+	MinVersion string   `yaml:"min_version,omitempty"`
 }
 
 // QuestionType represents the type of question
@@ -66,43 +66,43 @@ const (
 
 // Question represents an interactive prompt
 type Question struct {
-	Name        string                 `yaml:"name"`
-	Prompt      string                 `yaml:"prompt"`
-	Type        QuestionType           `yaml:"type"`
-	Required    bool                   `yaml:"required,omitempty"`
-	Default     interface{}            `yaml:"default,omitempty"`
-	Choices     []string               `yaml:"choices,omitempty"`
-	Validate    *ValidationRule        `yaml:"validate,omitempty"`
-	Condition   *QuestionCondition     `yaml:"condition,omitempty"`
-	Helper      *QuestionHelper        `yaml:"helper,omitempty"`
-	Group       string                 `yaml:"group,omitempty"`
-	Step        int                    `yaml:"step,omitempty"`
+	Name      string             `yaml:"name"`
+	Prompt    string             `yaml:"prompt"`
+	Type      QuestionType       `yaml:"type"`
+	Required  bool               `yaml:"required,omitempty"`
+	Default   interface{}        `yaml:"default,omitempty"`
+	Choices   []string           `yaml:"choices,omitempty"`
+	Validate  *ValidationRule    `yaml:"validate,omitempty"`
+	Condition *QuestionCondition `yaml:"condition,omitempty"`
+	Helper    *QuestionHelper    `yaml:"helper,omitempty"`
+	Group     string             `yaml:"group,omitempty"`
+	Step      int                `yaml:"step,omitempty"`
 }
 
 // ValidationRule defines validation constraints
 type ValidationRule struct {
-	Pattern string  `yaml:"pattern,omitempty"` // regex pattern
-	Min     *int    `yaml:"min,omitempty"`
-	Max     *int    `yaml:"max,omitempty"`
-	MinLen  *int    `yaml:"min_len,omitempty"`
-	MaxLen  *int    `yaml:"max_len,omitempty"`
-	Custom  string  `yaml:"custom,omitempty"` // custom validator name
+	Pattern string `yaml:"pattern,omitempty"` // regex pattern
+	Min     *int   `yaml:"min,omitempty"`
+	Max     *int   `yaml:"max,omitempty"`
+	MinLen  *int   `yaml:"min_len,omitempty"`
+	MaxLen  *int   `yaml:"max_len,omitempty"`
+	Custom  string `yaml:"custom,omitempty"` // custom validator name
 }
 
 // QuestionCondition defines conditional display
 type QuestionCondition struct {
-	Field      string                `yaml:"field,omitempty"`
-	Equals     interface{}           `yaml:"equals,omitempty"`
-	NotEquals  interface{}           `yaml:"not_equals,omitempty"`
-	Expression string                `yaml:"expression,omitempty"`
-	And        []QuestionCondition   `yaml:"and,omitempty"`
-	Or         []QuestionCondition   `yaml:"or,omitempty"`
-	Not        *QuestionCondition    `yaml:"not,omitempty"`
+	Field      string              `yaml:"field,omitempty"`
+	Equals     interface{}         `yaml:"equals,omitempty"`
+	NotEquals  interface{}         `yaml:"not_equals,omitempty"`
+	Expression string              `yaml:"expression,omitempty"`
+	And        []QuestionCondition `yaml:"and,omitempty"`
+	Or         []QuestionCondition `yaml:"or,omitempty"`
+	Not        *QuestionCondition  `yaml:"not,omitempty"`
 }
 
 // QuestionHelper provides helper tools
 type QuestionHelper struct {
-	Type string                 `yaml:"type"` // db_test, url_check, path_check
+	Type   string                 `yaml:"type"` // db_test, url_check, path_check
 	Config map[string]interface{} `yaml:"config,omitempty"`
 }
 
@@ -123,19 +123,19 @@ type FileMapping struct {
 
 // Migration represents a version migration
 type Migration struct {
-	FromVersion string            `yaml:"from_version"`
-	ToVersion   string            `yaml:"to_version"`
-	Description string            `yaml:"description,omitempty"`
-	Up          MigrationHandler  `yaml:"up"`
-	Down        MigrationHandler  `yaml:"down"`
-	Idempotent  bool              `yaml:"idempotent,omitempty"`
+	FromVersion string           `yaml:"from_version"`
+	ToVersion   string           `yaml:"to_version"`
+	Description string           `yaml:"description,omitempty"`
+	Up          MigrationHandler `yaml:"up"`
+	Down        MigrationHandler `yaml:"down"`
+	Idempotent  bool             `yaml:"idempotent,omitempty"`
 }
 
 // MigrationHandler defines migration logic
 type MigrationHandler struct {
-	SQL     []string `yaml:"sql,omitempty"`
-	Script  string   `yaml:"script,omitempty"`
-	GoCode  string   `yaml:"go_code,omitempty"`
+	SQL    []string `yaml:"sql,omitempty"`
+	Script string   `yaml:"script,omitempty"`
+	GoCode string   `yaml:"go_code,omitempty"`
 }
 
 // ManifestHooks defines lifecycle hooks

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	
+
 	"github.com/toutaio/toutago-ritual-grove/pkg/ritual"
 )
 
@@ -14,7 +14,7 @@ func TestNewRegistry(t *testing.T) {
 	if reg == nil {
 		t.Fatal("expected registry to be created")
 	}
-	
+
 	if len(reg.searchPaths) == 0 {
 		t.Error("expected default search paths to be set")
 	}
@@ -23,9 +23,9 @@ func TestNewRegistry(t *testing.T) {
 func TestAddSearchPath(t *testing.T) {
 	reg := NewRegistry()
 	initialCount := len(reg.searchPaths)
-	
+
 	reg.AddSearchPath("/custom/path")
-	
+
 	if len(reg.searchPaths) != initialCount+1 {
 		t.Errorf("expected %d search paths, got %d", initialCount+1, len(reg.searchPaths))
 	}
@@ -33,7 +33,7 @@ func TestAddSearchPath(t *testing.T) {
 
 func TestSearch(t *testing.T) {
 	reg := NewRegistry()
-	
+
 	// Add some test metadata
 	reg.cache["blog"] = &RitualMetadata{
 		Name:        "blog",
@@ -45,7 +45,7 @@ func TestSearch(t *testing.T) {
 		Description: "A wiki system",
 		Tags:        []string{"web", "documentation"},
 	}
-	
+
 	tests := []struct {
 		name     string
 		query    string
@@ -57,7 +57,7 @@ func TestSearch(t *testing.T) {
 		{"search by tag partial", "doc", 1},
 		{"no matches", "xyz", 0},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			results := reg.Search(tt.query)
@@ -73,7 +73,7 @@ func TestGet(t *testing.T) {
 	reg.cache["test"] = &RitualMetadata{
 		Name: "test",
 	}
-	
+
 	t.Run("existing ritual", func(t *testing.T) {
 		meta, err := reg.Get("test")
 		if err != nil {
@@ -83,7 +83,7 @@ func TestGet(t *testing.T) {
 			t.Errorf("expected name 'test', got '%s'", meta.Name)
 		}
 	})
-	
+
 	t.Run("non-existing ritual", func(t *testing.T) {
 		_, err := reg.Get("nonexistent")
 		if err == nil {
@@ -94,7 +94,7 @@ func TestGet(t *testing.T) {
 
 func TestFilterByTag(t *testing.T) {
 	reg := NewRegistry()
-	
+
 	reg.cache["blog"] = &RitualMetadata{
 		Name: "blog",
 		Tags: []string{"web", "content"},
@@ -107,12 +107,12 @@ func TestFilterByTag(t *testing.T) {
 		Name: "api",
 		Tags: []string{"rest", "backend"},
 	}
-	
+
 	results := reg.FilterByTag("web")
 	if len(results) != 2 {
 		t.Errorf("expected 2 results for 'web' tag, got %d", len(results))
 	}
-	
+
 	results = reg.FilterByTag("backend")
 	if len(results) != 1 {
 		t.Errorf("expected 1 result for 'backend' tag, got %d", len(results))
@@ -121,13 +121,13 @@ func TestFilterByTag(t *testing.T) {
 
 func TestMatchesQuery(t *testing.T) {
 	reg := NewRegistry()
-	
+
 	meta := &RitualMetadata{
 		Name:        "blog",
 		Description: "A blogging platform",
 		Tags:        []string{"web", "content"},
 	}
-	
+
 	tests := []struct {
 		query   string
 		matches bool
@@ -140,7 +140,7 @@ func TestMatchesQuery(t *testing.T) {
 		{"platform", true},
 		{"xyz", false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.query, func(t *testing.T) {
 			result := reg.matchesQuery(meta, strings.ToLower(tt.query))
@@ -153,11 +153,11 @@ func TestMatchesQuery(t *testing.T) {
 
 func TestGetDefaultSearchPaths(t *testing.T) {
 	paths := getDefaultSearchPaths()
-	
+
 	if len(paths) == 0 {
 		t.Error("expected at least one default search path")
 	}
-	
+
 	// Check that paths are absolute
 	for _, path := range paths {
 		if !filepath.IsAbs(path) {
@@ -168,11 +168,11 @@ func TestGetDefaultSearchPaths(t *testing.T) {
 
 func TestList(t *testing.T) {
 	reg := NewRegistry()
-	
+
 	reg.cache["ritual1"] = &RitualMetadata{Name: "ritual1"}
 	reg.cache["ritual2"] = &RitualMetadata{Name: "ritual2"}
 	reg.cache["ritual3"] = &RitualMetadata{Name: "ritual3"}
-	
+
 	list := reg.List()
 	if len(list) != 3 {
 		t.Errorf("expected 3 rituals in list, got %d", len(list))
@@ -183,19 +183,19 @@ func TestScan(t *testing.T) {
 	// Create temporary directory with a ritual
 	tmpDir := t.TempDir()
 	ritualDir := filepath.Join(tmpDir, "test-ritual")
-	
+
 	// Create ritual directory and file
 	if err := createTestRitual(ritualDir, "test-ritual", "1.0.0"); err != nil {
 		t.Fatalf("failed to create test ritual: %v", err)
 	}
-	
+
 	reg := NewRegistry()
 	reg.searchPaths = []string{tmpDir}
-	
+
 	if err := reg.Scan(); err != nil {
 		t.Fatalf("Scan failed: %v", err)
 	}
-	
+
 	// Check that the ritual was discovered
 	if len(reg.cache) == 0 {
 		t.Error("expected at least one ritual after scan")
@@ -205,13 +205,13 @@ func TestScan(t *testing.T) {
 func TestLoad(t *testing.T) {
 	tmpDir := t.TempDir()
 	ritualDir := filepath.Join(tmpDir, "my-ritual")
-	
+
 	if err := createTestRitual(ritualDir, "my-ritual", "1.0.0"); err != nil {
 		t.Fatalf("failed to create test ritual: %v", err)
 	}
-	
+
 	reg := NewRegistry()
-	
+
 	// Add ritual to cache first
 	reg.cache["my-ritual"] = &RitualMetadata{
 		Name:    "my-ritual",
@@ -219,12 +219,12 @@ func TestLoad(t *testing.T) {
 		Path:    ritualDir,
 		Source:  SourceLocal,
 	}
-	
+
 	manifest, err := reg.Load("my-ritual")
 	if err != nil {
 		t.Fatalf("Load failed: %v", err)
 	}
-	
+
 	if manifest.Ritual.Name != "my-ritual" {
 		t.Errorf("expected name 'my-ritual', got '%s'", manifest.Ritual.Name)
 	}
@@ -232,7 +232,7 @@ func TestLoad(t *testing.T) {
 
 func TestFilterByCompatibility(t *testing.T) {
 	reg := NewRegistry()
-	
+
 	reg.cache["compat1"] = &RitualMetadata{
 		Name: "compat1",
 		Compatibility: &ritual.Compatibility{
@@ -247,7 +247,7 @@ func TestFilterByCompatibility(t *testing.T) {
 			MaxToutaVersion: "3.0.0",
 		},
 	}
-	
+
 	results := reg.FilterByCompatibility("1.5.0")
 	// The function exists but may not be fully implemented
 	_ = results
@@ -255,15 +255,15 @@ func TestFilterByCompatibility(t *testing.T) {
 
 func TestSortByName(t *testing.T) {
 	reg := NewRegistry()
-	
+
 	rituals := []*RitualMetadata{
 		{Name: "zebra"},
 		{Name: "apple"},
 		{Name: "mango"},
 	}
-	
+
 	sorted := reg.SortByName(rituals)
-	
+
 	if sorted[0].Name != "apple" {
 		t.Errorf("expected first to be 'apple', got '%s'", sorted[0].Name)
 	}
@@ -280,9 +280,9 @@ func createTestRitual(dir, name, version string) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
-	
+
 	yamlContent := []byte("ritual:\n  name: " + name + "\n  version: " + version + "\n")
 	ritualFile := filepath.Join(dir, "ritual.yaml")
-	
+
 	return os.WriteFile(ritualFile, yamlContent, 0644)
 }

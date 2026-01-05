@@ -64,7 +64,7 @@ func (v *Validator) validateMetadata(manifest *ritual.Manifest) error {
 	if manifest.Ritual.TemplateEngine != "" {
 		validEngines := []string{"fith", "go-template"}
 		if !contains(validEngines, manifest.Ritual.TemplateEngine) {
-			return fmt.Errorf("invalid template engine: %s (must be one of: %s)", 
+			return fmt.Errorf("invalid template engine: %s (must be one of: %s)",
 				manifest.Ritual.TemplateEngine, strings.Join(validEngines, ", "))
 		}
 	}

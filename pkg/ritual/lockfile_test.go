@@ -96,16 +96,16 @@ rituals:
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			lockPath := filepath.Join(tmpDir, "ritual.lock")
-			
+
 			err := os.WriteFile(lockPath, []byte(tt.content), 0644)
 			require.NoError(t, err)
-			
+
 			got, err := LoadLockFile(lockPath)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.Ritual.Name, got.Ritual.Name)
 			assert.Equal(t, tt.want.Ritual.Version, got.Ritual.Version)
@@ -118,7 +118,7 @@ rituals:
 func TestLockFile_Save(t *testing.T) {
 	tmpDir := t.TempDir()
 	lockPath := filepath.Join(tmpDir, "ritual.lock")
-	
+
 	lock := &LockFile{
 		Ritual: RitualLock{
 			Name:       "test",
@@ -134,14 +134,14 @@ func TestLockFile_Save(t *testing.T) {
 			},
 		},
 	}
-	
+
 	err := lock.Save(lockPath)
 	require.NoError(t, err)
-	
+
 	// Verify file exists
 	_, err = os.Stat(lockPath)
 	require.NoError(t, err)
-	
+
 	// Load and verify
 	loaded, err := LoadLockFile(lockPath)
 	require.NoError(t, err)
@@ -205,7 +205,7 @@ func TestLockFile_Verify(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.lock.Verify(tt.manifest)
@@ -225,11 +225,11 @@ func TestLockFile_DependencyCheck(t *testing.T) {
 			{Name: "dep2", Version: "2.0.0", Resolved: "2.1.0"},
 		},
 	}
-	
+
 	dep, found := lock.GetDependency("dep1")
 	assert.True(t, found)
 	assert.Equal(t, "1.0.0", dep.Resolved)
-	
+
 	_, found = lock.GetDependency("nonexistent")
 	assert.False(t, found)
 }
@@ -241,11 +241,11 @@ func TestLockFile_RitualDependencyCheck(t *testing.T) {
 			{Name: "ritual2", Version: "2.0.0"},
 		},
 	}
-	
+
 	ritual, found := lock.GetRitualDependency("ritual1")
 	assert.True(t, found)
 	assert.Equal(t, "1.0.0", ritual.Version)
-	
+
 	_, found = lock.GetRitualDependency("nonexistent")
 	assert.False(t, found)
 }

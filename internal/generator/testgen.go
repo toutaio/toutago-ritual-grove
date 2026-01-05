@@ -91,16 +91,16 @@ func (g *TestGenerator) GenerateUnitTests(projectPath, packagePath, sourceFile s
 	// Parse source file name
 	baseName := strings.TrimSuffix(sourceFile, ".go")
 	testFileName := baseName + "_test.go"
-	
+
 	// Determine package name from path
 	packageName := filepath.Base(packagePath)
-	
+
 	// Convert to title case for function name (e.g., hello -> Hello)
 	functionName := strings.Title(baseName)
 	// Handle snake_case or kebab-case
 	functionName = strings.ReplaceAll(functionName, "_", "")
 	functionName = strings.ReplaceAll(functionName, "-", "")
-	
+
 	// Create test file content
 	content := fmt.Sprintf(`package %s
 
@@ -127,7 +127,7 @@ func Test%sHandler(t *testing.T) {
 	}
 }
 `, packageName, sourceFile, functionName)
-	
+
 	// Write test file
 	testPath := filepath.Join(projectPath, packagePath, testFileName)
 	return os.WriteFile(testPath, []byte(content), 0644)
@@ -136,7 +136,7 @@ func Test%sHandler(t *testing.T) {
 // GenerateHandlerTest generates a test for an HTTP handler
 func (g *TestGenerator) GenerateHandlerTest(spec HandlerTestSpec) (string, error) {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf("package %s\n\n", spec.PackageName))
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"net/http\"\n")
@@ -146,7 +146,7 @@ func (g *TestGenerator) GenerateHandlerTest(spec HandlerTestSpec) (string, error
 		sb.WriteString("\t\"strings\"\n")
 	}
 	sb.WriteString(")\n\n")
-	
+
 	sb.WriteString(fmt.Sprintf("func Test%s(t *testing.T) {\n", spec.HandlerName))
 	sb.WriteString("\treq := httptest.NewRequest(\"")
 	sb.WriteString(spec.HTTPMethod)
@@ -154,35 +154,35 @@ func (g *TestGenerator) GenerateHandlerTest(spec HandlerTestSpec) (string, error
 	sb.WriteString(spec.Path)
 	sb.WriteString("\", nil)\n")
 	sb.WriteString("\tw := httptest.NewRecorder()\n\n")
-	
+
 	sb.WriteString(fmt.Sprintf("\t%s(w, req)\n\n", spec.HandlerName))
-	
+
 	sb.WriteString("\tresp := w.Result()\n")
 	sb.WriteString(fmt.Sprintf("\tif resp.StatusCode != %d {\n", spec.ExpectedCode))
 	sb.WriteString(fmt.Sprintf("\t\tt.Errorf(\"Expected status %d, got %%d\", resp.StatusCode)\n", spec.ExpectedCode))
 	sb.WriteString("\t}\n")
-	
+
 	if spec.CheckBody && spec.BodyContains != "" {
 		sb.WriteString("\n\tbody := w.Body.String()\n")
 		sb.WriteString(fmt.Sprintf("\tif !strings.Contains(body, \"%s\") {\n", spec.BodyContains))
 		sb.WriteString(fmt.Sprintf("\t\tt.Errorf(\"Expected body to contain '%s', got: %%s\", body)\n", spec.BodyContains))
 		sb.WriteString("\t}\n")
 	}
-	
+
 	sb.WriteString("}\n")
-	
+
 	return sb.String(), nil
 }
 
 // GenerateTableDrivenTest generates a table-driven test
 func (g *TestGenerator) GenerateTableDrivenTest(spec TableDrivenTestSpec) (string, error) {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf("package %s\n\n", spec.PackageName))
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"testing\"\n")
 	sb.WriteString(")\n\n")
-	
+
 	sb.WriteString(fmt.Sprintf("func Test%s(t *testing.T) {\n", spec.FunctionName))
 	sb.WriteString("\ttests := []struct {\n")
 	sb.WriteString("\t\tname string\n")
@@ -190,7 +190,7 @@ func (g *TestGenerator) GenerateTableDrivenTest(spec TableDrivenTestSpec) (strin
 	sb.WriteString("\t\twant interface{}\n")
 	sb.WriteString("\t\twantErr bool\n")
 	sb.WriteString("\t}{\n")
-	
+
 	for _, tc := range spec.TestCases {
 		sb.WriteString("\t\t{\n")
 		sb.WriteString(fmt.Sprintf("\t\t\tname: \"%s\",\n", tc.Name))
@@ -199,7 +199,7 @@ func (g *TestGenerator) GenerateTableDrivenTest(spec TableDrivenTestSpec) (strin
 		sb.WriteString(fmt.Sprintf("\t\t\twantErr: %v,\n", tc.WantErr))
 		sb.WriteString("\t\t},\n")
 	}
-	
+
 	sb.WriteString("\t}\n\n")
 	sb.WriteString("\tfor _, tt := range tests {\n")
 	sb.WriteString("\t\tt.Run(tt.name, func(t *testing.T) {\n")
@@ -208,14 +208,14 @@ func (g *TestGenerator) GenerateTableDrivenTest(spec TableDrivenTestSpec) (strin
 	sb.WriteString("\t\t})\n")
 	sb.WriteString("\t}\n")
 	sb.WriteString("}\n")
-	
+
 	return sb.String(), nil
 }
 
 // GenerateIntegrationTest generates an integration test
 func (g *TestGenerator) GenerateIntegrationTest(projectPath string, spec IntegrationTestSpec) error {
 	var sb strings.Builder
-	
+
 	sb.WriteString("package test\n\n")
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"net/http\"\n")
@@ -225,32 +225,32 @@ func (g *TestGenerator) GenerateIntegrationTest(projectPath string, spec Integra
 		sb.WriteString("\t\"database/sql\"\n")
 	}
 	sb.WriteString(")\n\n")
-	
+
 	sb.WriteString(fmt.Sprintf("// Test%s %s\n", spec.Name, spec.Description))
 	sb.WriteString(fmt.Sprintf("func Test%s(t *testing.T) {\n", spec.Name))
-	
+
 	if spec.SetupDB {
 		sb.WriteString("\t// Setup test database\n")
 		sb.WriteString("\t// db := setupTestDB(t)\n")
 		sb.WriteString("\t// defer db.Close()\n\n")
 	}
-	
+
 	for _, endpoint := range spec.Endpoints {
 		sb.WriteString(fmt.Sprintf("\tt.Run(\"%s\", func(t *testing.T) {\n", endpoint.Name))
-		sb.WriteString(fmt.Sprintf("\t\treq := httptest.NewRequest(\"%s\", \"%s\", nil)\n", 
+		sb.WriteString(fmt.Sprintf("\t\treq := httptest.NewRequest(\"%s\", \"%s\", nil)\n",
 			endpoint.Method, endpoint.Path))
 		sb.WriteString("\t\tw := httptest.NewRecorder()\n\n")
 		sb.WriteString("\t\t// TODO: Call handler\n\n")
 		sb.WriteString("\t\tresp := w.Result()\n")
 		sb.WriteString(fmt.Sprintf("\t\tif resp.StatusCode != %d {\n", endpoint.ExpectedCode))
-		sb.WriteString(fmt.Sprintf("\t\t\tt.Errorf(\"Expected status %d, got %%d\", resp.StatusCode)\n", 
+		sb.WriteString(fmt.Sprintf("\t\t\tt.Errorf(\"Expected status %d, got %%d\", resp.StatusCode)\n",
 			endpoint.ExpectedCode))
 		sb.WriteString("\t\t}\n")
 		sb.WriteString("\t})\n\n")
 	}
-	
+
 	sb.WriteString("}\n")
-	
+
 	// Write to file
 	fileName := strings.ToLower(spec.Name) + "_test.go"
 	// Convert CamelCase to snake_case for filename
@@ -293,25 +293,25 @@ func (g *TestGenerator) GenerateTestFixture(projectPath string, fixture TestFixt
 	if err != nil {
 		return fmt.Errorf("failed to marshal fixture data: %w", err)
 	}
-	
+
 	// Write to file
 	fixturePath := filepath.Join(projectPath, "test", "fixtures", fixture.Name+".json")
 	if err := os.MkdirAll(filepath.Dir(fixturePath), 0755); err != nil {
 		return fmt.Errorf("failed to create fixtures directory: %w", err)
 	}
-	
+
 	return os.WriteFile(fixturePath, data, 0644)
 }
 
 // GenerateBenchmark generates a benchmark test
 func (g *TestGenerator) GenerateBenchmark(spec BenchmarkSpec) (string, error) {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf("package %s\n\n", spec.PackageName))
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"testing\"\n")
 	sb.WriteString(")\n\n")
-	
+
 	sb.WriteString(fmt.Sprintf("func Benchmark%s(b *testing.B) {\n", spec.FunctionName))
 	if spec.Setup != "" {
 		sb.WriteString(fmt.Sprintf("\t%s\n\n", spec.Setup))
@@ -321,22 +321,22 @@ func (g *TestGenerator) GenerateBenchmark(spec BenchmarkSpec) (string, error) {
 	sb.WriteString(fmt.Sprintf("\t\t// %s()\n", spec.FunctionName))
 	sb.WriteString("\t}\n")
 	sb.WriteString("}\n")
-	
+
 	return sb.String(), nil
 }
 
 // GenerateMockInterface generates a mock implementation of an interface
 func (g *TestGenerator) GenerateMockInterface(spec MockSpec) (string, error) {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf("package %s\n\n", spec.PackageName))
-	
+
 	// Generate mock struct
 	mockName := "Mock" + spec.InterfaceName
 	sb.WriteString(fmt.Sprintf("// %s is a mock implementation of %s\n", mockName, spec.InterfaceName))
 	sb.WriteString(fmt.Sprintf("type %s struct {\n", mockName))
 	sb.WriteString("}\n\n")
-	
+
 	// Generate method implementations
 	for _, method := range spec.Methods {
 		sb.WriteString(fmt.Sprintf("func (m *%s) %s(", mockName, method.Name))
@@ -345,7 +345,7 @@ func (g *TestGenerator) GenerateMockInterface(spec MockSpec) (string, error) {
 		sb.WriteString(strings.Join(method.Returns, ", "))
 		sb.WriteString(") {\n")
 		sb.WriteString("\t// TODO: Implement mock behavior\n")
-		
+
 		// Return zero values
 		if len(method.Returns) > 0 {
 			sb.WriteString("\treturn ")
@@ -363,9 +363,9 @@ func (g *TestGenerator) GenerateMockInterface(spec MockSpec) (string, error) {
 			}
 			sb.WriteString("\n")
 		}
-		
+
 		sb.WriteString("}\n\n")
 	}
-	
+
 	return sb.String(), nil
 }

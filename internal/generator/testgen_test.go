@@ -9,13 +9,13 @@ import (
 func TestTestGenerator_GenerateUnitTests(t *testing.T) {
 	tmpDir := t.TempDir()
 	projectPath := filepath.Join(tmpDir, "test-project")
-	
+
 	// Create a handler file first
 	handlersDir := filepath.Join(projectPath, "internal", "handlers")
 	if err := os.MkdirAll(handlersDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	handlerContent := `package handlers
 
 import (
@@ -30,25 +30,25 @@ func HelloHandler(w http.ResponseWriter, r *http.Request) {
 	if err := os.WriteFile(handlerFile, []byte(handlerContent), 0644); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	generator := NewTestGenerator()
 	err := generator.GenerateUnitTests(projectPath, "internal/handlers", "hello.go")
 	if err != nil {
 		t.Fatalf("GenerateUnitTests() error = %v", err)
 	}
-	
+
 	// Verify test file was created
 	testFile := filepath.Join(handlersDir, "hello_test.go")
 	if _, err := os.Stat(testFile); os.IsNotExist(err) {
 		t.Error("Test file was not created")
 	}
-	
+
 	// Read and verify content
 	content, err := os.ReadFile(testFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	contentStr := string(content)
 	if !contains(contentStr, "package handlers") {
 		t.Error("Test file should have correct package")
@@ -63,7 +63,7 @@ func HelloHandler(w http.ResponseWriter, r *http.Request) {
 
 func TestTestGenerator_GenerateHandlerTest(t *testing.T) {
 	generator := NewTestGenerator()
-	
+
 	testSpec := HandlerTestSpec{
 		PackageName:  "handlers",
 		HandlerName:  "UserHandler",
@@ -73,12 +73,12 @@ func TestTestGenerator_GenerateHandlerTest(t *testing.T) {
 		CheckBody:    true,
 		BodyContains: "users",
 	}
-	
+
 	content, err := generator.GenerateHandlerTest(testSpec)
 	if err != nil {
 		t.Fatalf("GenerateHandlerTest() error = %v", err)
 	}
-	
+
 	if !contains(content, "package handlers") {
 		t.Error("Should contain package declaration")
 	}
@@ -98,7 +98,7 @@ func TestTestGenerator_GenerateHandlerTest(t *testing.T) {
 
 func TestTestGenerator_GenerateTableDrivenTest(t *testing.T) {
 	generator := NewTestGenerator()
-	
+
 	testSpec := TableDrivenTestSpec{
 		PackageName:  "models",
 		FunctionName: "ValidateEmail",
@@ -115,12 +115,12 @@ func TestTestGenerator_GenerateTableDrivenTest(t *testing.T) {
 			},
 		},
 	}
-	
+
 	content, err := generator.GenerateTableDrivenTest(testSpec)
 	if err != nil {
 		t.Fatalf("GenerateTableDrivenTest() error = %v", err)
 	}
-	
+
 	if !contains(content, "package models") {
 		t.Error("Should contain package declaration")
 	}
@@ -141,13 +141,13 @@ func TestTestGenerator_GenerateTableDrivenTest(t *testing.T) {
 func TestTestGenerator_GenerateIntegrationTest(t *testing.T) {
 	tmpDir := t.TempDir()
 	projectPath := filepath.Join(tmpDir, "test-project")
-	
+
 	if err := os.MkdirAll(filepath.Join(projectPath, "test"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	generator := NewTestGenerator()
-	
+
 	integrationSpec := IntegrationTestSpec{
 		Name:        "UserAPI",
 		Description: "Test user API endpoints",
@@ -168,24 +168,24 @@ func TestTestGenerator_GenerateIntegrationTest(t *testing.T) {
 			},
 		},
 	}
-	
+
 	err := generator.GenerateIntegrationTest(projectPath, integrationSpec)
 	if err != nil {
 		t.Fatalf("GenerateIntegrationTest() error = %v", err)
 	}
-	
+
 	// Verify test file was created
 	testFile := filepath.Join(projectPath, "test", "user_api_test.go")
 	if _, err := os.Stat(testFile); os.IsNotExist(err) {
 		t.Error("Integration test file was not created")
 	}
-	
+
 	// Read and verify content
 	content, err := os.ReadFile(testFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	contentStr := string(content)
 	if !contains(contentStr, "TestUserAPI") {
 		t.Error("Should contain main test function")
@@ -198,13 +198,13 @@ func TestTestGenerator_GenerateIntegrationTest(t *testing.T) {
 func TestTestGenerator_GenerateTestFixture(t *testing.T) {
 	tmpDir := t.TempDir()
 	projectPath := filepath.Join(tmpDir, "test-project")
-	
+
 	if err := os.MkdirAll(filepath.Join(projectPath, "test", "fixtures"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	generator := NewTestGenerator()
-	
+
 	fixture := TestFixture{
 		Name: "users",
 		Data: []map[string]interface{}{
@@ -220,24 +220,24 @@ func TestTestGenerator_GenerateTestFixture(t *testing.T) {
 			},
 		},
 	}
-	
+
 	err := generator.GenerateTestFixture(projectPath, fixture)
 	if err != nil {
 		t.Fatalf("GenerateTestFixture() error = %v", err)
 	}
-	
+
 	// Verify fixture file was created
 	fixtureFile := filepath.Join(projectPath, "test", "fixtures", "users.json")
 	if _, err := os.Stat(fixtureFile); os.IsNotExist(err) {
 		t.Error("Fixture file was not created")
 	}
-	
+
 	// Read and verify content
 	content, err := os.ReadFile(fixtureFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	contentStr := string(content)
 	if !contains(contentStr, "John Doe") {
 		t.Error("Fixture should contain test data")
@@ -249,18 +249,18 @@ func TestTestGenerator_GenerateTestFixture(t *testing.T) {
 
 func TestTestGenerator_GenerateBenchmark(t *testing.T) {
 	generator := NewTestGenerator()
-	
+
 	benchSpec := BenchmarkSpec{
 		PackageName:  "services",
 		FunctionName: "ProcessData",
 		Setup:        "data := generateTestData()",
 	}
-	
+
 	content, err := generator.GenerateBenchmark(benchSpec)
 	if err != nil {
 		t.Fatalf("GenerateBenchmark() error = %v", err)
 	}
-	
+
 	if !contains(content, "func BenchmarkProcessData") {
 		t.Error("Should contain benchmark function")
 	}
@@ -274,7 +274,7 @@ func TestTestGenerator_GenerateBenchmark(t *testing.T) {
 
 func TestTestGenerator_GenerateMockInterface(t *testing.T) {
 	generator := NewTestGenerator()
-	
+
 	mockSpec := MockSpec{
 		PackageName:   "mocks",
 		InterfaceName: "UserRepository",
@@ -291,12 +291,12 @@ func TestTestGenerator_GenerateMockInterface(t *testing.T) {
 			},
 		},
 	}
-	
+
 	content, err := generator.GenerateMockInterface(mockSpec)
 	if err != nil {
 		t.Fatalf("GenerateMockInterface() error = %v", err)
 	}
-	
+
 	if !contains(content, "type MockUserRepository") {
 		t.Error("Should contain mock struct")
 	}
