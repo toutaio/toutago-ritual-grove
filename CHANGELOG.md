@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Human-readable deployment plan reports
   - Breaking change detection via semantic versioning
   - Migration tracking and execution planning
+- **Plan command**: `touta ritual plan` - Preview ritual updates before applying
+  - Shows differences between current and latest ritual versions
+  - Displays files that will be added, modified, or deleted
+  - Lists migrations that will be executed
+  - Warns about potential conflicts with user-modified files
+  - Supports `--to-version` flag for targeting specific versions (planned)
+  - Supports `--json` flag for machine-readable output (planned)
 
 ## [0.2.0] - 2026-01-05
 
