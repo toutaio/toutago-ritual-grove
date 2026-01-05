@@ -164,10 +164,15 @@ This will create:
 // initRitual initializes a project from a ritual
 func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 	// Create registry
-	reg := registry.NewLocalRegistry()
+	reg := registry.NewRegistry()
+	
+	// Scan for rituals
+	if err := reg.Scan(); err != nil {
+		return fmt.Errorf("failed to scan for rituals: %w", err)
+	}
 
 	// Find ritual in registry
-	ritualPath, err := reg.Find(ritualName)
+	ritualMeta, err := reg.Get(ritualName)
 	if err != nil {
 		return fmt.Errorf("ritual %q not found: %w\n\nTry 'touta ritual list' to see available rituals", ritualName, err)
 	}
@@ -175,8 +180,7 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 	fmt.Printf("🌱 Initializing project from ritual: %s\n\n", ritualName)
 
 	// Load ritual manifest
-	manifestPath := filepath.Join(ritualPath, "ritual.yaml")
-	manifest, err := ritual.LoadManifest(manifestPath)
+	manifest, err := reg.Load(ritualName)
 	if err != nil {
 		return fmt.Errorf("failed to load ritual manifest: %w", err)
 	}
@@ -189,8 +193,8 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 	// Run questionnaire
 	variables := make(map[string]interface{})
 	if !skipQuestions && len(manifest.Questions) > 0 {
-		q := questionnaire.New()
-		answers, err := q.Run(manifest.Questions)
+		adapter := questionnaire.NewCLIAdapter(manifest.Questions, nil)
+		answers, err := adapter.Run()
 		if err != nil {
 			return fmt.Errorf("questionnaire failed: %w", err)
 		}
@@ -227,7 +231,7 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 	gen.SetVariables(vars)
 
 	fmt.Printf("📝 Generating project files...\n")
-	if err := gen.GenerateFiles(manifest, ritualPath, outputPath); err != nil {
+	if err := gen.GenerateFiles(manifest, ritualMeta.Path, outputPath); err != nil {
 		return fmt.Errorf("failed to generate files: %w", err)
 	}
 
@@ -242,11 +246,14 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 
 // listRituals lists available rituals
 func listRituals() error {
-	reg := registry.NewLocalRegistry()
-	rituals, err := reg.List()
-	if err != nil {
-		return fmt.Errorf("failed to list rituals: %w", err)
+	reg := registry.NewRegistry()
+	
+	// Scan for rituals
+	if err := reg.Scan(); err != nil {
+		return fmt.Errorf("failed to scan for rituals: %w", err)
 	}
+	
+	rituals := reg.List()
 
 	if len(rituals) == 0 {
 		fmt.Println("No rituals found.")
@@ -268,14 +275,19 @@ func listRituals() error {
 
 // showRitualInfo shows detailed information about a ritual
 func showRitualInfo(ritualName string) error {
-	reg := registry.NewLocalRegistry()
-	ritualPath, err := reg.Find(ritualName)
+	reg := registry.NewRegistry()
+	
+	// Scan for rituals
+	if err := reg.Scan(); err != nil {
+		return fmt.Errorf("failed to scan for rituals: %w", err)
+	}
+	
+	ritualMeta, err := reg.Get(ritualName)
 	if err != nil {
 		return fmt.Errorf("ritual %q not found: %w", ritualName, err)
 	}
 
-	manifestPath := filepath.Join(ritualPath, "ritual.yaml")
-	manifest, err := ritual.LoadManifest(manifestPath)
+	manifest, err := reg.Load(ritualName)
 	if err != nil {
 		return fmt.Errorf("failed to load ritual manifest: %w", err)
 	}
@@ -320,6 +332,7 @@ func showRitualInfo(ritualName string) error {
 	templateCount := len(manifest.Files.Templates)
 	staticCount := len(manifest.Files.Static)
 	fmt.Printf("\nFiles: %d templates, %d static files\n", templateCount, staticCount)
+	fmt.Printf("Path: %s\n", ritualMeta.Path)
 
 	return nil
 }
@@ -334,7 +347,8 @@ func validateRitual(ritualPath string) error {
 	}
 
 	// Load manifest
-	manifest, err := ritual.LoadManifest(manifestPath)
+	loader := ritual.NewLoader(ritualPath)
+	manifest, err := loader.Load(ritualPath)
 	if err != nil {
 		return fmt.Errorf("failed to load ritual.yaml: %w", err)
 	}
