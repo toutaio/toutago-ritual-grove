@@ -8,11 +8,11 @@ import (
 
 func TestCreateWorkflow(t *testing.T) {
 	tests := []struct {
-		name          string
-		ritualPath    string
-		answers       map[string]interface{}
-		expectFiles   []string
-		expectError   bool
+		name        string
+		ritualPath  string
+		answers     map[string]interface{}
+		expectFiles []string
+		expectError bool
 	}{
 		{
 			name:       "create from minimal ritual",
@@ -88,7 +88,7 @@ func TestCreateWorkflow_WithQuestionnaire(t *testing.T) {
 
 	// Test with questionnaire mode (no answers provided)
 	err = workflow.Execute("../../rituals/minimal", tempDir, nil, false)
-	
+
 	// This should fail in automated tests since we can't provide interactive input
 	// In real usage, this would show the interactive questionnaire
 	if err == nil {

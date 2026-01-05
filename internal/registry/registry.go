@@ -120,10 +120,10 @@ func (r *Registry) scanEmbedded() error {
 
 	// Extract embedded rituals to cache if not already present
 	embeddedDir := filepath.Join(r.cacheDir, "embedded")
-	
+
 	for _, name := range ritualNames {
 		ritualPath := filepath.Join(embeddedDir, name)
-		
+
 		// Check if already extracted and valid
 		ritualFile := filepath.Join(ritualPath, "ritual.yaml")
 		if _, err := os.Stat(ritualFile); os.IsNotExist(err) {
@@ -132,7 +132,7 @@ func (r *Registry) scanEmbedded() error {
 				continue // Skip rituals that fail to extract
 			}
 		}
-		
+
 		// Index the ritual
 		if err := r.indexRitual(ritualPath, SourceEmbedded); err != nil {
 			continue // Skip rituals that fail to index
@@ -146,42 +146,50 @@ func (r *Registry) scanEmbedded() error {
 func (r *Registry) extractEmbeddedRitual(name, destDir string) error {
 	ritualFS := embedded.GetFS()
 	ritualPath := filepath.Join(destDir, name)
-	
+
 	// Ensure destination exists
 	if err := os.MkdirAll(ritualPath, 0755); err != nil {
 		return fmt.Errorf("failed to create ritual directory: %w", err)
 	}
-	
+
 	// Walk the embedded ritual files
 	return fs.WalkDir(ritualFS, name, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		destPath := filepath.Join(destDir, path)
-		
+
 		if d.IsDir() {
 			return os.MkdirAll(destPath, 0755)
 		}
-		
+
 		// Create parent directory
 		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
 			return err
 		}
-		
+
 		// Copy file
 		srcFile, err := ritualFS.Open(path)
 		if err != nil {
 			return err
 		}
-		defer srcFile.Close()
-		
+		defer func() {
+			if cerr := srcFile.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
+
 		destFile, err := os.Create(destPath)
 		if err != nil {
 			return err
 		}
-		defer destFile.Close()
-		
+		defer func() {
+			if cerr := destFile.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
+
 		_, err = io.Copy(destFile, srcFile)
 		return err
 	})

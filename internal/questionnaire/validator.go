@@ -183,13 +183,12 @@ func (v *Validator) validateBoolean(value interface{}) error {
 }
 
 func (v *Validator) validateNumber(value interface{}) error {
-	switch value.(type) {
+	switch val := value.(type) {
 	case int, int64, float64:
 		return nil
 	case string:
 		// Try to parse as number
-		strVal := value.(string)
-		if _, err := strconv.ParseFloat(strVal, 64); err != nil {
+		if _, err := strconv.ParseFloat(val, 64); err != nil {
 			return fmt.Errorf("expected numeric value")
 		}
 		return nil

@@ -23,10 +23,10 @@ const (
 
 // DeploymentStep represents a single step in the deployment process
 type DeploymentStep struct {
-	Type         StepType
-	Description  string
+	Type          StepType
+	Description   string
 	EstimatedTime time.Duration
-	Required     bool
+	Required      bool
 }
 
 // String returns a string representation of the step
@@ -36,8 +36,8 @@ func (s DeploymentStep) String() string {
 
 // Conflict represents a potential conflict in the deployment
 type Conflict struct {
-	File   string
-	Reason string
+	File       string
+	Reason     string
 	Resolution string
 }
 
@@ -93,8 +93,8 @@ func (p *DeploymentPlan) detectConflicts(modifiedFiles, targetFiles []string) []
 	for _, f := range targetFiles {
 		if modifiedSet[f] {
 			conflicts = append(conflicts, Conflict{
-				File:   f,
-				Reason: "File was manually modified and will be updated",
+				File:       f,
+				Reason:     "File was manually modified and will be updated",
 				Resolution: "Review changes and merge manually",
 			})
 		}
@@ -123,8 +123,8 @@ func (p *Planner) AnalyzeChanges(current, target *ritual.Manifest) (*DeploymentP
 		targetVer, err := semver.NewVersion(target.Ritual.Version)
 		if err == nil && targetVer.Major() > currentVer.Major() {
 			plan.Conflicts = append(plan.Conflicts, Conflict{
-				File:   "version",
-				Reason: fmt.Sprintf("Major version change from %s to %s indicates breaking changes", 
+				File: "version",
+				Reason: fmt.Sprintf("Major version change from %s to %s indicates breaking changes",
 					current.Ritual.Version, target.Ritual.Version),
 				Resolution: "Review changelog and test thoroughly",
 			})
@@ -159,7 +159,7 @@ func (p *Planner) AnalyzeChanges(current, target *ritual.Manifest) (*DeploymentP
 	})
 
 	if len(plan.FilesAdded) > 0 || len(plan.FilesModified) > 0 {
-		desc := fmt.Sprintf("Update %d files, add %d new files", 
+		desc := fmt.Sprintf("Update %d files, add %d new files",
 			len(plan.FilesModified), len(plan.FilesAdded))
 		plan.Steps = append(plan.Steps, DeploymentStep{
 			Type:        StepUpdateFiles,

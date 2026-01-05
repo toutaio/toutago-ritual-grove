@@ -96,7 +96,7 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 	// Generate template files
 	for _, tmpl := range manifest.Files.Templates {
 		srcPath := filepath.Join(ritualPath, tmpl.Source)
-		
+
 		// Render destination path (it may contain template variables)
 		destPathRendered, err := g.engine.Render(tmpl.Destination, g.variables.All())
 		if err != nil {
@@ -129,7 +129,7 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 	// Copy static files
 	for _, static := range manifest.Files.Static {
 		srcPath := filepath.Join(ritualPath, static.Source)
-		
+
 		// Render destination path (it may contain template variables)
 		destPathRendered, err := g.engine.Render(static.Destination, g.variables.All())
 		if err != nil {
@@ -185,7 +185,7 @@ func (g *FileGenerator) generateDirectory(srcDir, destDir string, isTemplate boo
 		if isTemplate && strings.HasSuffix(destPath, ".tmpl") {
 			destPath = strings.TrimSuffix(destPath, ".tmpl")
 		}
-		
+
 		return g.GenerateFile(path, destPath, isTemplate)
 	})
 }

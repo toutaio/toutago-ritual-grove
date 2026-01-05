@@ -51,13 +51,13 @@ func main() {
 			fmt.Println("Usage: ritual create <ritual-name> [project-path] [--yes] [--dry-run]")
 			os.Exit(1)
 		}
-		
+
 		ritualName := os.Args[2]
 		projectPath := "."
 		if len(os.Args) > 3 && !strings.HasPrefix(os.Args[3], "--") {
 			projectPath = os.Args[3]
 		}
-		
+
 		dryRun := false
 		useDefaults := false
 		for _, arg := range os.Args[3:] {
@@ -68,7 +68,7 @@ func main() {
 				useDefaults = true
 			}
 		}
-		
+
 		if err := runCreateCommand(ritualName, projectPath, dryRun, useDefaults); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
@@ -247,7 +247,7 @@ func runCreateCommand(ritualName, projectPath string, dryRun, useDefaults bool) 
 		if err != nil {
 			return fmt.Errorf("failed to load ritual: %w", err)
 		}
-		
+
 		answers = make(map[string]interface{})
 		for _, q := range manifest.Questions {
 			if q.Default != nil {

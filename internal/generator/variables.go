@@ -5,6 +5,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Variables manages template variables and substitutions
@@ -100,9 +103,10 @@ func (v *Variables) AddComputed() {
 		strValue := fmt.Sprintf("%v", value)
 
 		// Add case transformations
+		caser := cases.Title(language.English)
 		v.data[key+"_upper"] = strings.ToUpper(strValue)
 		v.data[key+"_lower"] = strings.ToLower(strValue)
-		v.data[key+"_title"] = strings.Title(strValue)
+		v.data[key+"_title"] = caser.String(strValue)
 		v.data[key+"_pascal"] = toPascalCase(strValue)
 		v.data[key+"_camel"] = toCamelCase(strValue)
 		v.data[key+"_snake"] = toSnakeCase(strValue)

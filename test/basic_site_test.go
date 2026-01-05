@@ -22,7 +22,7 @@ func TestBasicSiteRitualEndToEnd(t *testing.T) {
 	// Step 1: Load the basic-site ritual
 	ritualPath := filepath.Join("..", "rituals", "basic-site")
 	loader := ritual.NewLoader(ritualPath)
-	
+
 	manifest, err := loader.Load(ritualPath)
 	require.NoError(t, err, "Should load basic-site ritual")
 	assert.Equal(t, "basic-site", manifest.Ritual.Name)
@@ -35,7 +35,7 @@ func TestBasicSiteRitualEndToEnd(t *testing.T) {
 		"port":            3000,
 		"enable_database": false,
 	}
-	
+
 	for name, value := range answers {
 		flow.SetAnswer(name, value)
 	}
@@ -58,7 +58,7 @@ func TestBasicSiteRitualEndToEnd(t *testing.T) {
 
 	t.Logf("Generating files from %s to %s", ritualPath, projectPath)
 	t.Logf("Templates: %+v", manifest.Files.Templates)
-	
+
 	err = gen.GenerateFiles(manifest, ritualPath, projectPath)
 	if err != nil {
 		t.Logf("Generation error: %v", err)
@@ -107,7 +107,7 @@ func TestBasicSiteRitualEndToEnd(t *testing.T) {
 	// Step 7: Verify template variables were substituted correctly
 	mainContent, err := os.ReadFile(filepath.Join(projectPath, "main.go"))
 	require.NoError(t, err, "Should read main.go")
-	
+
 	mainStr := string(mainContent)
 	assert.Contains(t, mainStr, "github.com/test/my-site/handlers", "Should contain module path")
 	assert.Contains(t, mainStr, "3000", "Should contain port number")
@@ -116,7 +116,7 @@ func TestBasicSiteRitualEndToEnd(t *testing.T) {
 	// Step 8: Verify handler contains correct values
 	handlerContent, err := os.ReadFile(filepath.Join(projectPath, "handlers/home.go"))
 	require.NoError(t, err, "Should read handler")
-	
+
 	handlerStr := string(handlerContent)
 	assert.Contains(t, handlerStr, "Test Site", "Handler should contain site name")
 
@@ -127,7 +127,7 @@ func TestBasicSiteRitualEndToEnd(t *testing.T) {
 func TestBasicSiteRitualWithRegistry(t *testing.T) {
 	// Step 1: Create registry
 	reg := registry.NewRegistry()
-	
+
 	// Add built-in rituals directory
 	ritualsDir := filepath.Join("..", "rituals")
 	reg.AddSearchPath(ritualsDir)
@@ -135,10 +135,10 @@ func TestBasicSiteRitualWithRegistry(t *testing.T) {
 	// Step 2: Scan for rituals
 	err := reg.Scan()
 	require.NoError(t, err, "Should scan for rituals")
-	
+
 	// Step 3: Get list of rituals
 	rituals := reg.List()
-	
+
 	// Should find at least basic-site
 	assert.GreaterOrEqual(t, len(rituals), 1, "Should discover at least one ritual")
 
@@ -166,7 +166,7 @@ func TestBasicSiteRitualValidation(t *testing.T) {
 	// Load ritual
 	ritualPath := filepath.Join("..", "rituals", "basic-site")
 	loader := ritual.NewLoader(ritualPath)
-	
+
 	manifest, err := loader.Load(ritualPath)
 	require.NoError(t, err, "Should load ritual")
 
@@ -176,10 +176,10 @@ func TestBasicSiteRitualValidation(t *testing.T) {
 	assert.NotEmpty(t, manifest.Ritual.Name, "Name should not be empty")
 	assert.NotEmpty(t, manifest.Ritual.Version, "Version should not be empty")
 	assert.NotEmpty(t, manifest.Ritual.Description, "Description should not be empty")
-	
+
 	// Validate questions
 	assert.NotEmpty(t, manifest.Questions, "Should have questions")
-	
+
 	// Validate each question has required fields
 	for _, q := range manifest.Questions {
 		assert.NotEmpty(t, q.Name, "Question should have name")

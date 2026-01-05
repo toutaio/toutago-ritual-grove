@@ -6,6 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // TestGenerator generates test files
@@ -96,7 +99,8 @@ func (g *TestGenerator) GenerateUnitTests(projectPath, packagePath, sourceFile s
 	packageName := filepath.Base(packagePath)
 
 	// Convert to title case for function name (e.g., hello -> Hello)
-	functionName := strings.Title(baseName)
+	caser := cases.Title(language.English)
+	functionName := caser.String(baseName)
 	// Handle snake_case or kebab-case
 	functionName = strings.ReplaceAll(functionName, "_", "")
 	functionName = strings.ReplaceAll(functionName, "-", "")
@@ -252,9 +256,8 @@ func (g *TestGenerator) GenerateIntegrationTest(projectPath string, spec Integra
 	sb.WriteString("}\n")
 
 	// Write to file
-	fileName := strings.ToLower(spec.Name) + "_test.go"
 	// Convert CamelCase to snake_case for filename
-	fileName = camelToSnake(spec.Name) + "_test.go"
+	fileName := camelToSnake(spec.Name) + "_test.go"
 	testDir := filepath.Join(projectPath, "test")
 	if err := os.MkdirAll(testDir, 0755); err != nil {
 		return fmt.Errorf("failed to create test directory: %w", err)

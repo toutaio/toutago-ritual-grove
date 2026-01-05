@@ -139,7 +139,7 @@ func TestController_ConditionalQuestions(t *testing.T) {
 	// Reset and try with true
 	ctrl.Reset()
 
-	q, _ = ctrl.GetNextQuestion()
+	_, _ = ctrl.GetNextQuestion()
 	ctrl.SubmitAnswer("use_database", true)
 
 	// Should now ask for database_type

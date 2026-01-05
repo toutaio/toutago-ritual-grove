@@ -172,7 +172,7 @@ func planCommand() *cobra.Command {
 func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 	// Create registry
 	reg := registry.NewRegistry()
-	
+
 	// Scan for rituals
 	if err := reg.Scan(); err != nil {
 		return fmt.Errorf("failed to scan for rituals: %w", err)
@@ -224,13 +224,13 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 		}
 		projectName = filepath.Base(cwd)
 	}
-	
+
 	// Generate module path (github.com/user/project or example.com/project)
 	modulePath := fmt.Sprintf("example.com/%s", projectName)
 	if userVar, ok := variables["github_user"]; ok {
 		modulePath = fmt.Sprintf("github.com/%s/%s", userVar, projectName)
 	}
-	
+
 	variables["project_name"] = projectName
 	variables["module_path"] = modulePath
 	variables["ritual_name"] = ritualName
@@ -261,12 +261,12 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 // listRituals lists available rituals
 func listRituals() error {
 	reg := registry.NewRegistry()
-	
+
 	// Scan for rituals
 	if err := reg.Scan(); err != nil {
 		return fmt.Errorf("failed to scan for rituals: %w", err)
 	}
-	
+
 	rituals := reg.List()
 
 	if len(rituals) == 0 {
@@ -291,12 +291,12 @@ func listRituals() error {
 // showRitualInfo shows detailed information about a ritual
 func showRitualInfo(ritualName string) error {
 	reg := registry.NewRegistry()
-	
+
 	// Scan for rituals
 	if err := reg.Scan(); err != nil {
 		return fmt.Errorf("failed to scan for rituals: %w", err)
 	}
-	
+
 	ritualMeta, err := reg.Get(ritualName)
 	if err != nil {
 		return fmt.Errorf("ritual %q not found: %w", ritualName, err)
@@ -313,7 +313,7 @@ func showRitualInfo(ritualName string) error {
 	if manifest.Ritual.Author != "" {
 		fmt.Printf("Author:      %s\n", manifest.Ritual.Author)
 	}
-	
+
 	fmt.Println("\nCompatibility:")
 	if manifest.Compatibility.MinToutaVersion != "" {
 		fmt.Printf("  Min Toutā version: %s\n", manifest.Compatibility.MinToutaVersion)
@@ -351,7 +351,7 @@ func showRitualInfo(ritualName string) error {
 // validateRitual validates a ritual.yaml file
 func validateRitual(ritualPath string) error {
 	manifestPath := filepath.Join(ritualPath, "ritual.yaml")
-	
+
 	// Check if file exists
 	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 		return fmt.Errorf("ritual.yaml not found in %s", ritualPath)
@@ -438,9 +438,9 @@ A custom ritual template for Toutā projects.
 
 ## Usage
 
-` + "```bash" + `
+`+"```bash"+`
 touta ritual init %s
-` + "```" + `
+`+"```"+`
 
 ## Questions
 

@@ -14,7 +14,7 @@ import (
 
 // CreateWorkflow manages the project creation process
 type CreateWorkflow struct {
-	scaffolder  *generator.ProjectScaffolder
+	scaffolder *generator.ProjectScaffolder
 }
 
 // NewCreateWorkflow creates a new create workflow
@@ -44,9 +44,9 @@ func (w *CreateWorkflow) Execute(ritualPath, targetPath string, answers map[stri
 		if dryRun {
 			return fmt.Errorf("dry-run mode requires answers to be provided")
 		}
-		
+
 		adapter := questionnaire.NewCLIAdapter(manifest.Questions, os.Stdin)
-		
+
 		answers, err = adapter.Run()
 		if err != nil {
 			return fmt.Errorf("questionnaire failed: %w", err)
@@ -94,6 +94,6 @@ func (w *CreateWorkflow) Execute(ritualPath, targetPath string, answers map[stri
 
 	fmt.Printf("✓ Project created successfully at: %s\n", targetPath)
 	fmt.Printf("✓ Used ritual: %s v%s\n", manifest.Ritual.Name, manifest.Ritual.Version)
-	
+
 	return nil
 }

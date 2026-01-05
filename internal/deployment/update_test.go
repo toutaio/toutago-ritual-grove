@@ -73,7 +73,7 @@ func TestUpdateDetector_CompareVersions(t *testing.T) {
 func TestUpdateDetector_ListUpdates(t *testing.T) {
 	detector := NewUpdateDetector()
 	current := mustParseVersion(t, "1.0.0")
-	
+
 	available := []*semver.Version{
 		mustParseVersion(t, "0.9.0"),
 		mustParseVersion(t, "1.0.0"),
@@ -83,7 +83,7 @@ func TestUpdateDetector_ListUpdates(t *testing.T) {
 	}
 
 	updates := detector.ListUpdates(current, available)
-	
+
 	expectedCount := 3 // 1.0.1, 1.1.0, 2.0.0
 	if len(updates) != expectedCount {
 		t.Errorf("ListUpdates() returned %d updates, want %d", len(updates), expectedCount)
@@ -123,7 +123,7 @@ func TestUpdateDetector_GetUpdateInfo(t *testing.T) {
 func TestUpdateDetector_GetLatestCompatible(t *testing.T) {
 	detector := NewUpdateDetector()
 	current := mustParseVersion(t, "1.2.3")
-	
+
 	available := []*semver.Version{
 		mustParseVersion(t, "1.2.4"),
 		mustParseVersion(t, "1.3.0"),

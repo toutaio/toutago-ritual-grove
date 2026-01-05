@@ -159,8 +159,8 @@ func TestDatabaseGenerator_RepositoryCode(t *testing.T) {
 	gen := NewDatabaseGenerator()
 
 	model := ModelSpec{
-		Name:   "User",
-		Table:  "users",
+		Name:  "User",
+		Table: "users",
 		Fields: []FieldSpec{
 			{Name: "ID", Type: "int", DBColumn: "id"},
 			{Name: "Email", Type: "string", DBColumn: "email"},

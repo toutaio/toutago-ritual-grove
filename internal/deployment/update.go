@@ -36,18 +36,18 @@ func (d *UpdateDetector) IsBreakingChange(current, available *semver.Version) bo
 // ListUpdates returns all available updates newer than current version
 func (d *UpdateDetector) ListUpdates(current *semver.Version, available []*semver.Version) []*semver.Version {
 	var updates []*semver.Version
-	
+
 	for _, v := range available {
 		if v.GreaterThan(current) {
 			updates = append(updates, v)
 		}
 	}
-	
+
 	// Sort descending (newest first)
 	sort.Slice(updates, func(i, j int) bool {
 		return updates[i].GreaterThan(updates[j])
 	})
-	
+
 	return updates
 }
 
@@ -58,7 +58,7 @@ func (d *UpdateDetector) GetUpdateInfo(current, target *semver.Version) UpdateIn
 		ToVersion:   target.String(),
 		IsBreaking:  d.IsBreakingChange(current, target),
 	}
-	
+
 	// Determine update type
 	if target.Major() > current.Major() {
 		info.UpdateType = "major"
@@ -67,14 +67,14 @@ func (d *UpdateDetector) GetUpdateInfo(current, target *semver.Version) UpdateIn
 	} else {
 		info.UpdateType = "patch"
 	}
-	
+
 	return info
 }
 
 // GetLatestCompatible returns the latest non-breaking version from available versions
 func (d *UpdateDetector) GetLatestCompatible(current *semver.Version, available []*semver.Version) *semver.Version {
 	var latest *semver.Version
-	
+
 	for _, v := range available {
 		if v.GreaterThan(current) && !d.IsBreakingChange(current, v) {
 			if latest == nil || v.GreaterThan(latest) {
@@ -82,6 +82,6 @@ func (d *UpdateDetector) GetLatestCompatible(current *semver.Version, available 
 			}
 		}
 	}
-	
+
 	return latest
 }

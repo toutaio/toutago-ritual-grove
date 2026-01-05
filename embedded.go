@@ -41,13 +41,21 @@ func ExtractRituals(destDir string) error {
 		if err != nil {
 			return err
 		}
-		defer srcFile.Close()
+		defer func() {
+			if cerr := srcFile.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
 
 		destFile, err := os.Create(destPath)
 		if err != nil {
 			return err
 		}
-		defer destFile.Close()
+		defer func() {
+			if cerr := destFile.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
 
 		_, err = io.Copy(destFile, srcFile)
 		return err

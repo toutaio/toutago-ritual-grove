@@ -15,10 +15,10 @@ func TestDiffGenerator_DetectChanges(t *testing.T) {
 	}
 
 	newFiles := map[string]string{
-		"main.go":    "package main\n// v1.1",    // modified
-		"handler.go": "package handler\n// v1.0", // unchanged
-		"config.yaml": "port: 8080\nenv: prod",  // modified
-		"new_file.go": "package new",             // added
+		"main.go":     "package main\n// v1.1",    // modified
+		"handler.go":  "package handler\n// v1.0", // unchanged
+		"config.yaml": "port: 8080\nenv: prod",    // modified
+		"new_file.go": "package new",              // added
 		// deprecated.go removed
 	}
 
@@ -51,8 +51,8 @@ func TestDiffGenerator_WithProtectedFiles(t *testing.T) {
 	generator := NewDiffGenerator()
 
 	currentFiles := map[string]string{
-		"main.go":       "package main\n// user modified",
-		"generated.go":  "package gen\n// generated",
+		"main.go":      "package main\n// user modified",
+		"generated.go": "package gen\n// generated",
 	}
 
 	newFiles := map[string]string{

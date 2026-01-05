@@ -65,7 +65,7 @@ func (g *DiffGenerator) GenerateDiffWithProtected(currentFiles, newFiles map[str
 	// Check for added and modified files
 	for filename, newContent := range newFiles {
 		currentContent, exists := currentFiles[filename]
-		
+
 		if !exists {
 			// File was added
 			diff.Added = append(diff.Added, filename)

@@ -68,33 +68,35 @@ func (h *HealthChecker) CheckDatabase(ctx context.Context, check DatabaseHealthC
 		Name:      "database",
 		Timestamp: time.Now(),
 	}
-	
+
 	start := time.Now()
 	defer func() {
 		result.Duration = time.Since(start)
 	}()
-	
+
 	// Create context with timeout
 	if check.Timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, check.Timeout)
 		defer cancel()
 	}
-	
+
 	// Open database connection
 	db, err := sql.Open(check.Driver, check.DSN)
 	if err != nil {
 		result.Error = fmt.Sprintf("failed to open database: %v", err)
 		return result
 	}
-	defer db.Close()
-	
+	defer func() {
+		_ = db.Close() // Best effort close
+	}()
+
 	// Ping database
 	if err := db.PingContext(ctx); err != nil {
 		result.Error = fmt.Sprintf("failed to ping database: %v", err)
 		return result
 	}
-	
+
 	result.Healthy = true
 	return result
 }
@@ -105,48 +107,50 @@ func (h *HealthChecker) CheckEndpoint(ctx context.Context, check EndpointHealthC
 		Name:      "endpoint",
 		Timestamp: time.Now(),
 	}
-	
+
 	start := time.Now()
 	defer func() {
 		result.Duration = time.Since(start)
 	}()
-	
+
 	method := check.Method
 	if method == "" {
 		method = "GET"
 	}
-	
+
 	// Create HTTP client with timeout
 	client := &http.Client{
 		Timeout: check.Timeout,
 	}
-	
+
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, method, check.URL, nil)
 	if err != nil {
 		result.Error = fmt.Sprintf("failed to create request: %v", err)
 		return result
 	}
-	
+
 	// Execute request
 	resp, err := client.Do(req)
 	if err != nil {
 		result.Error = fmt.Sprintf("failed to reach endpoint: %v", err)
 		return result
 	}
-	defer resp.Body.Close()
-	
+	defer func() {
+		_ = resp.Body.Close() // Best effort close
+	}()
+
 	// Check status code
 	expectedStatus := check.ExpectedStatus
 	if expectedStatus == 0 {
 		expectedStatus = 200
 	}
-	
+
 	if resp.StatusCode != expectedStatus {
 		result.Error = fmt.Sprintf("unexpected status code: got %d, want %d", resp.StatusCode, expectedStatus)
 		return result
 	}
-	
+
 	result.Healthy = true
 	return result
 }
@@ -158,12 +162,12 @@ func (h *HealthChecker) ValidateConfig(config map[string]interface{}, validation
 		Timestamp: time.Now(),
 		Healthy:   true,
 	}
-	
+
 	start := time.Now()
 	defer func() {
 		result.Duration = time.Since(start)
 	}()
-	
+
 	// Check required keys
 	for _, key := range validation.RequiredKeys {
 		if _, exists := config[key]; !exists {
@@ -172,14 +176,14 @@ func (h *HealthChecker) ValidateConfig(config map[string]interface{}, validation
 			return result
 		}
 	}
-	
+
 	// Validate values
 	for key, validValues := range validation.ValidValues {
 		value, exists := config[key]
 		if !exists {
 			continue
 		}
-		
+
 		// Check if value is in valid values list
 		valid := false
 		for _, validValue := range validValues {
@@ -188,24 +192,24 @@ func (h *HealthChecker) ValidateConfig(config map[string]interface{}, validation
 				break
 			}
 		}
-		
+
 		if !valid {
 			result.Healthy = false
 			result.Error = fmt.Sprintf("invalid value for %s: got %v, want one of %v", key, value, validValues)
 			return result
 		}
 	}
-	
+
 	return result
 }
 
 // RunChecks executes multiple health checks
 func (h *HealthChecker) RunChecks(ctx context.Context, checks []HealthCheck) []HealthCheckResult {
 	results := make([]HealthCheckResult, 0, len(checks))
-	
+
 	for _, check := range checks {
 		var result HealthCheckResult
-		
+
 		switch check.Type {
 		case "database":
 			// Extract database check config
@@ -217,7 +221,7 @@ func (h *HealthChecker) RunChecks(ctx context.Context, checks []HealthCheck) []H
 				dbCheck.Timeout = time.Duration(timeout) * time.Second
 			}
 			result = h.CheckDatabase(ctx, dbCheck)
-			
+
 		case "endpoint":
 			// Extract endpoint check config
 			endpointCheck := EndpointHealthCheck{
@@ -229,13 +233,13 @@ func (h *HealthChecker) RunChecks(ctx context.Context, checks []HealthCheck) []H
 				endpointCheck.Timeout = time.Duration(timeout) * time.Second
 			}
 			result = h.CheckEndpoint(ctx, endpointCheck)
-			
+
 		case "config":
 			validation := ConfigValidation{
 				RequiredKeys: getStringSliceFromConfig(check.Config, "required_keys"),
 			}
 			result = h.ValidateConfig(check.Config, validation)
-			
+
 		default:
 			result = HealthCheckResult{
 				Name:      check.Name,
@@ -244,11 +248,11 @@ func (h *HealthChecker) RunChecks(ctx context.Context, checks []HealthCheck) []H
 				Timestamp: time.Now(),
 			}
 		}
-		
+
 		result.Name = check.Name
 		results = append(results, result)
 	}
-	
+
 	return results
 }
 
@@ -261,7 +265,7 @@ func (h *HealthChecker) GetOverallHealth(results []HealthCheckResult) OverallHea
 		FailedChecks: 0,
 		Results:      results,
 	}
-	
+
 	for _, result := range results {
 		if result.Healthy {
 			overall.PassedChecks++
@@ -270,7 +274,7 @@ func (h *HealthChecker) GetOverallHealth(results []HealthCheckResult) OverallHea
 			overall.Healthy = false
 		}
 	}
-	
+
 	return overall
 }
 

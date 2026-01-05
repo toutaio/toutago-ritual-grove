@@ -294,7 +294,7 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 	// Process template files
 	for _, fileMapping := range manifest.Files.Templates {
 		srcPath := filepath.Join(templatesDir, fileMapping.Source)
-		
+
 		// Render destination path (may contain template variables)
 		destPathRendered, err := s.generator.engine.Render(fileMapping.Destination, vars.All())
 		if err != nil {
@@ -319,7 +319,7 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 	// Process static files
 	for _, fileMapping := range manifest.Files.Static {
 		srcPath := filepath.Join(templatesDir, fileMapping.Source)
-		
+
 		// Render destination path (may contain template variables)
 		destPathRendered, err := s.generator.engine.Render(fileMapping.Destination, vars.All())
 		if err != nil {

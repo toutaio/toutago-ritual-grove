@@ -158,7 +158,6 @@ func TestIsVersionNewer(t *testing.T) {
 	}
 }
 
-
 func TestVersionString(t *testing.T) {
 	tests := []struct {
 		name    string

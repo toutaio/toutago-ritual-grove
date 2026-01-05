@@ -193,10 +193,7 @@ func (r *DependencyResolver) ResolveDependencies(manifest *ritual.Manifest) ([]D
 // BuildGraph builds a dependency graph from manifest
 func (r *DependencyResolver) BuildGraph(manifest *ritual.Manifest) error {
 	// Add main ritual node
-	var ritualDeps []string
-	for _, dep := range manifest.Dependencies.Rituals {
-		ritualDeps = append(ritualDeps, dep)
-	}
+	ritualDeps := append([]string(nil), manifest.Dependencies.Rituals...)
 
 	r.graph.AddNode(manifest.Ritual.Name, ritualDeps)
 	return nil

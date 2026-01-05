@@ -6,6 +6,9 @@ import (
 	"html/template"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // TemplateEngine defines the interface for template rendering
@@ -21,10 +24,11 @@ type GoTemplateEngine struct {
 
 // NewGoTemplateEngine creates a new Go template engine
 func NewGoTemplateEngine() *GoTemplateEngine {
+	caser := cases.Title(language.English)
 	funcMap := template.FuncMap{
 		"upper":  strings.ToUpper,
 		"lower":  strings.ToLower,
-		"title":  strings.Title,
+		"title":  caser.String,
 		"pascal": toPascalCase,
 		"camel":  toCamelCase,
 		"snake":  toSnakeCase,

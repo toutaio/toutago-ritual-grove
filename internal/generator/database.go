@@ -44,7 +44,7 @@ type ColumnSchema struct {
 
 // QuerySpec defines a database query
 type QuerySpec struct {
-	Operation string            // "select", "insert", "update", "delete"
+	Operation string // "select", "insert", "update", "delete"
 	Table     string
 	Columns   []string
 	Where     map[string]string

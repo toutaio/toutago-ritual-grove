@@ -5,6 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // RouteGenerator generates route definitions
@@ -70,35 +73,36 @@ func (g *RouteGenerator) GenerateRoutes(targetPath string, config RouteConfig) e
 }
 
 func (g *RouteGenerator) generateRESTfulRoutes(resource, handler string) []Route {
+	caser := cases.Title(language.English)
 	return []Route{
 		{
 			Method:      "GET",
 			Path:        "/" + resource,
-			Handler:     handler + ".List" + strings.Title(resource),
+			Handler:     handler + ".List" + caser.String(resource),
 			Description: "List all " + resource,
 		},
 		{
 			Method:      "POST",
 			Path:        "/" + resource,
-			Handler:     handler + ".Create" + strings.Title(singular(resource)),
+			Handler:     handler + ".Create" + caser.String(singular(resource)),
 			Description: "Create a new " + singular(resource),
 		},
 		{
 			Method:      "GET",
 			Path:        "/" + resource + "/{id}",
-			Handler:     handler + ".Get" + strings.Title(singular(resource)),
+			Handler:     handler + ".Get" + caser.String(singular(resource)),
 			Description: "Get a " + singular(resource) + " by ID",
 		},
 		{
 			Method:      "PUT",
 			Path:        "/" + resource + "/{id}",
-			Handler:     handler + ".Update" + strings.Title(singular(resource)),
+			Handler:     handler + ".Update" + caser.String(singular(resource)),
 			Description: "Update a " + singular(resource),
 		},
 		{
 			Method:      "DELETE",
 			Path:        "/" + resource + "/{id}",
-			Handler:     handler + ".Delete" + strings.Title(singular(resource)),
+			Handler:     handler + ".Delete" + caser.String(singular(resource)),
 			Description: "Delete a " + singular(resource),
 		},
 	}

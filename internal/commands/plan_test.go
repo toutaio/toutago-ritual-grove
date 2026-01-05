@@ -46,7 +46,7 @@ func TestPlanCommand(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Write manifest to yaml file manually for now (SaveManifest doesn't exist in API)
 	manifestPath := filepath.Join(ritualDir, "ritual.yaml")
 	manifestData := `ritual:
