@@ -35,6 +35,9 @@ Use rituals to create:
 	cmd.AddCommand(validateCommand())
 	cmd.AddCommand(createCommand())
 	cmd.AddCommand(planCommand())
+	cmd.AddCommand(searchCommand())
+	cmd.AddCommand(updateCommand())
+	cmd.AddCommand(migrateCommand())
 
 	return cmd
 }
@@ -469,4 +472,136 @@ TODO: Document what files this ritual generates
 	fmt.Printf("  4. Test with: touta ritual validate --path %s\n\n", ritualName)
 
 	return nil
+}
+
+// searchCommand searches for rituals
+func searchCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "search <query>",
+		Short: "Search for rituals by name, tag, or description",
+		Long: `Search for available rituals in the registry.
+
+Example:
+  touta ritual search blog
+  touta ritual search api`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			query := args[0]
+			return searchRituals(query)
+		},
+	}
+
+	return cmd
+}
+
+// updateCommand updates a project to a new ritual version
+func updateCommand() *cobra.Command {
+	var toVersion string
+	var dryRun bool
+	var force bool
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update project to new ritual version",
+		Long: `Update the current project to a new version of its ritual.
+
+This command will:
+  - Check the current ritual version
+  - Run migrations if needed
+  - Create backups before updating
+  - Rollback on error (unless --force)
+
+Example:
+  touta ritual update --to 1.2.0
+  touta ritual update --to 1.2.0 --dry-run`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return updateProject(".", toVersion, dryRun, force)
+		},
+	}
+
+	cmd.Flags().StringVar(&toVersion, "to", "", "Target version to update to (required)")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would happen without making changes")
+	cmd.Flags().BoolVar(&force, "force", false, "Force update even if migrations fail")
+	cmd.MarkFlagRequired("to")
+
+	return cmd
+}
+
+// migrateCommand runs pending migrations
+func migrateCommand() *cobra.Command {
+	var up bool
+	var down bool
+	var toVersion string
+
+	cmd := &cobra.Command{
+		Use:   "migrate",
+		Short: "Run pending migrations",
+		Long: `Run pending migrations for the current project.
+
+Example:
+  touta ritual migrate --up
+  touta ritual migrate --down --to 1.0.0`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !up && !down {
+				return fmt.Errorf("must specify --up or --down")
+			}
+			if up && down {
+				return fmt.Errorf("cannot specify both --up and --down")
+			}
+			return runMigrations(".", up, toVersion)
+		},
+	}
+
+	cmd.Flags().BoolVar(&up, "up", false, "Run forward migrations")
+	cmd.Flags().BoolVar(&down, "down", false, "Run rollback migrations")
+	cmd.Flags().StringVar(&toVersion, "to", "", "Target version to migrate to")
+
+	return cmd
+}
+
+// searchRituals searches for rituals matching a query
+func searchRituals(query string) error {
+	reg := registry.NewRegistry()
+
+	if err := reg.Scan(); err != nil {
+		return fmt.Errorf("failed to scan for rituals: %w", err)
+	}
+
+	results := reg.Search(query)
+	if len(results) == 0 {
+		fmt.Printf("No rituals found matching '%s'\n", query)
+		return nil
+	}
+
+	fmt.Printf("Found %d ritual(s) matching '%s':\n\n", len(results), query)
+	for _, r := range results {
+		fmt.Printf("  📦 %s (%s)\n", r.Name, r.Version)
+		if r.Description != "" {
+			fmt.Printf("     %s\n", r.Description)
+		}
+		if len(r.Tags) > 0 {
+			fmt.Printf("     Tags: %v\n", r.Tags)
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
+// updateProject updates a project to a new ritual version
+func updateProject(projectPath, toVersion string, dryRun, force bool) error {
+	handler := commands.NewUpdateHandler()
+
+	opts := commands.UpdateOptions{
+		ToVersion: toVersion,
+		DryRun:    dryRun,
+		Force:     force,
+	}
+
+	return handler.Execute(projectPath, opts)
+}
+
+// runMigrations runs pending migrations
+func runMigrations(projectPath string, up bool, toVersion string) error {
+	return fmt.Errorf("migration command not yet implemented - use 'update' command instead")
 }

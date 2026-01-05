@@ -93,11 +93,11 @@ func TestRitualCommand(t *testing.T) {
 	}
 
 	// Check subcommands exist
-	subcommands := []string{"init", "list", "info", "validate", "create", "plan"}
+	subcommands := []string{"init", "list", "info", "validate", "create", "plan", "search", "update", "migrate"}
 	for _, subcmd := range subcommands {
 		found := false
 		for _, c := range cmd.Commands() {
-			if c.Use == subcmd || c.Use == subcmd+" <ritual-name>" || c.Use == subcmd+" <name>" {
+			if c.Use == subcmd || c.Use == subcmd+" <ritual-name>" || c.Use == subcmd+" <name>" || c.Use == subcmd+" <query>" {
 				found = true
 				break
 			}
@@ -292,5 +292,86 @@ func TestCreateRitual(t *testing.T) {
 	// Validate the created ritual
 	if err := validateRitual(ritualPath); err != nil {
 		t.Errorf("Created ritual is invalid: %v", err)
+	}
+}
+
+func TestSearchCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var searchCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "search" {
+			searchCmd = cmd
+			break
+		}
+	}
+
+	if searchCmd == nil {
+		t.Fatal("search command not found")
+	}
+
+	if searchCmd.Use != "search <query>" {
+		t.Errorf("Expected Use='search <query>', got %s", searchCmd.Use)
+	}
+}
+
+func TestUpdateCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var updateCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "update" {
+			updateCmd = cmd
+			break
+		}
+	}
+
+	if updateCmd == nil {
+		t.Fatal("update command not found")
+	}
+
+	// Check flags
+	toFlag := updateCmd.Flags().Lookup("to")
+	if toFlag == nil {
+		t.Error("Expected --to flag")
+	}
+
+	dryRunFlag := updateCmd.Flags().Lookup("dry-run")
+	if dryRunFlag == nil {
+		t.Error("Expected --dry-run flag")
+	}
+
+	forceFlag := updateCmd.Flags().Lookup("force")
+	if forceFlag == nil {
+		t.Error("Expected --force flag")
+	}
+}
+
+func TestMigrateCommand(t *testing.T) {
+	ritualCmd := RitualCommand()
+	var migrateCmd *cobra.Command
+	for _, cmd := range ritualCmd.Commands() {
+		if cmd.Name() == "migrate" {
+			migrateCmd = cmd
+			break
+		}
+	}
+
+	if migrateCmd == nil {
+		t.Fatal("migrate command not found")
+	}
+
+	// Check flags
+	upFlag := migrateCmd.Flags().Lookup("up")
+	if upFlag == nil {
+		t.Error("Expected --up flag")
+	}
+
+	downFlag := migrateCmd.Flags().Lookup("down")
+	if downFlag == nil {
+		t.Error("Expected --down flag")
+	}
+
+	toFlag := migrateCmd.Flags().Lookup("to")
+	if toFlag == nil {
+		t.Error("Expected --to flag")
 	}
 }

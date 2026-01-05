@@ -14,10 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Rollback on migration failure
   - Dry-run mode for preview
   - Breaking change detection
+- **Search command**: Search for rituals by name, tag, or description
+- **Update CLI command**: `touta ritual update --to <version>` for updating projects
+- **Migrate CLI command**: `touta ritual migrate --up/--down` for running migrations
 - Etymology section in README explaining name origins and philosophy
 
 ### Changed
-- Improved test coverage for pkg/cli package (16.9% → 31.4%)
+- Improved test coverage for pkg/cli package (16.9% → 31.4% → 40.0%+)
 - Enhanced command structure validation tests
 - **Refactored update handler**: Reduced cyclomatic complexity from 16 to <10
   - Split Execute method into smaller, focused helper methods
