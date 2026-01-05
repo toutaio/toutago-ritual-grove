@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-05
+
 ### Added
 - **Update command handler**: Update projects to new ritual versions
   - Version-to-version migration support
@@ -20,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Etymology section in README explaining name origins and philosophy
 
 ### Changed
-- Improved test coverage for pkg/cli package (16.9% → 31.4% → 40.0%+)
+- Improved test coverage for pkg/cli package (16.9% → 34.2%)
 - Enhanced command structure validation tests
 - **Refactored update handler**: Reduced cyclomatic complexity from 16 to <10
   - Split Execute method into smaller, focused helper methods
