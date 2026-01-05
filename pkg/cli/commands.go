@@ -268,7 +268,8 @@ func listRituals() error {
 		return nil
 	}
 
-	fmt.Println("Available rituals:\n")
+	fmt.Println("Available rituals:")
+	fmt.Println()
 	for _, r := range rituals {
 		fmt.Printf("  📦 %s (%s)\n", r.Name, r.Version)
 		if r.Description != "" {
