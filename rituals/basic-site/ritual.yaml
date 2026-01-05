@@ -49,6 +49,10 @@ files:
     - src: templates/views/base.html.tmpl
       dest: views/home.html
       
+  static:
+    - src: static/style.css
+      dest: static/style.css
+      
   directories:
     - handlers
     - views

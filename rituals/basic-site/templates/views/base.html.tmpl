@@ -4,62 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ .site_name }}</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        header {
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        h1 {
-            margin: 0;
-        }
-        footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            color: #666;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <header>
-        <h1>{{ .site_name }}</h1>
-    </header>
-    
-    <main>
-        <h2>{{ .message }}</h2>
+    <div class="container">
+        <header>
+            <h1>{{ .site_name }}</h1>
+        </header>
+        
+        <main>
+            <h2>{{ .message }}</h2>
 
-        <p>
-            Your Toutā site is up and running! This is a basic starter template with:
-        </p>
+            <p>
+                Your Toutā site is up and running! This is a basic starter template with:
+            </p>
 
-        <ul>
-            <li>✅ Cosan Router for routing</li>
-            <li>✅ Fíth Renderer for templating</li>
-            <li>✅ Basic homepage handler</li>
-            <li>✅ Clean project structure</li>
-        </ul>
+            <ul>
+                <li>✅ Cosan Router for routing</li>
+                <li>✅ Fíth Renderer for templating</li>
+                <li>✅ Basic homepage handler</li>
+                <li>✅ Clean project structure</li>
+            </ul>
 
-        <h3>Next Steps</h3>
+            <h3>Next Steps</h3>
 
-        <ol>
-            <li>Add more handlers in the <code>handlers/</code> directory</li>
-            <li>Create additional templates in <code>views/</code></li>
-            <li>Add static assets to <code>static/</code></li>
-            <li>Customize your site!</li>
-        </ol>
-    </main>
-    
-    <footer>
-        <p>Powered by <strong>Toutā</strong></p>
-    </footer>
+            <ol>
+                <li>Add more handlers in the <code>handlers/</code> directory</li>
+                <li>Create additional templates in <code>views/</code></li>
+                <li>Add static assets to <code>static/</code></li>
+                <li>Customize your site!</li>
+            </ol>
+        </main>
+        
+        <footer>
+            <p>Powered by <strong>Toutā</strong></p>
+        </footer>
+    </div>
 </body>
 </html>
