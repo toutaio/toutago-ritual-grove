@@ -380,7 +380,7 @@ func validateRitual(ritualPath string) error {
 // createRitual creates a new ritual template
 func createRitual(ritualName string) error {
 	// Create ritual directory
-	if err := os.MkdirAll(ritualName, 0755); err != nil {
+	if err := os.MkdirAll(ritualName, 0750); err != nil {
 		return fmt.Errorf("failed to create ritual directory: %w", err)
 	}
 
@@ -391,7 +391,7 @@ func createRitual(ritualName string) error {
 		filepath.Join(ritualName, "migrations"),
 	}
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
@@ -425,7 +425,7 @@ hooks:
 `, ritualName)
 
 	ritualYAMLPath := filepath.Join(ritualName, "ritual.yaml")
-	if err := os.WriteFile(ritualYAMLPath, []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(ritualYAMLPath, []byte(ritualYAML), 0600); err != nil {
 		return fmt.Errorf("failed to create ritual.yaml: %w", err)
 	}
 
@@ -457,7 +457,7 @@ TODO: Document what files this ritual generates
 `, ritualName, ritualName)
 
 	readmePath := filepath.Join(ritualName, "README.md")
-	if err := os.WriteFile(readmePath, []byte(readme), 0644); err != nil {
+	if err := os.WriteFile(readmePath, []byte(readme), 0600); err != nil {
 		return fmt.Errorf("failed to create README.md: %w", err)
 	}
 

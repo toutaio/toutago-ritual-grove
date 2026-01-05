@@ -101,7 +101,7 @@ func TestGoTemplateEngineRenderFile(t *testing.T) {
 	templatePath := filepath.Join(tmpDir, "test.tmpl")
 
 	templateContent := "Hello {{ .name }}!\nPort: {{ .port }}"
-	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create test template: %v", err)
 	}
 

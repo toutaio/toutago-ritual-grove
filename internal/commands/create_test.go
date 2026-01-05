@@ -12,7 +12,7 @@ func TestCreateCommandInteractive(t *testing.T) {
 	// Create test ritual
 	ritualDir := filepath.Join(tmpDir, "test-ritual")
 	templatesDir := filepath.Join(ritualDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	if err := os.MkdirAll(templatesDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -39,12 +39,12 @@ files:
     - src: "test.txt.tmpl"
       dest: "test.txt"
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	template := "App: {{ .app_name }}, Port: {{ .port }}"
-	if err := os.WriteFile(filepath.Join(templatesDir, "test.txt.tmpl"), []byte(template), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(templatesDir, "test.txt.tmpl"), []byte(template), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -85,7 +85,7 @@ func TestCreateCommandWithDefaults(t *testing.T) {
 
 	ritualDir := filepath.Join(tmpDir, "defaults-ritual")
 	templatesDir := filepath.Join(ritualDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	if err := os.MkdirAll(templatesDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -111,12 +111,12 @@ files:
     - src: "config.txt.tmpl"
       dest: "config.txt"
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	template := "{{ .app_name }}: {{ .enable_feature }}"
-	if err := os.WriteFile(filepath.Join(templatesDir, "config.txt.tmpl"), []byte(template), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(templatesDir, "config.txt.tmpl"), []byte(template), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -177,7 +177,7 @@ func TestExtractDefaultAnswers(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	ritualDir := filepath.Join(tmpDir, "extract-ritual")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -201,7 +201,7 @@ questions:
   - name: no_default
     type: text
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 

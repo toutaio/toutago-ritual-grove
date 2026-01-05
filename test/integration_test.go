@@ -21,7 +21,7 @@ func TestEndToEndProjectGeneration(t *testing.T) {
 	// Create a test ritual
 	ritualDir := filepath.Join(tmpDir, "test-ritual")
 	templatesDir := filepath.Join(ritualDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	if err := os.MkdirAll(templatesDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,7 +51,7 @@ files:
     - src: "README.md"
       dest: "README.md"
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -64,7 +64,7 @@ func main() {
 	fmt.Println("Welcome to {{ .app_name }}!")
 }
 `
-	if err := os.WriteFile(filepath.Join(templatesDir, "main.go.tmpl"), []byte(mainGoTemplate), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(templatesDir, "main.go.tmpl"), []byte(mainGoTemplate), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -72,7 +72,7 @@ func main() {
   name: {{ .app_name }}
   module: {{ .module_name }}
 `
-	if err := os.WriteFile(filepath.Join(templatesDir, "config.yaml.tmpl"), []byte(configTemplate), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(templatesDir, "config.yaml.tmpl"), []byte(configTemplate), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -81,7 +81,7 @@ func main() {
 
 This is a generated application.
 `
-	if err := os.WriteFile(filepath.Join(templatesDir, "README.md"), []byte(readme), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(templatesDir, "README.md"), []byte(readme), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -164,7 +164,7 @@ func TestExecutorWithHooks(t *testing.T) {
 	// Create a test ritual with hooks
 	ritualDir := filepath.Join(tmpDir, "hook-ritual")
 	templatesDir := filepath.Join(ritualDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	if err := os.MkdirAll(templatesDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -182,7 +182,7 @@ hooks:
 files:
   templates: []
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -219,7 +219,7 @@ func TestCircularDependencyDetection(t *testing.T) {
 
 	// Create ritual A that depends on B
 	ritualADir := filepath.Join(tmpDir, "ritual-a")
-	if err := os.MkdirAll(ritualADir, 0755); err != nil {
+	if err := os.MkdirAll(ritualADir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -234,13 +234,13 @@ dependencies:
 files:
   templates: []
 `
-	if err := os.WriteFile(filepath.Join(ritualADir, "ritual.yaml"), []byte(ritualAYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualADir, "ritual.yaml"), []byte(ritualAYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	// Create ritual B that depends on A (circular!)
 	ritualBDir := filepath.Join(tmpDir, "ritual-b")
-	if err := os.MkdirAll(ritualBDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualBDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -255,7 +255,7 @@ dependencies:
 files:
   templates: []
 `
-	if err := os.WriteFile(filepath.Join(ritualBDir, "ritual.yaml"), []byte(ritualBYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualBDir, "ritual.yaml"), []byte(ritualBYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -286,7 +286,7 @@ func TestTemplateWithFrontmatter(t *testing.T) {
 
 	ritualDir := filepath.Join(tmpDir, "frontmatter-ritual")
 	templatesDir := filepath.Join(ritualDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	if err := os.MkdirAll(templatesDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -301,7 +301,7 @@ files:
     - src: "with-frontmatter.tmpl"
       dest: "output.txt"
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -312,7 +312,7 @@ author: Test
 ---
 Hello {{ .name }}!`
 
-	if err := os.WriteFile(filepath.Join(templatesDir, "with-frontmatter.tmpl"), []byte(template), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(templatesDir, "with-frontmatter.tmpl"), []byte(template), 0600); err != nil {
 		t.Fatal(err)
 	}
 

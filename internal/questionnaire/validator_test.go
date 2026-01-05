@@ -380,7 +380,7 @@ func TestValidatePath(t *testing.T) {
 	// Create temp directory for testing
 	tmpDir := t.TempDir()
 	tmpFile := tmpDir + "/test"
-	if err := os.WriteFile(tmpFile, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(tmpFile, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

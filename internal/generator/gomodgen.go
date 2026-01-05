@@ -71,7 +71,7 @@ func (g *GoModGenerator) Generate(projectPath string, manifest *ritual.Manifest,
 	}
 
 	goModPath := filepath.Join(projectPath, "go.mod")
-	return os.WriteFile(goModPath, []byte(sb.String()), 0644)
+	return os.WriteFile(goModPath, []byte(sb.String()), 0600)
 }
 
 // AddToutaDependencies adds Toutā framework dependencies to go.mod
@@ -83,6 +83,7 @@ func (g *GoModGenerator) AddToutaDependencies(projectPath string, vars *Variable
 
 	// Read existing go.mod
 	goModPath := filepath.Join(projectPath, "go.mod")
+	// #nosec G304 - goModPath is a controlled project file path
 	content, err := os.ReadFile(goModPath)
 	if err != nil {
 		// If go.mod doesn't exist, create it first
@@ -117,7 +118,7 @@ func (g *GoModGenerator) AddToutaDependencies(projectPath string, vars *Variable
 		contentStr = strings.Replace(contentStr, "require (", fmt.Sprintf("require (\n\t%s", dep), 1)
 	}
 
-	return os.WriteFile(goModPath, []byte(contentStr), 0644)
+	return os.WriteFile(goModPath, []byte(contentStr), 0600)
 }
 
 // RunGoModTidy runs `go mod tidy` to update dependencies

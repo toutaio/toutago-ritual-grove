@@ -40,7 +40,7 @@ func (s *ProjectScaffolder) CreateStructure(projectPath string) error {
 
 	for _, dir := range dirs {
 		dirPath := filepath.Join(projectPath, dir)
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
+		if err := os.MkdirAll(dirPath, 0750); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
@@ -92,7 +92,7 @@ func main() {
 	}
 
 	mainPath := filepath.Join(projectPath, "cmd", "server", "main.go")
-	if err := os.WriteFile(mainPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(mainPath, []byte(content), 0600); err != nil {
 		return fmt.Errorf("failed to write main.go: %w", err)
 	}
 
@@ -121,7 +121,7 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 `
 
 	handlerPath := filepath.Join(projectPath, "internal", "handlers", "health.go")
-	return os.WriteFile(handlerPath, []byte(template), 0644)
+	return os.WriteFile(handlerPath, []byte(template), 0600)
 }
 
 // GenerateGoMod generates the go.mod file with dependencies
@@ -148,7 +148,7 @@ func (s *ProjectScaffolder) GenerateGoMod(projectPath string, manifest *ritual.M
 	}
 
 	goModPath := filepath.Join(projectPath, "go.mod")
-	return os.WriteFile(goModPath, []byte(sb.String()), 0644)
+	return os.WriteFile(goModPath, []byte(sb.String()), 0600)
 }
 
 // GenerateConfig generates configuration files (.env.example, config files)
@@ -177,7 +177,7 @@ LOG_LEVEL=info
 	}
 
 	envPath := filepath.Join(projectPath, ".env.example")
-	return os.WriteFile(envPath, []byte(content), 0644)
+	return os.WriteFile(envPath, []byte(content), 0600)
 }
 
 // GenerateREADME generates a README.md file
@@ -237,7 +237,7 @@ func (s *ProjectScaffolder) GenerateREADME(projectPath string, manifest *ritual.
 	content += "MIT\n"
 
 	readmePath := filepath.Join(projectPath, "README.md")
-	return os.WriteFile(readmePath, []byte(content), 0644)
+	return os.WriteFile(readmePath, []byte(content), 0600)
 }
 
 // GenerateGitignore generates a .gitignore file
@@ -282,7 +282,7 @@ logs/
 `
 
 	gitignorePath := filepath.Join(projectPath, ".gitignore")
-	return os.WriteFile(gitignorePath, []byte(content), 0644)
+	return os.WriteFile(gitignorePath, []byte(content), 0600)
 }
 
 // ApplyTemplateFiles applies template files from the ritual

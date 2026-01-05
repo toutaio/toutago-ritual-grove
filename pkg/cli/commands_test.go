@@ -12,7 +12,7 @@ func TestInitRitual(t *testing.T) {
 
 	// Create a simple test ritual
 	ritualDir := filepath.Join(tmpDir, "test-ritual")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual dir: %v", err)
 	}
 
@@ -45,13 +45,13 @@ hooks:
 `
 
 	ritualYAMLPath := filepath.Join(ritualDir, "ritual.yaml")
-	if err := os.WriteFile(ritualYAMLPath, []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(ritualYAMLPath, []byte(ritualYAML), 0600); err != nil {
 		t.Fatalf("Failed to create ritual.yaml: %v", err)
 	}
 
 	// Create templates directory
 	templatesDir := filepath.Join(ritualDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	if err := os.MkdirAll(templatesDir, 0750); err != nil {
 		t.Fatalf("Failed to create templates dir: %v", err)
 	}
 
@@ -64,13 +64,13 @@ func main() {
 `
 
 	mainTemplatePath := filepath.Join(templatesDir, "main.go.tmpl")
-	if err := os.WriteFile(mainTemplatePath, []byte(mainTemplate), 0644); err != nil {
+	if err := os.WriteFile(mainTemplatePath, []byte(mainTemplate), 0600); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}
 
 	// Test initialization
 	outputDir := filepath.Join(tmpDir, "output")
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0750); err != nil {
 		t.Fatalf("Failed to create output dir: %v", err)
 	}
 
@@ -111,7 +111,7 @@ hooks:
 `
 
 	ritualPath := filepath.Join(tmpDir, "ritual.yaml")
-	if err := os.WriteFile(ritualPath, []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(ritualPath, []byte(ritualYAML), 0600); err != nil {
 		t.Fatalf("Failed to create ritual.yaml: %v", err)
 	}
 
@@ -130,7 +130,7 @@ func TestValidateRitualInvalid(t *testing.T) {
 `
 
 	ritualPath := filepath.Join(tmpDir, "ritual.yaml")
-	if err := os.WriteFile(ritualPath, []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(ritualPath, []byte(ritualYAML), 0600); err != nil {
 		t.Fatalf("Failed to create ritual.yaml: %v", err)
 	}
 

@@ -139,7 +139,7 @@ func TestRunUpWithScript(t *testing.T) {
 	// Create a test script
 	scriptPath := filepath.Join(tmpDir, "migrate.sh")
 	scriptContent := "#!/bin/bash\necho 'Migration executed'\n"
-	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0755); err != nil {
+	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0750); err != nil {
 		t.Fatalf("Failed to write script: %v", err)
 	}
 

@@ -277,12 +277,12 @@ func TestSortByName(t *testing.T) {
 
 // Helper function to create a test ritual
 func createTestRitual(dir, name, version string) error {
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		return err
 	}
 
 	yamlContent := []byte("ritual:\n  name: " + name + "\n  version: " + version + "\n")
 	ritualFile := filepath.Join(dir, "ritual.yaml")
 
-	return os.WriteFile(ritualFile, yamlContent, 0644)
+	return os.WriteFile(ritualFile, yamlContent, 0600)
 }

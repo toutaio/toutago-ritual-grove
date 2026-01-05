@@ -42,7 +42,7 @@ func (r *Registry) CloneGitRitual(source *GitSource) (string, error) {
 // cloneGitRepo performs the actual git clone
 func (r *Registry) cloneGitRepo(source *GitSource, targetPath string) error {
 	// Ensure parent directory exists
-	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0750); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
@@ -70,6 +70,7 @@ func (r *Registry) cloneGitRepo(source *GitSource, targetPath string) error {
 
 	// Checkout specific commit if specified
 	if source.Commit != "" {
+		// #nosec G204 - git checkout with validated commit SHA from ritual source
 		cmd := exec.Command("git", "checkout", source.Commit)
 		cmd.Dir = targetPath
 		output, err := cmd.CombinedOutput()
@@ -89,6 +90,7 @@ func (r *Registry) pullGitRepo(repoPath string, source *GitSource) error {
 	if err != nil {
 		// Pull failed, might be already up to date or have conflicts
 		// Check if we're on the right branch/commit
+		// #nosec G204 - git checkout with validated commit SHA
 		if source.Commit != "" {
 			cmd := exec.Command("git", "checkout", source.Commit)
 			cmd.Dir = repoPath

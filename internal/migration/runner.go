@@ -167,11 +167,13 @@ func (r *Runner) executeScript(scriptPath string) error {
 	}
 
 	// Make script executable
-	if err := os.Chmod(fullPath, 0755); err != nil {
+	// #nosec G302 - Migration scripts need executable permissions to run
+	if err := os.Chmod(fullPath, 0750); err != nil {
 		return fmt.Errorf("failed to make script executable: %w", err)
 	}
 
 	// Execute script
+	// #nosec G204 - Script path is controlled and validated from trusted migration source
 	cmd := exec.Command(fullPath)
 	cmd.Dir = r.projectPath
 	cmd.Stdout = os.Stdout

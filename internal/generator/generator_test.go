@@ -21,7 +21,7 @@ func TestGenerateFile(t *testing.T) {
 	// Create a template file
 	templatePath := filepath.Join(tmpDir, "src.tmpl")
 	templateContent := "App: {{ .app_name }}\nPort: {{ .port }}"
-	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}
 
@@ -51,7 +51,7 @@ func TestGenerateFileStatic(t *testing.T) {
 	// Create a static file
 	staticPath := filepath.Join(tmpDir, "static.txt")
 	staticContent := "This is static content"
-	if err := os.WriteFile(staticPath, []byte(staticContent), 0644); err != nil {
+	if err := os.WriteFile(staticPath, []byte(staticContent), 0600); err != nil {
 		t.Fatalf("Failed to create static file: %v", err)
 	}
 
@@ -84,7 +84,7 @@ func TestProtectedFiles(t *testing.T) {
 	// Create existing protected file
 	protectedPath := filepath.Join(tmpDir, "config.yaml")
 	originalContent := "original content"
-	if err := os.WriteFile(protectedPath, []byte(originalContent), 0644); err != nil {
+	if err := os.WriteFile(protectedPath, []byte(originalContent), 0600); err != nil {
 		t.Fatalf("Failed to create protected file: %v", err)
 	}
 
@@ -94,7 +94,7 @@ func TestProtectedFiles(t *testing.T) {
 	// Create template
 	templatePath := filepath.Join(tmpDir, "config.tmpl")
 	templateContent := "app: {{ .app_name }}"
-	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}
 
@@ -151,18 +151,18 @@ func TestGenerateFiles(t *testing.T) {
 	outputDir := filepath.Join(tmpDir, "output")
 
 	// Create ritual structure
-	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0755)
-	os.MkdirAll(filepath.Join(ritualDir, "static"), 0755)
+	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0750)
+	os.MkdirAll(filepath.Join(ritualDir, "static"), 0750)
 
 	// Create template file
 	templatePath := filepath.Join(ritualDir, "templates", "main.go.tmpl")
 	templateContent := "package main\n\nconst AppName = \"{{ .app_name }}\""
-	os.WriteFile(templatePath, []byte(templateContent), 0644)
+	os.WriteFile(templatePath, []byte(templateContent), 0600)
 
 	// Create static file
 	staticPath := filepath.Join(ritualDir, "static", "README.md")
 	staticContent := "# My App"
-	os.WriteFile(staticPath, []byte(staticContent), 0644)
+	os.WriteFile(staticPath, []byte(staticContent), 0600)
 
 	// Create manifest
 	manifest := &ritual.Manifest{
@@ -226,7 +226,7 @@ func TestGenerateFile_InvalidTemplate(t *testing.T) {
 	// Create invalid template
 	templatePath := filepath.Join(tmpDir, "bad.tmpl")
 	templateContent := "{{ .app_name" // Missing closing }}
-	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}
 
@@ -244,7 +244,7 @@ func TestGenerateFiles_MissingSourceFile(t *testing.T) {
 	ritualDir := filepath.Join(tmpDir, "ritual")
 	outputDir := filepath.Join(tmpDir, "output")
 
-	os.MkdirAll(ritualDir, 0755)
+	os.MkdirAll(ritualDir, 0750)
 
 	manifest := &ritual.Manifest{
 		Files: ritual.FilesSection{
@@ -267,7 +267,7 @@ func TestGenerateFiles_OptionalMissingFile(t *testing.T) {
 	ritualDir := filepath.Join(tmpDir, "ritual")
 	outputDir := filepath.Join(tmpDir, "output")
 
-	os.MkdirAll(ritualDir, 0755)
+	os.MkdirAll(ritualDir, 0750)
 
 	manifest := &ritual.Manifest{
 		Files: ritual.FilesSection{

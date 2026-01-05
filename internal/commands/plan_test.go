@@ -18,7 +18,7 @@ func TestPlanCommand(t *testing.T) {
 
 	// Create .ritual directory and state
 	ritualDir := filepath.Join(tmpDir, ".ritual")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatalf("Failed to create .ritual directory: %v", err)
 	}
 
@@ -57,7 +57,7 @@ files:
     - src: main.go.tmpl
       dest: main.go
 `
-	if err := os.WriteFile(manifestPath, []byte(manifestData), 0644); err != nil {
+	if err := os.WriteFile(manifestPath, []byte(manifestData), 0600); err != nil {
 		t.Fatalf("Failed to write manifest: %v", err)
 	}
 

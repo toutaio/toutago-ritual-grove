@@ -187,13 +187,13 @@ require (
 )
 `
 	goModPath := filepath.Join(tempDir, "go.mod")
-	if err := os.WriteFile(goModPath, []byte(goModContent), 0644); err != nil {
+	if err := os.WriteFile(goModPath, []byte(goModContent), 0600); err != nil {
 		t.Fatalf("Failed to write go.mod: %v", err)
 	}
 
 	// Create a simple main.go that uses the dependency
 	mainDir := filepath.Join(tempDir, "cmd", "server")
-	if err := os.MkdirAll(mainDir, 0755); err != nil {
+	if err := os.MkdirAll(mainDir, 0750); err != nil {
 		t.Fatalf("Failed to create main dir: %v", err)
 	}
 
@@ -210,7 +210,7 @@ func main() {
 }
 `
 	mainPath := filepath.Join(mainDir, "main.go")
-	if err := os.WriteFile(mainPath, []byte(mainContent), 0644); err != nil {
+	if err := os.WriteFile(mainPath, []byte(mainContent), 0600); err != nil {
 		t.Fatalf("Failed to write main.go: %v", err)
 	}
 

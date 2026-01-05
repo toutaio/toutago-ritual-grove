@@ -127,12 +127,12 @@ func (c *Container) Close() error {
 	}
 
 	containerDir := filepath.Join(projectPath, "internal", "container")
-	if err := os.MkdirAll(containerDir, 0755); err != nil {
+	if err := os.MkdirAll(containerDir, 0750); err != nil {
 		return err
 	}
 
 	containerPath := filepath.Join(containerDir, "container.go")
-	return os.WriteFile(containerPath, []byte(content), 0644)
+	return os.WriteFile(containerPath, []byte(content), 0600)
 }
 
 // generateRouterSetup creates router configuration
@@ -182,12 +182,12 @@ func Setup(c *container.Container) *http.ServeMux {
 	}
 
 	routerDir := filepath.Join(projectPath, "internal", "router")
-	if err := os.MkdirAll(routerDir, 0755); err != nil {
+	if err := os.MkdirAll(routerDir, 0750); err != nil {
 		return err
 	}
 
 	routerPath := filepath.Join(routerDir, "router.go")
-	return os.WriteFile(routerPath, []byte(content), 0644)
+	return os.WriteFile(routerPath, []byte(content), 0600)
 }
 
 // generateMiddlewareChain creates middleware utilities
@@ -251,12 +251,12 @@ func CORS(next http.HandlerFunc) http.HandlerFunc {
 `
 
 	middlewareDir := filepath.Join(projectPath, "internal", "middleware")
-	if err := os.MkdirAll(middlewareDir, 0755); err != nil {
+	if err := os.MkdirAll(middlewareDir, 0750); err != nil {
 		return err
 	}
 
 	middlewarePath := filepath.Join(middlewareDir, "middleware.go")
-	return os.WriteFile(middlewarePath, []byte(template), 0644)
+	return os.WriteFile(middlewarePath, []byte(template), 0600)
 }
 
 // updateMainWithWiring updates main.go to use the wired components
@@ -270,6 +270,7 @@ func (w *ComponentWiring) updateMainWithWiring(projectPath string, vars *Variabl
 	}
 
 	// Read existing main.go
+	// #nosec G304 - mainPath is a validated project file path
 	content, err := os.ReadFile(mainPath)
 	if err != nil {
 		return err
@@ -346,5 +347,5 @@ func main() {
 		return err
 	}
 
-	return os.WriteFile(mainPath, []byte(newContent), 0644)
+	return os.WriteFile(mainPath, []byte(newContent), 0600)
 }

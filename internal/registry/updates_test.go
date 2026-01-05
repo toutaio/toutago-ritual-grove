@@ -15,7 +15,7 @@ func TestCheckForUpdates(t *testing.T) {
 
 	// Create a test ritual
 	ritualDir := filepath.Join(tmpDir, "test-ritual")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual dir: %v", err)
 	}
 
@@ -38,7 +38,7 @@ files:
   static: []
   protected: []
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 
@@ -138,7 +138,7 @@ func TestCheckAllUpdates(t *testing.T) {
 
 	for _, r := range rituals {
 		ritualDir := filepath.Join(tmpDir, r.name)
-		if err := os.MkdirAll(ritualDir, 0755); err != nil {
+		if err := os.MkdirAll(ritualDir, 0750); err != nil {
 			t.Fatalf("Failed to create ritual dir: %v", err)
 		}
 
@@ -161,7 +161,7 @@ files:
   static: []
   protected: []
 `
-		if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(content), 0600); err != nil {
 			t.Fatalf("Failed to write ritual.yaml: %v", err)
 		}
 
@@ -222,7 +222,7 @@ func TestGetLatestVersion(t *testing.T) {
 
 	// Create a test ritual
 	ritualDir := filepath.Join(tmpDir, "version-test")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual dir: %v", err)
 	}
 
@@ -245,7 +245,7 @@ files:
   static: []
   protected: []
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 
@@ -278,7 +278,7 @@ func TestGetUpdateNotifications(t *testing.T) {
 
 	// Create test ritual
 	ritualDir := filepath.Join(tmpDir, "notify-test")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual dir: %v", err)
 	}
 
@@ -301,7 +301,7 @@ files:
   static: []
   protected: []
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 
@@ -348,7 +348,7 @@ func TestLoadChangelog(t *testing.T) {
 
 	// Create test ritual
 	ritualDir := filepath.Join(tmpDir, "changelog-test")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual dir: %v", err)
 	}
 
@@ -371,7 +371,7 @@ files:
   static: []
   protected: []
 `
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 

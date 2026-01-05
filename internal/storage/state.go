@@ -30,7 +30,7 @@ type Migration struct {
 // Save saves the state to .ritual/state.yaml in the project directory.
 func (s *State) Save(projectPath string) error {
 	stateDir := filepath.Join(projectPath, ".ritual")
-	if err := os.MkdirAll(stateDir, 0755); err != nil {
+	if err := os.MkdirAll(stateDir, 0750); err != nil {
 		return fmt.Errorf("failed to create state directory: %w", err)
 	}
 
@@ -40,7 +40,7 @@ func (s *State) Save(projectPath string) error {
 		return fmt.Errorf("failed to marshal state: %w", err)
 	}
 
-	if err := os.WriteFile(statePath, data, 0644); err != nil {
+	if err := os.WriteFile(statePath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write state file: %w", err)
 	}
 
@@ -50,6 +50,7 @@ func (s *State) Save(projectPath string) error {
 // LoadState loads the state from .ritual/state.yaml in the project directory.
 func LoadState(projectPath string) (*State, error) {
 	statePath := filepath.Join(projectPath, ".ritual", "state.yaml")
+	// #nosec G304 - statePath is constructed from validated components
 	data, err := os.ReadFile(statePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read state file: %w", err)

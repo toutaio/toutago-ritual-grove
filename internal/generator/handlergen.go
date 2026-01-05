@@ -50,12 +50,12 @@ func (g *HandlerGenerator) GenerateHandler(targetPath string, config HandlerConf
 	content := g.generateHandlerContent(config, operations)
 
 	handlerDir := filepath.Join(targetPath, "internal", config.Package)
-	if err := os.MkdirAll(handlerDir, 0755); err != nil {
+	if err := os.MkdirAll(handlerDir, 0750); err != nil {
 		return err
 	}
 
 	handlerPath := filepath.Join(handlerDir, fileName)
-	return os.WriteFile(handlerPath, []byte(content), 0644)
+	return os.WriteFile(handlerPath, []byte(content), 0600)
 }
 
 func (g *HandlerGenerator) generateHandlerContent(config HandlerConfig, operations []string) string {
@@ -374,12 +374,12 @@ func Test%sHandler_List(t *testing.T) {
 	)
 
 	handlerDir := filepath.Join(targetPath, "internal", config.Package)
-	if err := os.MkdirAll(handlerDir, 0755); err != nil {
+	if err := os.MkdirAll(handlerDir, 0750); err != nil {
 		return err
 	}
 
 	testPath := filepath.Join(handlerDir, fileName)
-	return os.WriteFile(testPath, []byte(content), 0644)
+	return os.WriteFile(testPath, []byte(content), 0600)
 }
 
 // GenerateMultiple generates multiple handlers

@@ -97,7 +97,7 @@ rituals:
 			tmpDir := t.TempDir()
 			lockPath := filepath.Join(tmpDir, "ritual.lock")
 
-			err := os.WriteFile(lockPath, []byte(tt.content), 0644)
+			err := os.WriteFile(lockPath, []byte(tt.content), 0600)
 			require.NoError(t, err)
 
 			got, err := LoadLockFile(lockPath)

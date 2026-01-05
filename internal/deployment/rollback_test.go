@@ -12,11 +12,11 @@ func TestRollback_CreateBackup(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
-	os.MkdirAll(projectDir, 0755)
+	os.MkdirAll(projectDir, 0750)
 
 	// Create some files
-	os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main"), 0644)
-	os.WriteFile(filepath.Join(projectDir, "config.yaml"), []byte("port: 8080"), 0644)
+	os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main"), 0600)
+	os.WriteFile(filepath.Join(projectDir, "config.yaml"), []byte("port: 8080"), 0600)
 
 	backupPath, err := rb.CreateBackup(projectDir)
 	if err != nil {
@@ -38,11 +38,11 @@ func TestRollback_RestoreFromBackup(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
-	os.MkdirAll(projectDir, 0755)
+	os.MkdirAll(projectDir, 0750)
 
 	// Create original file
 	originalContent := []byte("package main\n// v1.0")
-	os.WriteFile(filepath.Join(projectDir, "main.go"), originalContent, 0644)
+	os.WriteFile(filepath.Join(projectDir, "main.go"), originalContent, 0600)
 
 	// Create backup
 	backupPath, err := rb.CreateBackup(projectDir)
@@ -51,7 +51,7 @@ func TestRollback_RestoreFromBackup(t *testing.T) {
 	}
 
 	// Modify the file (simulating an update)
-	os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main\n// v2.0"), 0644)
+	os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main\n// v2.0"), 0600)
 
 	// Rollback
 	if err := rb.RestoreFromBackup(backupPath, projectDir); err != nil {
@@ -74,7 +74,7 @@ func TestRollback_ListBackups(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
-	os.MkdirAll(projectDir, 0755)
+	os.MkdirAll(projectDir, 0750)
 
 	// Create multiple backups
 	backup1, err1 := rb.CreateBackup(projectDir)
@@ -115,7 +115,7 @@ func TestRollback_CleanOldBackups(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
-	os.MkdirAll(projectDir, 0755)
+	os.MkdirAll(projectDir, 0750)
 
 	// Create multiple backups
 	for i := 0; i < 5; i++ {
@@ -140,7 +140,7 @@ func TestRollback_BackupMetadata(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
-	os.MkdirAll(projectDir, 0755)
+	os.MkdirAll(projectDir, 0750)
 
 	metadata := BackupMetadata{
 		RitualName:    "test-ritual",
@@ -172,10 +172,10 @@ func TestRollback_GetBackupSize(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
-	os.MkdirAll(projectDir, 0755)
+	os.MkdirAll(projectDir, 0750)
 
 	// Create file with known size
-	os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main\n"), 0644)
+	os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main\n"), 0600)
 
 	backupPath, _ := rb.CreateBackup(projectDir)
 

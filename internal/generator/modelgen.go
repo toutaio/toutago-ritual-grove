@@ -54,12 +54,12 @@ func (g *ModelGenerator) GenerateModel(targetPath string, config ModelConfig) er
 	content := g.generateModelContent(config)
 
 	modelDir := filepath.Join(targetPath, "internal", config.Package)
-	if err := os.MkdirAll(modelDir, 0755); err != nil {
+	if err := os.MkdirAll(modelDir, 0750); err != nil {
 		return err
 	}
 
 	modelPath := filepath.Join(modelDir, fileName)
-	return os.WriteFile(modelPath, []byte(content), 0644)
+	return os.WriteFile(modelPath, []byte(content), 0600)
 }
 
 func (g *ModelGenerator) generateModelContent(config ModelConfig) string {
@@ -226,12 +226,12 @@ func (r *%sImpl) Delete(ctx context.Context, id string) error {
 	)
 
 	repoDir := filepath.Join(targetPath, "internal", "repository")
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
+	if err := os.MkdirAll(repoDir, 0750); err != nil {
 		return err
 	}
 
 	repoPath := filepath.Join(repoDir, fileName)
-	return os.WriteFile(repoPath, []byte(content), 0644)
+	return os.WriteFile(repoPath, []byte(content), 0600)
 }
 
 // GenerateMultiple generates multiple models

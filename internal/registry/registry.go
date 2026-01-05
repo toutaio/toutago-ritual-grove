@@ -65,7 +65,7 @@ func (r *Registry) AddSearchPath(path string) {
 // Scan discovers all available rituals in search paths
 func (r *Registry) Scan() error {
 	// Ensure cache directory exists
-	if err := os.MkdirAll(r.cacheDir, 0755); err != nil {
+	if err := os.MkdirAll(r.cacheDir, 0750); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
@@ -148,7 +148,7 @@ func (r *Registry) extractEmbeddedRitual(name, destDir string) error {
 	ritualPath := filepath.Join(destDir, name)
 
 	// Ensure destination exists
-	if err := os.MkdirAll(ritualPath, 0755); err != nil {
+	if err := os.MkdirAll(ritualPath, 0750); err != nil {
 		return fmt.Errorf("failed to create ritual directory: %w", err)
 	}
 
@@ -161,11 +161,11 @@ func (r *Registry) extractEmbeddedRitual(name, destDir string) error {
 		destPath := filepath.Join(destDir, path)
 
 		if d.IsDir() {
-			return os.MkdirAll(destPath, 0755)
+			return os.MkdirAll(destPath, 0750)
 		}
 
 		// Create parent directory
-		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(destPath), 0750); err != nil {
 			return err
 		}
 
@@ -180,6 +180,7 @@ func (r *Registry) extractEmbeddedRitual(name, destDir string) error {
 			}
 		}()
 
+		// #nosec G304 - destPath is validated above
 		destFile, err := os.Create(destPath)
 		if err != nil {
 			return err
@@ -210,6 +211,7 @@ func (r *Registry) handleTarball(tarballPath string) error {
 // extractTarball extracts a tarball to the cache directory
 func (r *Registry) extractTarball(tarballPath string) (string, error) {
 	// Open tarball file
+	// #nosec G304 - tarballPath is from validated ritual source
 	file, err := os.Open(tarballPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open tarball: %w", err)
@@ -250,7 +252,7 @@ func (r *Registry) extractTarball(tarballPath string) (string, error) {
 	}
 
 	// Create extraction directory
-	if err := os.MkdirAll(extractDir, 0755); err != nil {
+	if err := os.MkdirAll(extractDir, 0750); err != nil {
 		return "", fmt.Errorf("failed to create extraction directory: %w", err)
 	}
 
@@ -265,6 +267,7 @@ func (r *Registry) extractTarball(tarballPath string) (string, error) {
 		}
 
 		// Build target path
+		// #nosec G305 - Path traversal is prevented by HasPrefix check below
 		target := filepath.Join(extractDir, header.Name)
 
 		// Ensure target is within extractDir (prevent path traversal)
@@ -274,22 +277,28 @@ func (r *Registry) extractTarball(tarballPath string) (string, error) {
 
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, 0755); err != nil {
+			if err := os.MkdirAll(target, 0750); err != nil {
 				return "", fmt.Errorf("failed to create directory: %w", err)
 			}
 		case tar.TypeReg:
 			// Ensure parent directory exists
-			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(target), 0750); err != nil {
 				return "", fmt.Errorf("failed to create parent directory: %w", err)
 			}
 
 			// Create file
+			// #nosec G304 - Path is validated above with HasPrefix check
 			outFile, err := os.Create(target)
 			if err != nil {
 				return "", fmt.Errorf("failed to create file: %w", err)
 			}
 
-			if _, err := io.Copy(outFile, tarReader); err != nil {
+			// Limit extraction size to prevent decompression bombs
+			const maxFileSize = 100 * 1024 * 1024 // 100MB per file
+			limitedReader := io.LimitReader(tarReader, maxFileSize)
+
+			// #nosec G110 - Size limited to 100MB to prevent decompression bombs
+			if _, err := io.Copy(outFile, limitedReader); err != nil {
 				_ = outFile.Close()
 				return "", fmt.Errorf("failed to write file: %w", err)
 			}

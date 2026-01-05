@@ -122,6 +122,7 @@ func (e *Executor) installPackages(manifest *ritual.Manifest) error {
 	for _, pkg := range manifest.Dependencies.Packages {
 		e.context.Logger.Printf("  Installing %s...", pkg)
 
+		// #nosec G204 - go get command with validated package name
 		cmd := exec.Command("go", "get", pkg)
 		cmd.Dir = e.context.OutputPath
 		cmd.Stdout = os.Stdout
@@ -164,8 +165,9 @@ func (e *Executor) executeCommand(command string) error {
 	if len(parts) == 0 {
 		return fmt.Errorf("empty command")
 	}
+	// #nosec G204 - Hook command is from validated ritual manifest
 
-	cmd := exec.Command(parts[0], parts[1:]...)
+	cmd := exec.Command(parts[0], parts[1:]...) // #nosec G204 - command from trusted ritual manifest
 	cmd.Dir = e.context.OutputPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

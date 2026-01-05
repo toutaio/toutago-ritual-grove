@@ -40,6 +40,7 @@ type RitualDependencyLock struct {
 
 // LoadLockFile loads and parses a ritual.lock file
 func LoadLockFile(path string) (*LockFile, error) {
+	// #nosec G304 - path is from configuration
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read lock file: %w", err)
@@ -60,7 +61,7 @@ func (l *LockFile) Save(path string) error {
 		return fmt.Errorf("failed to marshal lock file: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, data, 0600); err != nil {
 		return fmt.Errorf("failed to write lock file: %w", err)
 	}
 

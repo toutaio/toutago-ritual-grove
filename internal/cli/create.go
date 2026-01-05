@@ -72,7 +72,7 @@ func (w *CreateWorkflow) Execute(ritualPath, targetPath string, answers map[stri
 	}
 
 	// Create target directory if it doesn't exist
-	if err := os.MkdirAll(targetPath, 0755); err != nil {
+	if err := os.MkdirAll(targetPath, 0750); err != nil {
 		return fmt.Errorf("failed to create target directory: %w", err)
 	}
 

@@ -76,12 +76,12 @@ func validateToken(token string) bool {
 `
 
 	middlewareDir := filepath.Join(projectPath, "internal", "middleware")
-	if err := os.MkdirAll(middlewareDir, 0755); err != nil {
+	if err := os.MkdirAll(middlewareDir, 0750); err != nil {
 		return err
 	}
 
 	authPath := filepath.Join(middlewareDir, "auth.go")
-	return os.WriteFile(authPath, []byte(template), 0644)
+	return os.WriteFile(authPath, []byte(template), 0600)
 }
 
 // GenerateLoggingMiddleware generates request logging middleware
@@ -167,12 +167,12 @@ func DetailedLogger(next http.HandlerFunc) http.HandlerFunc {
 `
 
 	middlewareDir := filepath.Join(projectPath, "internal", "middleware")
-	if err := os.MkdirAll(middlewareDir, 0755); err != nil {
+	if err := os.MkdirAll(middlewareDir, 0750); err != nil {
 		return err
 	}
 
 	loggingPath := filepath.Join(middlewareDir, "logging.go")
-	return os.WriteFile(loggingPath, []byte(template), 0644)
+	return os.WriteFile(loggingPath, []byte(template), 0600)
 }
 
 // GenerateCORSMiddleware generates CORS middleware
@@ -282,7 +282,7 @@ func isOriginAllowed(origin string, allowed []string) bool {
 	}
 
 	middlewareDir := filepath.Join(projectPath, "internal", "middleware")
-	if err := os.MkdirAll(middlewareDir, 0755); err != nil {
+	if err := os.MkdirAll(middlewareDir, 0750); err != nil {
 		return err
 	}
 
@@ -295,7 +295,7 @@ func isOriginAllowed(origin string, allowed []string) bool {
 	}
 
 	corsPath := filepath.Join(middlewareDir, "cors.go")
-	return os.WriteFile(corsPath, []byte(content), 0644)
+	return os.WriteFile(corsPath, []byte(content), 0600)
 }
 
 // GenerateCustomMiddleware generates a custom middleware from specification
@@ -317,13 +317,13 @@ func %s(next http.HandlerFunc) http.HandlerFunc {
 `, spec.Name, spec.Description, spec.Name, spec.Logic)
 
 	middlewareDir := filepath.Join(projectPath, "internal", "middleware")
-	if err := os.MkdirAll(middlewareDir, 0755); err != nil {
+	if err := os.MkdirAll(middlewareDir, 0750); err != nil {
 		return err
 	}
 
 	filename := strings.ToLower(spec.Name) + ".go"
 	middlewarePath := filepath.Join(middlewareDir, filename)
-	return os.WriteFile(middlewarePath, []byte(template), 0644)
+	return os.WriteFile(middlewarePath, []byte(template), 0600)
 }
 
 // GenerateAll generates all standard middleware

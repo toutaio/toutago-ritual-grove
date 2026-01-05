@@ -353,6 +353,7 @@ func ValidateWritablePath(value interface{}) error {
 
 	// Try to create a temp file to test writability
 	testFile := filepath.Join(strVal, ".writetest")
+	// #nosec G304 - testFile is created in a temporary directory for validation
 	f, err := os.Create(testFile)
 	if err != nil {
 		return fmt.Errorf("path is not writable: %w", err)

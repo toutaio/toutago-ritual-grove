@@ -162,7 +162,7 @@ func TestDocGenerator_GenerateLicense(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			subDir := filepath.Join(tmpDir, tt.name)
-			os.MkdirAll(subDir, 0755)
+			os.MkdirAll(subDir, 0750)
 
 			err := gen.GenerateLicense(subDir, tt.licenseType, "Test Author", "2026")
 			if err != nil {

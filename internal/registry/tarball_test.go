@@ -84,7 +84,7 @@ func TestInvalidTarball(t *testing.T) {
 
 	// Create an invalid tarball (not actually a tar.gz file)
 	invalidPath := filepath.Join(tmpDir, "invalid.tar.gz")
-	if err := os.WriteFile(invalidPath, []byte("not a tarball"), 0644); err != nil {
+	if err := os.WriteFile(invalidPath, []byte("not a tarball"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -222,7 +222,7 @@ func createTestTarball(path, name, version string) error {
 
 	header := &tar.Header{
 		Name: "ritual.yaml",
-		Mode: 0644,
+		Mode: 0600,
 		Size: int64(len(yamlContent)),
 	}
 
@@ -303,7 +303,7 @@ func createNestedTarball(path, name, version string) error {
 func addFileToTar(tw *tar.Writer, name string, content []byte) error {
 	header := &tar.Header{
 		Name: name,
-		Mode: 0644,
+		Mode: 0600,
 		Size: int64(len(content)),
 	}
 
@@ -322,7 +322,7 @@ func addFileToTar(tw *tar.Writer, name string, content []byte) error {
 func addDirToTar(tw *tar.Writer, name string) error {
 	header := &tar.Header{
 		Name:     name,
-		Mode:     0755,
+		Mode:     0750,
 		Typeflag: tar.TypeDir,
 	}
 

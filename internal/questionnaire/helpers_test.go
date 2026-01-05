@@ -116,12 +116,12 @@ func TestURLHelper(t *testing.T) {
 func TestPathHelper(t *testing.T) {
 	tempDir := t.TempDir()
 	existingFile := filepath.Join(tempDir, "existing.txt")
-	if err := os.WriteFile(existingFile, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(existingFile, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	existingDir := filepath.Join(tempDir, "existing-dir")
-	if err := os.Mkdir(existingDir, 0755); err != nil {
+	if err := os.Mkdir(existingDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -215,12 +215,12 @@ func TestGitHelper(t *testing.T) {
 
 	// Initialize a git repo for testing
 	gitDir := filepath.Join(tempDir, "git-repo")
-	if err := os.Mkdir(gitDir, 0755); err != nil {
+	if err := os.Mkdir(gitDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
 	nonGitDir := filepath.Join(tempDir, "non-git")
-	if err := os.Mkdir(nonGitDir, 0755); err != nil {
+	if err := os.Mkdir(nonGitDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 

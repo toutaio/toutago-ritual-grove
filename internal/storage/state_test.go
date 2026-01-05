@@ -36,7 +36,7 @@ func TestState_Save(t *testing.T) {
 func TestState_Load(t *testing.T) {
 	tmpDir := t.TempDir()
 	stateDir := filepath.Join(tmpDir, ".ritual")
-	os.MkdirAll(stateDir, 0755)
+	os.MkdirAll(stateDir, 0750)
 
 	// Create a state file manually
 	originalState := &State{

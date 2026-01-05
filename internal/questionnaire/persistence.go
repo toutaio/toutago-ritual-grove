@@ -11,6 +11,7 @@ import (
 
 const (
 	// SecretPlaceholder is used to mask secrets in saved answers
+	// #nosec G101 - This is not a hardcoded credential, just a placeholder string
 	SecretPlaceholder = "<SECRET_FROM_ENV>"
 )
 
@@ -30,7 +31,7 @@ func NewAnswerPersistence(filePath string) *AnswerPersistence {
 func (p *AnswerPersistence) Save(answers map[string]interface{}) error {
 	// Ensure directory exists
 	dir := filepath.Dir(p.filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
@@ -41,7 +42,7 @@ func (p *AnswerPersistence) Save(answers map[string]interface{}) error {
 	}
 
 	// Write to file
-	if err := os.WriteFile(p.filePath, data, 0644); err != nil {
+	if err := os.WriteFile(p.filePath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write answers file: %w", err)
 	}
 

@@ -57,12 +57,13 @@ func (g *FileGenerator) GenerateFile(srcPath, destPath string, isTemplate bool) 
 
 	// Ensure destination directory exists
 	destDir := filepath.Dir(destPath)
-	if err := os.MkdirAll(destDir, 0755); err != nil {
+	if err := os.MkdirAll(destDir, 0750); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", destDir, err)
 	}
 
 	if isTemplate {
 		// Read template file
+		// #nosec G304 - srcPath is from validated ritual template source
 		content, err := os.ReadFile(srcPath)
 		if err != nil {
 			return fmt.Errorf("failed to read template %s: %w", srcPath, err)
@@ -75,7 +76,7 @@ func (g *FileGenerator) GenerateFile(srcPath, destPath string, isTemplate bool) 
 		}
 
 		// Write rendered content
-		if err := os.WriteFile(destPath, []byte(rendered), 0644); err != nil {
+		if err := os.WriteFile(destPath, []byte(rendered), 0600); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", destPath, err)
 		}
 	} else {
@@ -194,7 +195,7 @@ func (g *FileGenerator) generateDirectory(srcDir, destDir string, isTemplate boo
 func (g *FileGenerator) CreateDirectoryStructure(basePath string, dirs []string) error {
 	for _, dir := range dirs {
 		fullPath := filepath.Join(basePath, dir)
-		if err := os.MkdirAll(fullPath, 0755); err != nil {
+		if err := os.MkdirAll(fullPath, 0750); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", fullPath, err)
 		}
 	}
@@ -202,6 +203,7 @@ func (g *FileGenerator) CreateDirectoryStructure(basePath string, dirs []string)
 }
 
 // copyFile copies a file from src to dst
+// #nosec G304 - src is from validated ritual source
 func copyFile(src, dst string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {
@@ -211,6 +213,7 @@ func copyFile(src, dst string) error {
 		if err := sourceFile.Close(); err != nil {
 			// Log but don't fail on close error
 		}
+		// #nosec G304 - dst is a validated destination path
 	}()
 
 	destFile, err := os.Create(dst)

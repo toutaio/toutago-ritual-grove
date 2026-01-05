@@ -135,7 +135,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 	)
 
 	readmePath := filepath.Join(targetPath, "README.md")
-	return os.WriteFile(readmePath, []byte(content), 0644)
+	return os.WriteFile(readmePath, []byte(content), 0600)
 }
 
 // GenerateAPIDoc generates API documentation
@@ -161,12 +161,12 @@ func (g *DocGenerator) GenerateAPIDoc(targetPath string, endpoints []APIEndpoint
 	}
 
 	docsDir := filepath.Join(targetPath, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0750); err != nil {
 		return err
 	}
 
 	apiDocPath := filepath.Join(docsDir, "API.md")
-	return os.WriteFile(apiDocPath, []byte(sb.String()), 0644)
+	return os.WriteFile(apiDocPath, []byte(sb.String()), 0600)
 }
 
 // GenerateChangelog generates a CHANGELOG.md file
@@ -203,7 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	)
 
 	changelogPath := filepath.Join(targetPath, "CHANGELOG.md")
-	return os.WriteFile(changelogPath, []byte(content), 0644)
+	return os.WriteFile(changelogPath, []byte(content), 0600)
 }
 
 // GenerateContributing generates a CONTRIBUTING.md file
@@ -264,7 +264,7 @@ Be respectful and professional in all interactions.
 `
 
 	contributingPath := filepath.Join(targetPath, "CONTRIBUTING.md")
-	return os.WriteFile(contributingPath, []byte(content), 0644)
+	return os.WriteFile(contributingPath, []byte(content), 0600)
 }
 
 // GenerateLicense generates a LICENSE file
@@ -321,7 +321,7 @@ limitations under the License.
 	}
 
 	licensePath := filepath.Join(targetPath, "LICENSE")
-	return os.WriteFile(licensePath, []byte(content), 0644)
+	return os.WriteFile(licensePath, []byte(content), 0600)
 }
 
 // GenerateArchitectureDoc generates architecture documentation
@@ -346,12 +346,12 @@ func (g *DocGenerator) GenerateArchitectureDoc(targetPath string, components []C
 	sb.WriteString("5. Response returned to client\n\n")
 
 	docsDir := filepath.Join(targetPath, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0750); err != nil {
 		return err
 	}
 
 	archPath := filepath.Join(docsDir, "ARCHITECTURE.md")
-	return os.WriteFile(archPath, []byte(sb.String()), 0644)
+	return os.WriteFile(archPath, []byte(sb.String()), 0600)
 }
 
 // GenerateDeploymentGuide generates deployment documentation
@@ -384,12 +384,12 @@ func (g *DocGenerator) GenerateDeploymentGuide(targetPath string, config Deploym
 	sb.WriteString("- Readiness endpoint: `/ready`\n\n")
 
 	docsDir := filepath.Join(targetPath, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0750); err != nil {
 		return err
 	}
 
 	deployPath := filepath.Join(docsDir, "DEPLOYMENT.md")
-	return os.WriteFile(deployPath, []byte(sb.String()), 0644)
+	return os.WriteFile(deployPath, []byte(sb.String()), 0600)
 }
 
 // GenerateAll generates all documentation files

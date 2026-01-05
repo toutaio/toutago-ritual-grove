@@ -17,7 +17,7 @@ func TestExecutor_Execute_DryRun(t *testing.T) {
 	outputDir := filepath.Join(tmpDir, "output")
 
 	// Create ritual structure
-	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0755)
+	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0750)
 
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
@@ -33,7 +33,7 @@ func TestExecutor_Execute_DryRun(t *testing.T) {
 
 	// Create template file
 	templatePath := filepath.Join(ritualDir, "templates", "main.go")
-	os.WriteFile(templatePath, []byte("package main"), 0644)
+	os.WriteFile(templatePath, []byte("package main"), 0600)
 
 	vars := generator.NewVariables()
 
@@ -64,7 +64,7 @@ func TestExecutor_Execute_Real(t *testing.T) {
 	outputDir := filepath.Join(tmpDir, "output")
 
 	// Create ritual structure
-	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0755)
+	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0750)
 
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
@@ -81,7 +81,7 @@ func TestExecutor_Execute_Real(t *testing.T) {
 	// Create template file
 	templatePath := filepath.Join(ritualDir, "templates", "main.go")
 	templateContent := "package main\n\nconst App = \"{{ .app_name }}\""
-	os.WriteFile(templatePath, []byte(templateContent), 0644)
+	os.WriteFile(templatePath, []byte(templateContent), 0600)
 
 	vars := generator.NewVariables()
 	vars.Set("app_name", "test-app")
@@ -203,7 +203,7 @@ func TestExecutor_Execute_WithStaticFiles(t *testing.T) {
 	outputDir := filepath.Join(tmpDir, "output")
 
 	// Create ritual structure
-	os.MkdirAll(filepath.Join(ritualDir, "static"), 0755)
+	os.MkdirAll(filepath.Join(ritualDir, "static"), 0750)
 
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
@@ -219,7 +219,7 @@ func TestExecutor_Execute_WithStaticFiles(t *testing.T) {
 
 	// Create static file
 	staticPath := filepath.Join(ritualDir, "static", "config.json")
-	os.WriteFile(staticPath, []byte(`{"app": "test"}`), 0644)
+	os.WriteFile(staticPath, []byte(`{"app": "test"}`), 0600)
 
 	vars := generator.NewVariables()
 
@@ -296,12 +296,12 @@ func TestExecutor_Execute_WithHooksAndPackages(t *testing.T) {
 	outputDir := filepath.Join(tmpDir, "output")
 
 	// Create ritual structure
-	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0755)
-	os.MkdirAll(outputDir, 0755)
+	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0750)
+	os.MkdirAll(outputDir, 0750)
 
 	// Create go.mod first
 	goModContent := "module testapp\n\ngo 1.21\n"
-	os.WriteFile(filepath.Join(outputDir, "go.mod"), []byte(goModContent), 0644)
+	os.WriteFile(filepath.Join(outputDir, "go.mod"), []byte(goModContent), 0600)
 
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
@@ -324,7 +324,7 @@ func TestExecutor_Execute_WithHooksAndPackages(t *testing.T) {
 
 	// Create template file
 	templatePath := filepath.Join(ritualDir, "templates", "main.go")
-	os.WriteFile(templatePath, []byte("package main"), 0644)
+	os.WriteFile(templatePath, []byte("package main"), 0600)
 
 	vars := generator.NewVariables()
 
@@ -354,7 +354,7 @@ func TestExecutor_Execute_NilLogger(t *testing.T) {
 	ritualDir := filepath.Join(tmpDir, "ritual")
 	outputDir := filepath.Join(tmpDir, "output")
 
-	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0755)
+	os.MkdirAll(filepath.Join(ritualDir, "templates"), 0750)
 
 	manifest := &ritual.Manifest{
 		Ritual: ritual.RitualMeta{
@@ -369,7 +369,7 @@ func TestExecutor_Execute_NilLogger(t *testing.T) {
 	}
 
 	templatePath := filepath.Join(ritualDir, "templates", "main.go")
-	os.WriteFile(templatePath, []byte("package main"), 0644)
+	os.WriteFile(templatePath, []byte("package main"), 0600)
 
 	vars := generator.NewVariables()
 

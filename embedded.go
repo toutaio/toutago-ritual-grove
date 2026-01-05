@@ -28,11 +28,11 @@ func ExtractRituals(destDir string) error {
 		destPath := filepath.Join(destDir, relPath)
 
 		if d.IsDir() {
-			return os.MkdirAll(destPath, 0755)
+			return os.MkdirAll(destPath, 0750)
 		}
 
 		// Create parent directory
-		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(destPath), 0750); err != nil {
 			return err
 		}
 
@@ -47,6 +47,7 @@ func ExtractRituals(destDir string) error {
 			}
 		}()
 
+		// #nosec G304 - destPath is constructed from validated embedded resources
 		destFile, err := os.Create(destPath)
 		if err != nil {
 			return err

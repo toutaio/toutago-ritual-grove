@@ -227,7 +227,7 @@ func TestAnswerValidation(t *testing.T) {
 database: postgres
 port: 8080
 `)
-		if err := os.WriteFile(answersFile, validContent, 0644); err != nil {
+		if err := os.WriteFile(answersFile, validContent, 0600); err != nil {
 			t.Fatal(err)
 		}
 
@@ -251,7 +251,7 @@ database: postgres
 invalid yaml here!!!
   bad indentation
 `)
-		if err := os.WriteFile(answersFile, invalidContent, 0644); err != nil {
+		if err := os.WriteFile(answersFile, invalidContent, 0600); err != nil {
 			t.Fatal(err)
 		}
 

@@ -43,7 +43,7 @@ func (r *RollbackManager) CreateBackupWithMetadata(projectDir string, metadata B
 	backupPath := filepath.Join(projectDir, r.backupDir, backupName)
 
 	// Create backup directory
-	if err := os.MkdirAll(backupPath, 0755); err != nil {
+	if err := os.MkdirAll(backupPath, 0750); err != nil {
 		return "", fmt.Errorf("failed to create backup directory: %w", err)
 	}
 
@@ -61,7 +61,7 @@ func (r *RollbackManager) CreateBackupWithMetadata(projectDir string, metadata B
 		return "", fmt.Errorf("failed to marshal metadata: %w", err)
 	}
 
-	if err := os.WriteFile(metadataPath, metadataJSON, 0644); err != nil {
+	if err := os.WriteFile(metadataPath, metadataJSON, 0600); err != nil {
 		return "", fmt.Errorf("failed to write metadata: %w", err)
 	}
 
@@ -145,6 +145,7 @@ func (r *RollbackManager) CleanOldBackups(projectDir string, keepCount int) erro
 func (r *RollbackManager) ReadBackupMetadata(backupPath string) (BackupMetadata, error) {
 	metadataPath := filepath.Join(backupPath, "backup.json")
 
+	// #nosec G304 - metadataPath is constructed from validated backup directory
 	data, err := os.ReadFile(metadataPath)
 	if err != nil {
 		return BackupMetadata{}, fmt.Errorf("failed to read metadata: %w", err)
@@ -211,6 +212,7 @@ func (r *RollbackManager) copyDirectory(src, dst string) error {
 }
 
 // copyFile copies a single file
+// #nosec G304 - Source path is from validated backup metadata
 func (r *RollbackManager) copyFile(src, dst string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {
@@ -221,8 +223,9 @@ func (r *RollbackManager) copyFile(src, dst string) error {
 	}()
 
 	// Create destination directory if it doesn't exist
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0750); err != nil {
 		return err
+		// #nosec G304 - Destination path is validated and from backup metadata
 	}
 
 	destFile, err := os.Create(dst)

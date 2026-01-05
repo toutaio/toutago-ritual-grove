@@ -178,7 +178,7 @@ func TestUpdateMainWithWiring(t *testing.T) {
 
 	// Create cmd/server directory
 	mainDir := filepath.Join(tempDir, "cmd", "server")
-	if err := os.MkdirAll(mainDir, 0755); err != nil {
+	if err := os.MkdirAll(mainDir, 0750); err != nil {
 		t.Fatalf("Failed to create main directory: %v", err)
 	}
 
@@ -197,7 +197,7 @@ func main() {
 }
 `
 	mainPath := filepath.Join(mainDir, "main.go")
-	if err := os.WriteFile(mainPath, []byte(initialMain), 0644); err != nil {
+	if err := os.WriteFile(mainPath, []byte(initialMain), 0600); err != nil {
 		t.Fatalf("Failed to write initial main.go: %v", err)
 	}
 
@@ -251,7 +251,7 @@ func TestUpdateMainWithWiring_AlreadyWired(t *testing.T) {
 
 	// Create cmd/server directory
 	mainDir := filepath.Join(tempDir, "cmd", "server")
-	if err := os.MkdirAll(mainDir, 0755); err != nil {
+	if err := os.MkdirAll(mainDir, 0750); err != nil {
 		t.Fatalf("Failed to create main directory: %v", err)
 	}
 
@@ -268,7 +268,7 @@ func main() {
 }
 `
 	mainPath := filepath.Join(mainDir, "main.go")
-	if err := os.WriteFile(mainPath, []byte(wiredMain), 0644); err != nil {
+	if err := os.WriteFile(mainPath, []byte(wiredMain), 0600); err != nil {
 		t.Fatalf("Failed to write wired main.go: %v", err)
 	}
 

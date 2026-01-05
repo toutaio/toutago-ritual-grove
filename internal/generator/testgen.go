@@ -134,7 +134,7 @@ func Test%sHandler(t *testing.T) {
 
 	// Write test file
 	testPath := filepath.Join(projectPath, packagePath, testFileName)
-	return os.WriteFile(testPath, []byte(content), 0644)
+	return os.WriteFile(testPath, []byte(content), 0600)
 }
 
 // GenerateHandlerTest generates a test for an HTTP handler
@@ -259,11 +259,11 @@ func (g *TestGenerator) GenerateIntegrationTest(projectPath string, spec Integra
 	// Convert CamelCase to snake_case for filename
 	fileName := camelToSnake(spec.Name) + "_test.go"
 	testDir := filepath.Join(projectPath, "test")
-	if err := os.MkdirAll(testDir, 0755); err != nil {
+	if err := os.MkdirAll(testDir, 0750); err != nil {
 		return fmt.Errorf("failed to create test directory: %w", err)
 	}
 	testPath := filepath.Join(testDir, fileName)
-	return os.WriteFile(testPath, []byte(sb.String()), 0644)
+	return os.WriteFile(testPath, []byte(sb.String()), 0600)
 }
 
 // camelToSnake converts CamelCase to snake_case
@@ -299,11 +299,11 @@ func (g *TestGenerator) GenerateTestFixture(projectPath string, fixture TestFixt
 
 	// Write to file
 	fixturePath := filepath.Join(projectPath, "test", "fixtures", fixture.Name+".json")
-	if err := os.MkdirAll(filepath.Dir(fixturePath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fixturePath), 0750); err != nil {
 		return fmt.Errorf("failed to create fixtures directory: %w", err)
 	}
 
-	return os.WriteFile(fixturePath, data, 0644)
+	return os.WriteFile(fixturePath, data, 0600)
 }
 
 // GenerateBenchmark generates a benchmark test

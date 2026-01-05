@@ -12,7 +12,7 @@ func TestTestGenerator_GenerateUnitTests(t *testing.T) {
 
 	// Create a handler file first
 	handlersDir := filepath.Join(projectPath, "internal", "handlers")
-	if err := os.MkdirAll(handlersDir, 0755); err != nil {
+	if err := os.MkdirAll(handlersDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -27,7 +27,7 @@ func HelloHandler(w http.ResponseWriter, r *http.Request) {
 }
 `
 	handlerFile := filepath.Join(handlersDir, "hello.go")
-	if err := os.WriteFile(handlerFile, []byte(handlerContent), 0644); err != nil {
+	if err := os.WriteFile(handlerFile, []byte(handlerContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -142,7 +142,7 @@ func TestTestGenerator_GenerateIntegrationTest(t *testing.T) {
 	tmpDir := t.TempDir()
 	projectPath := filepath.Join(tmpDir, "test-project")
 
-	if err := os.MkdirAll(filepath.Join(projectPath, "test"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(projectPath, "test"), 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -199,7 +199,7 @@ func TestTestGenerator_GenerateTestFixture(t *testing.T) {
 	tmpDir := t.TempDir()
 	projectPath := filepath.Join(tmpDir, "test-project")
 
-	if err := os.MkdirAll(filepath.Join(projectPath, "test", "fixtures"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(projectPath, "test", "fixtures"), 0750); err != nil {
 		t.Fatal(err)
 	}
 

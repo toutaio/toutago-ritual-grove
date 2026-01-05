@@ -191,7 +191,7 @@ func TestLoader_Load(t *testing.T) {
 	// Create a temporary directory with a ritual.yaml
 	tmpDir := t.TempDir()
 	ritualDir := filepath.Join(tmpDir, "test-ritual")
-	if err := os.MkdirAll(ritualDir, 0755); err != nil {
+	if err := os.MkdirAll(ritualDir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual directory: %v", err)
 	}
 
@@ -215,7 +215,7 @@ files:
       dest: main.go
 `)
 
-	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), yamlContent, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualDir, "ritual.yaml"), yamlContent, 0600); err != nil {
 		t.Fatalf("Failed to write test ritual file: %v", err)
 	}
 

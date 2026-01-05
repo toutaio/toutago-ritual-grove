@@ -96,7 +96,7 @@ LOG_FORMAT=json
 	)
 
 	envPath := filepath.Join(targetPath, ".env.example")
-	return os.WriteFile(envPath, []byte(content), 0644)
+	return os.WriteFile(envPath, []byte(content), 0600)
 }
 
 // GenerateYAMLConfig generates a config.yaml file
@@ -138,12 +138,12 @@ logging:
 	)
 
 	configDir := filepath.Join(targetPath, "config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, 0750); err != nil {
 		return err
 	}
 
 	configPath := filepath.Join(configDir, "config.yaml")
-	return os.WriteFile(configPath, []byte(content), 0644)
+	return os.WriteFile(configPath, []byte(content), 0600)
 }
 
 // GenerateDockerCompose generates a docker-compose.yml file
@@ -224,7 +224,7 @@ services:
 	)
 
 	composePath := filepath.Join(targetPath, "docker-compose.yml")
-	return os.WriteFile(composePath, []byte(content), 0644)
+	return os.WriteFile(composePath, []byte(content), 0600)
 }
 
 // GenerateDockerfile generates a Dockerfile
@@ -265,7 +265,7 @@ CMD ["./main"]
 	)
 
 	dockerfilePath := filepath.Join(targetPath, "Dockerfile")
-	return os.WriteFile(dockerfilePath, []byte(content), 0644)
+	return os.WriteFile(dockerfilePath, []byte(content), 0600)
 }
 
 // GenerateGitignore generates a .gitignore file
@@ -328,7 +328,7 @@ logs/
 `
 
 	gitignorePath := filepath.Join(targetPath, ".gitignore")
-	return os.WriteFile(gitignorePath, []byte(content), 0644)
+	return os.WriteFile(gitignorePath, []byte(content), 0600)
 }
 
 // GenerateEditorConfig generates a .editorconfig file
@@ -359,7 +359,7 @@ indent_style = tab
 `
 
 	editorconfigPath := filepath.Join(targetPath, ".editorconfig")
-	return os.WriteFile(editorconfigPath, []byte(content), 0644)
+	return os.WriteFile(editorconfigPath, []byte(content), 0600)
 }
 
 // GenerateMakefile generates a Makefile
@@ -420,7 +420,7 @@ dev:
 	)
 
 	makefilePath := filepath.Join(targetPath, "Makefile")
-	return os.WriteFile(makefilePath, []byte(content), 0644)
+	return os.WriteFile(makefilePath, []byte(content), 0600)
 }
 
 // GenerateAll generates all configuration files

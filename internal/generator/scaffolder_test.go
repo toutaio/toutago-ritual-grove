@@ -172,7 +172,7 @@ func TestProjectScaffolder_GenerateFromRitual(t *testing.T) {
 
 	// Create a simple ritual structure
 	ritualPath := filepath.Join(tmpDir, "ritual")
-	if err := os.MkdirAll(filepath.Join(ritualPath, "templates"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(ritualPath, "templates"), 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -192,13 +192,13 @@ files:
     - src: "test.txt.tmpl"
       dest: "test.txt"
 `
-	if err := os.WriteFile(filepath.Join(ritualPath, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualPath, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	// Create template file
 	template := `Hello {{ .app_name }}!`
-	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "test.txt.tmpl"), []byte(template), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "test.txt.tmpl"), []byte(template), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -335,20 +335,20 @@ func TestProjectScaffolder_ApplyTemplateFiles(t *testing.T) {
 	ritualPath := filepath.Join(tmpDir, "ritual")
 
 	// Create ritual with templates
-	if err := os.MkdirAll(filepath.Join(ritualPath, "templates"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(ritualPath, "templates"), 0750); err != nil {
 		t.Fatal(err)
 	}
 
 	// Create template files
 	template1 := `package main
 // {{ .app_name }}`
-	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "file1.go.tmpl"), []byte(template1), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "file1.go.tmpl"), []byte(template1), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	// Create static file
 	static := `# Static content`
-	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "static.txt"), []byte(static), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "static.txt"), []byte(static), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -441,7 +441,7 @@ func TestProjectScaffolder_GenerateWithHooks(t *testing.T) {
 	ritualPath := filepath.Join(tmpDir, "ritual")
 
 	// Create ritual with hooks
-	if err := os.MkdirAll(filepath.Join(ritualPath, "templates"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(ritualPath, "templates"), 0750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -460,12 +460,12 @@ files:
     - src: "test.txt.tmpl"
       dest: "test.txt"
 `
-	if err := os.WriteFile(filepath.Join(ritualPath, "ritual.yaml"), []byte(ritualYAML), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualPath, "ritual.yaml"), []byte(ritualYAML), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	template := "Test content"
-	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "test.txt.tmpl"), []byte(template), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "test.txt.tmpl"), []byte(template), 0600); err != nil {
 		t.Fatal(err)
 	}
 

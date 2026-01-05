@@ -60,7 +60,7 @@ func TestGitSource(t *testing.T) {
 
 	// Create a test Git repository
 	testRepoDir := filepath.Join(tmpDir, "test-repo")
-	if err := os.MkdirAll(testRepoDir, 0755); err != nil {
+	if err := os.MkdirAll(testRepoDir, 0750); err != nil {
 		t.Fatalf("Failed to create test repo dir: %v", err)
 	}
 
@@ -106,7 +106,7 @@ files:
   protected: []
 `
 	ritualPath := filepath.Join(testRepoDir, "ritual.yaml")
-	if err := os.WriteFile(ritualPath, []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(ritualPath, []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 
@@ -190,7 +190,7 @@ func TestGitSourceWithBranch(t *testing.T) {
 
 	// Create test repo with branches
 	testRepoDir := filepath.Join(tmpDir, "test-repo")
-	if err := os.MkdirAll(testRepoDir, 0755); err != nil {
+	if err := os.MkdirAll(testRepoDir, 0750); err != nil {
 		t.Fatalf("Failed to create test repo dir: %v", err)
 	}
 
@@ -216,7 +216,7 @@ func TestGitSourceWithBranch(t *testing.T) {
   version: 1.0.0
   description: Main branch ritual
 `
-	if err := os.WriteFile(filepath.Join(testRepoDir, "ritual.yaml"), []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testRepoDir, "ritual.yaml"), []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 
@@ -243,7 +243,7 @@ func TestGitSourceWithBranch(t *testing.T) {
   version: 2.0.0
   description: Dev branch ritual
 `
-	if err := os.WriteFile(filepath.Join(testRepoDir, "ritual.yaml"), []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testRepoDir, "ritual.yaml"), []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 
@@ -303,7 +303,7 @@ func TestScanGitRepoMonoRepo(t *testing.T) {
 
 	// Create mono-repo with multiple rituals
 	testRepoDir := filepath.Join(tmpDir, "monorepo")
-	if err := os.MkdirAll(testRepoDir, 0755); err != nil {
+	if err := os.MkdirAll(testRepoDir, 0750); err != nil {
 		t.Fatalf("Failed to create test repo dir: %v", err)
 	}
 
@@ -316,7 +316,7 @@ func TestScanGitRepoMonoRepo(t *testing.T) {
 
 	// Create two rituals
 	ritual1Dir := filepath.Join(testRepoDir, "ritual1")
-	if err := os.MkdirAll(ritual1Dir, 0755); err != nil {
+	if err := os.MkdirAll(ritual1Dir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual1 dir: %v", err)
 	}
 
@@ -325,12 +325,12 @@ func TestScanGitRepoMonoRepo(t *testing.T) {
   version: 1.0.0
   description: First ritual in monorepo
 `
-	if err := os.WriteFile(filepath.Join(ritual1Dir, "ritual.yaml"), []byte(ritual1Content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritual1Dir, "ritual.yaml"), []byte(ritual1Content), 0600); err != nil {
 		t.Fatalf("Failed to write ritual1.yaml: %v", err)
 	}
 
 	ritual2Dir := filepath.Join(testRepoDir, "ritual2")
-	if err := os.MkdirAll(ritual2Dir, 0755); err != nil {
+	if err := os.MkdirAll(ritual2Dir, 0750); err != nil {
 		t.Fatalf("Failed to create ritual2 dir: %v", err)
 	}
 
@@ -339,7 +339,7 @@ func TestScanGitRepoMonoRepo(t *testing.T) {
   version: 1.0.0
   description: Second ritual in monorepo
 `
-	if err := os.WriteFile(filepath.Join(ritual2Dir, "ritual.yaml"), []byte(ritual2Content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(ritual2Dir, "ritual.yaml"), []byte(ritual2Content), 0600); err != nil {
 		t.Fatalf("Failed to write ritual2.yaml: %v", err)
 	}
 
@@ -383,7 +383,7 @@ func TestLoadFromGit(t *testing.T) {
 
 	// Create test repo
 	testRepoDir := filepath.Join(tmpDir, "test-repo")
-	if err := os.MkdirAll(testRepoDir, 0755); err != nil {
+	if err := os.MkdirAll(testRepoDir, 0750); err != nil {
 		t.Fatalf("Failed to create test repo dir: %v", err)
 	}
 
@@ -406,7 +406,7 @@ func TestLoadFromGit(t *testing.T) {
   version: 1.0.0
   description: Test LoadFromGit
 `
-	if err := os.WriteFile(filepath.Join(testRepoDir, "ritual.yaml"), []byte(ritualContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testRepoDir, "ritual.yaml"), []byte(ritualContent), 0600); err != nil {
 		t.Fatalf("Failed to write ritual.yaml: %v", err)
 	}
 

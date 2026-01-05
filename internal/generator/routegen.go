@@ -64,12 +64,12 @@ func (g *RouteGenerator) GenerateRoutes(targetPath string, config RouteConfig) e
 	content := g.generateRouteContent(config, routes)
 
 	routeDir := filepath.Join(targetPath, "internal", config.Package)
-	if err := os.MkdirAll(routeDir, 0755); err != nil {
+	if err := os.MkdirAll(routeDir, 0750); err != nil {
 		return err
 	}
 
 	routePath := filepath.Join(routeDir, "routes.go")
-	return os.WriteFile(routePath, []byte(content), 0644)
+	return os.WriteFile(routePath, []byte(content), 0600)
 }
 
 func (g *RouteGenerator) generateRESTfulRoutes(resource, handler string) []Route {

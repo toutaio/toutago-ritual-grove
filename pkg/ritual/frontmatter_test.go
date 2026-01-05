@@ -19,7 +19,7 @@ func TestParseFrontmatter(t *testing.T) {
 			name: "yaml frontmatter",
 			content: `---
 output: cmd/main.go
-mode: 0755
+mode: 0750
 overwrite: false
 ---
 package main
@@ -29,7 +29,7 @@ func main() {
 }`,
 			wantMeta: map[string]interface{}{
 				"output":    "cmd/main.go",
-				"mode":      0755,
+				"mode":      0750,
 				"overwrite": false,
 			},
 			wantTemplate: `package main
@@ -60,7 +60,7 @@ package main`,
 			name: "complex frontmatter",
 			content: `---
 output: internal/{{ .Package }}/handler.go
-mode: 0644
+mode: 0600
 overwrite: true
 depends:
   - name: github.com/gorilla/mux
@@ -72,7 +72,7 @@ conditions:
 package {{ .Package }}`,
 			wantMeta: map[string]interface{}{
 				"output":    "internal/{{ .Package }}/handler.go",
-				"mode":      0644,
+				"mode":      0600,
 				"overwrite": true,
 				"depends": []interface{}{
 					map[string]interface{}{
@@ -141,11 +141,11 @@ func TestTemplateFrontmatter_GetString(t *testing.T) {
 
 func TestTemplateFrontmatter_GetInt(t *testing.T) {
 	fm := TemplateFrontmatter{
-		"mode":   0755,
+		"mode":   0750,
 		"string": "hello",
 	}
 
-	assert.Equal(t, 0755, fm.GetInt("mode"))
+	assert.Equal(t, 0750, fm.GetInt("mode"))
 	assert.Equal(t, 0, fm.GetInt("nonexistent"))
 	assert.Equal(t, 0, fm.GetInt("string")) // Not an int
 }
@@ -190,7 +190,7 @@ func TestTemplateFrontmatter_Has(t *testing.T) {
 func TestParseFrontmatter_RealWorldExample(t *testing.T) {
 	content := `---
 output: internal/handlers/{{ .Resource | snake_case }}_handler.go
-mode: 0644
+mode: 0600
 overwrite: false
 tags:
   - handler
@@ -221,7 +221,7 @@ func (h *{{ .Resource | pascal_case }}Handler) List(w http.ResponseWriter, r *ht
 
 	fm := TemplateFrontmatter(meta)
 	assert.Equal(t, "internal/handlers/{{ .Resource | snake_case }}_handler.go", fm.GetString("output"))
-	assert.Equal(t, 0644, fm.GetInt("mode"))
+	assert.Equal(t, 0600, fm.GetInt("mode"))
 	assert.False(t, fm.GetBool("overwrite"))
 
 	tags := fm.GetStringSlice("tags")
