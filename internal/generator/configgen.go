@@ -50,6 +50,7 @@ type DockerfileConfig struct {
 type MakefileConfig struct {
 	AppName    string
 	BinaryName string
+	Port       int
 }
 
 // FullConfig contains all configuration options
@@ -369,10 +370,16 @@ func (g *ConfigGenerator) GenerateMakefile(targetPath string, config MakefileCon
 		binaryName = config.AppName
 	}
 
+	port := config.Port
+	if port == 0 {
+		port = 8080
+	}
+
 	content := fmt.Sprintf(`.PHONY: build test run clean install lint fmt vet
 
 BINARY_NAME=%s
 MAIN_PATH=./cmd/main.go
+PORT=%d
 
 build:
 	go build -o $(BINARY_NAME) $(MAIN_PATH)
@@ -409,7 +416,7 @@ docker-build:
 	docker build -t $(BINARY_NAME) .
 
 docker-run:
-	docker run -p 8080:8080 $(BINARY_NAME)
+	docker run -p $(PORT):$(PORT) $(BINARY_NAME)
 
 dev:
 	air
@@ -417,6 +424,7 @@ dev:
 .DEFAULT_GOAL := build
 `,
 		binaryName,
+		port,
 	)
 
 	makefilePath := filepath.Join(targetPath, "Makefile")
@@ -474,6 +482,7 @@ func (g *ConfigGenerator) GenerateAll(targetPath string, config FullConfig) erro
 		makefileConfig := MakefileConfig{
 			AppName:    config.AppConfig.AppName,
 			BinaryName: config.AppConfig.AppName,
+			Port:       config.AppConfig.Port,
 		}
 
 		if err := g.GenerateMakefile(targetPath, makefileConfig); err != nil {

@@ -29,6 +29,27 @@ func (t *SetupInertiaMiddlewareTask) Execute(ctx context.Context, taskCtx *tasks
 		projectDir = taskCtx.WorkingDir()
 	}
 
+	// Get port from context (from ritual questions)
+	port := 8080
+	if val, ok := taskCtx.Get("port"); ok {
+		switch v := val.(type) {
+		case int:
+			port = v
+		case float64:
+			port = int(v)
+		case string:
+			fmt.Sscanf(v, "%d", &port)
+		}
+	}
+
+	// Get host from context (default to localhost)
+	host := "localhost"
+	if val, ok := taskCtx.Get("host"); ok {
+		if str, ok := val.(string); ok && str != "" {
+			host = str
+		}
+	}
+
 	mainFile := filepath.Join(projectDir, "main.go")
 
 	// Read main.go
@@ -52,21 +73,21 @@ func (t *SetupInertiaMiddlewareTask) Execute(ctx context.Context, taskCtx *tasks
 	// Check if already has middleware setup
 	if !strings.Contains(contentStr, "inertia.NewMiddleware") {
 		// Add middleware before router.Run()
-		middlewareCode := `
+		middlewareCode := fmt.Sprintf(`
 	// Setup Inertia middleware
 	router.Use(inertia.NewMiddleware(inertia.Config{
-		URL:     "http://localhost:8080",
+		URL:     "http://%s:%d",
 		Version: "1",
 	}))
 
-	`
+	`, host, port)
 		contentStr = strings.Replace(contentStr,
 			"router.Run(",
 			middlewareCode+"router.Run(",
 			1)
 	}
 
-	return os.WriteFile(mainFile, []byte(contentStr), 0644)
+	return os.WriteFile(mainFile, []byte(contentStr), 0600)
 }
 
 func (t *SetupInertiaMiddlewareTask) Validate() error {
@@ -164,7 +185,7 @@ func %[1]sDelete(ctx *cosan.Context) error {
 		capitalize(resourceName), resourceName,
 	)
 
-	return os.WriteFile(handlerFile, []byte(template), 0644)
+	return os.WriteFile(handlerFile, []byte(template), 0600)
 }
 
 func (t *AddInertiaHandlersTask) Validate() error {
@@ -225,7 +246,7 @@ func SharedData() map[string]inertia.SharedDataFunc {
 %s
 `, strings.Join(funcs, "\n"), generateSharedDataHelpers(sharedData))
 
-	return os.WriteFile(configFile, []byte(template), 0644)
+	return os.WriteFile(configFile, []byte(template), 0600)
 }
 
 func (t *AddSharedDataTask) Validate() error {
@@ -294,7 +315,7 @@ func (t *GenerateTypeScriptTypesTask) Execute(ctx context.Context, taskCtx *task
 	}
 
 	content := "// Auto-generated TypeScript types from Go structs\n\n" + strings.Join(types, "\n\n")
-	return os.WriteFile(outputFile, []byte(content), 0644)
+	return os.WriteFile(outputFile, []byte(content), 0600)
 }
 
 func (t *GenerateTypeScriptTypesTask) Validate() error {
@@ -355,7 +376,7 @@ func (t *UpdateRoutesForInertiaTask) Execute(ctx context.Context, taskCtx *tasks
 	)
 
 	modified := strings.Replace(string(content), "// Existing routes", "// Existing routes"+routes, 1)
-	return os.WriteFile(routesFile, []byte(modified), 0644)
+	return os.WriteFile(routesFile, []byte(modified), 0600)
 }
 
 func (t *UpdateRoutesForInertiaTask) Validate() error {
@@ -482,4 +503,3 @@ func init() {
 		return &UpdateRoutesForInertiaTask{ProjectDir: projectDir, Resource: resource}, nil
 	})
 }
-
