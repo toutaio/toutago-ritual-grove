@@ -37,6 +37,102 @@ func TestMkdirTask(t *testing.T) {
 	}
 }
 
+func TestTemplateRenderTask(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create template file.
+	templatePath := filepath.Join(tmpDir, "test.tmpl")
+	templateContent := "Hello, {{ .Name }}!"
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+		t.Fatalf("Failed to create template: %v", err)
+	}
+
+	destPath := filepath.Join(tmpDir, "output.txt")
+
+	task := &TemplateRenderTask{
+		Template: templatePath,
+		Dest:     destPath,
+		Data:     map[string]interface{}{"Name": "World"},
+	}
+
+	ctx := tasks.NewTaskContext()
+	ctx.SetWorkingDir(tmpDir)
+
+	err := task.Execute(context.Background(), ctx)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// Verify output file exists and has correct content.
+	content, err := os.ReadFile(destPath)
+	if err != nil {
+		t.Fatalf("Failed to read output: %v", err)
+	}
+
+	expected := "Hello, World!"
+	if string(content) != expected {
+		t.Errorf("Expected %q, got %q", expected, string(content))
+	}
+}
+
+func TestTemplateRenderTaskValidation(t *testing.T) {
+	// Test missing template.
+	task := &TemplateRenderTask{Dest: "/tmp/out"}
+	if err := task.Validate(); err == nil {
+		t.Error("Expected validation error for missing template")
+	}
+
+	// Test missing dest.
+	task = &TemplateRenderTask{Template: "/tmp/tmpl"}
+	if err := task.Validate(); err == nil {
+		t.Error("Expected validation error for missing dest")
+	}
+}
+
+func TestValidateFilesTask(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create test files.
+	file1 := filepath.Join(tmpDir, "file1.txt")
+	file2 := filepath.Join(tmpDir, "file2.txt")
+	if err := os.WriteFile(file1, []byte("test"), 0644); err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	if err := os.WriteFile(file2, []byte("test"), 0644); err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	task := &ValidateFilesTask{
+		Files: []string{file1, file2},
+	}
+
+	ctx := tasks.NewTaskContext()
+	ctx.SetWorkingDir(tmpDir)
+
+	err := task.Execute(context.Background(), ctx)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// Test with missing file.
+	task = &ValidateFilesTask{
+		Files: []string{file1, filepath.Join(tmpDir, "missing.txt")},
+	}
+
+	err = task.Execute(context.Background(), ctx)
+	if err == nil {
+		t.Error("Expected error for missing file")
+	}
+}
+
+func TestValidateFilesTaskValidation(t *testing.T) {
+	// Test empty files list.
+	task := &ValidateFilesTask{}
+	if err := task.Validate(); err == nil {
+		t.Error("Expected validation error for empty files list")
+	}
+}
+
 func TestMkdirTaskValidation(t *testing.T) {
 	// Test missing path.
 	task := &MkdirTask{}

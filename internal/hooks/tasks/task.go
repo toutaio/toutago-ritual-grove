@@ -106,3 +106,15 @@ func (tc *TaskContext) AllEnv() map[string]string {
 
 	return result
 }
+
+// Data returns all data stored in the context.
+func (tc *TaskContext) Data() map[string]interface{} {
+	tc.mu.RLock()
+	defer tc.mu.RUnlock()
+
+	result := make(map[string]interface{}, len(tc.data))
+	for k, v := range tc.data {
+		result[k] = v
+	}
+	return result
+}

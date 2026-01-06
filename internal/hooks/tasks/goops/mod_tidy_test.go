@@ -83,7 +83,7 @@ func main() {}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			baseDir := tt.setup(t)
-			
+
 			taskCtx := tasks.NewTaskContext()
 			taskCtx.SetWorkingDir(baseDir)
 
@@ -95,4 +95,3 @@ func main() {}
 		})
 	}
 }
-

@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Layout and page component templates
 - Optional authentication scaffolding
 - Optional SSR support configuration
+- **Hook Tasks System Extensions**
+  - template-render task for rendering Go templates to files
+  - validate-files task for validating file existence
+  - go-mod-download task for downloading Go dependencies
+  - go-build task for building Go binaries with custom output paths
+  - go-test task for running Go tests with custom arguments
+  - go-fmt task for formatting Go code
+  - exec-go task for running arbitrary Go commands
 
 ## [0.3.0] - 2026-01-06
 

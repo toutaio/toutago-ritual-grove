@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/toutaio/toutago-ritual-grove/internal/hooks/tasks"
 )
@@ -235,6 +236,115 @@ func (t *ChmodTask) Validate() error {
 	return nil
 }
 
+// TemplateRenderTask renders a template to a file.
+type TemplateRenderTask struct {
+	Template string
+	Dest     string
+	Data     map[string]interface{}
+}
+
+func (t *TemplateRenderTask) Name() string {
+	return "template-render"
+}
+
+func (t *TemplateRenderTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) error {
+	templatePath := t.Template
+	destPath := t.Dest
+
+	if !filepath.IsAbs(templatePath) {
+		templatePath = filepath.Join(taskCtx.WorkingDir(), templatePath)
+	}
+	if !filepath.IsAbs(destPath) {
+		destPath = filepath.Join(taskCtx.WorkingDir(), destPath)
+	}
+
+	// Read template file.
+	content, err := os.ReadFile(templatePath)
+	if err != nil {
+		return fmt.Errorf("read template: %w", err)
+	}
+
+	// Parse template.
+	tmpl, err := template.New(filepath.Base(templatePath)).Parse(string(content))
+	if err != nil {
+		return fmt.Errorf("parse template: %w", err)
+	}
+
+	// Create destination directory if needed.
+	destDir := filepath.Dir(destPath)
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return fmt.Errorf("create dest dir: %w", err)
+	}
+
+	// Render to destination file.
+	destFile, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("create dest file: %w", err)
+	}
+	defer destFile.Close()
+
+	data := t.Data
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+
+	// Merge with context data.
+	for k, v := range taskCtx.Data() {
+		if _, exists := data[k]; !exists {
+			data[k] = v
+		}
+	}
+
+	if err := tmpl.Execute(destFile, data); err != nil {
+		return fmt.Errorf("render template: %w", err)
+	}
+
+	return nil
+}
+
+func (t *TemplateRenderTask) Validate() error {
+	if t.Template == "" {
+		return errors.New("template is required")
+	}
+	if t.Dest == "" {
+		return errors.New("dest is required")
+	}
+	return nil
+}
+
+// ValidateFilesTask validates that files exist.
+type ValidateFilesTask struct {
+	Files []string
+}
+
+func (t *ValidateFilesTask) Name() string {
+	return "validate-files"
+}
+
+func (t *ValidateFilesTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) error {
+	for _, file := range t.Files {
+		path := file
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(taskCtx.WorkingDir(), path)
+		}
+
+		if _, err := os.Stat(path); err != nil {
+			if os.IsNotExist(err) {
+				return fmt.Errorf("file does not exist: %s", file)
+			}
+			return fmt.Errorf("check file %s: %w", file, err)
+		}
+	}
+	return nil
+}
+
+func (t *ValidateFilesTask) Validate() error {
+	if len(t.Files) == 0 {
+		return errors.New("files list is required")
+	}
+	return nil
+}
+
 // Register all file operation tasks.
 func init() {
 	tasks.Register("mkdir", func(config map[string]interface{}) (tasks.Task, error) {
@@ -269,5 +379,23 @@ func init() {
 		permFloat, _ := config["perm"].(float64)
 		perm := os.FileMode(permFloat)
 		return &ChmodTask{Path: path, Perm: perm}, nil
+	})
+
+	tasks.Register("template-render", func(config map[string]interface{}) (tasks.Task, error) {
+		template, _ := config["template"].(string)
+		dest, _ := config["dest"].(string)
+		data, _ := config["data"].(map[string]interface{})
+		return &TemplateRenderTask{Template: template, Dest: dest, Data: data}, nil
+	})
+
+	tasks.Register("validate-files", func(config map[string]interface{}) (tasks.Task, error) {
+		filesRaw, _ := config["files"].([]interface{})
+		files := make([]string, 0, len(filesRaw))
+		for _, f := range filesRaw {
+			if str, ok := f.(string); ok {
+				files = append(files, str)
+			}
+		}
+		return &ValidateFilesTask{Files: files}, nil
 	})
 }
