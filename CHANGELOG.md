@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - HTMX integration guide covering patterns and best practices
   - TypeScript type generation documentation
   - SSR setup and troubleshooting guides
+  - Frontend migration guide for switching between Traditional, Inertia.js, and HTMX
+  - Ritual creation guide with examples and best practices
 - **Inertia.js Hook Tasks**
   - SetupInertiaMiddleware task for adding Inertia middleware to main.go
   - AddInertiaHandlers task for generating Inertia-compatible CRUD handlers
