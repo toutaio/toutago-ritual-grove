@@ -173,6 +173,58 @@ func (t *GoFmtTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) err
 	return nil
 }
 
+// GoRunTask runs go run.
+type GoRunTask struct {
+	File string
+	Args []string
+	Dir  string
+	Env  map[string]string
+}
+
+func (t *GoRunTask) Name() string {
+	return "go-run"
+}
+
+func (t *GoRunTask) Validate() error {
+	if t.File == "" {
+		return errors.New("file is required")
+	}
+	return nil
+}
+
+func (t *GoRunTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) error {
+	dir := taskCtx.WorkingDir()
+	if t.Dir != "" {
+		if filepath.IsAbs(t.Dir) {
+			dir = t.Dir
+		} else {
+			dir = filepath.Join(taskCtx.WorkingDir(), t.Dir)
+		}
+	}
+
+	args := []string{"run", t.File}
+	args = append(args, t.Args...)
+
+	cmd := exec.CommandContext(ctx, "go", args...)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Set environment variables.
+	if len(t.Env) > 0 {
+		cmd.Env = os.Environ()
+		for k, v := range t.Env {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("go run failed: %w", err)
+	}
+
+	return nil
+}
+
 // ExecGoTask runs an arbitrary go command.
 type ExecGoTask struct {
 	Command []string
@@ -247,6 +299,30 @@ func init() {
 	tasks.Register("go-fmt", func(config map[string]interface{}) (tasks.Task, error) {
 		dir, _ := config["dir"].(string)
 		return &GoFmtTask{Dir: dir}, nil
+	})
+
+	tasks.Register("go-run", func(config map[string]interface{}) (tasks.Task, error) {
+		file, _ := config["file"].(string)
+		dir, _ := config["dir"].(string)
+		
+		argsRaw, _ := config["args"].([]interface{})
+		args := make([]string, 0, len(argsRaw))
+		for _, a := range argsRaw {
+			if str, ok := a.(string); ok {
+				args = append(args, str)
+			}
+		}
+		
+		envMap := make(map[string]string)
+		if envRaw, ok := config["env"].(map[string]interface{}); ok {
+			for k, v := range envRaw {
+				if str, ok := v.(string); ok {
+					envMap[k] = str
+				}
+			}
+		}
+		
+		return &GoRunTask{File: file, Args: args, Dir: dir, Env: envMap}, nil
 	})
 
 	tasks.Register("exec-go", func(config map[string]interface{}) (tasks.Task, error) {

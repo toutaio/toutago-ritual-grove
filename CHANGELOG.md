@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - go-build task for building Go binaries with custom output paths
   - go-test task for running Go tests with custom arguments
   - go-fmt task for formatting Go code
+  - go-run task for running Go programs with arguments and environment variables
   - exec-go task for running arbitrary Go commands
 
 ## [0.3.0] - 2026-01-06
