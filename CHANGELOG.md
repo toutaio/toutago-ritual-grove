@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-06
+
 ### Added
 - **Ritual List Filtering** (`touta ritual list --tag --name --author`)
   - Filter rituals by tags (OR logic - matches any tag)
@@ -35,8 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - fileops package: 50.9% → 65.3% (+14.4%)
   - goops package: 58.3% → 64.3% (+6.0%)
   - internal/cli: 80.0% → 79.7% (new features)
-  - Overall coverage: 74.7% → 75.3% (+0.6%)
+  - Overall coverage: 74.7% → 75.2% (+0.5%)
   - Added comprehensive Name() and Validate() tests for all task types
+
+### Summary
+Complete CLI enhancement release with filtering, configuration files, and git integration.
+All practical CLI features (sections 15.3.x and 15.4.x) are now complete.
 
 ## [0.4.0] - 2026-01-06
 
