@@ -62,7 +62,7 @@ func TestCreateWorkflow(t *testing.T) {
 						// List what was actually created for debugging
 						t.Logf("Expected file not found: %s", expectedFile)
 						t.Logf("Contents of %s:", tempDir)
-						filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
+						_ = filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
 							if err == nil && !info.IsDir() {
 								relPath, _ := filepath.Rel(tempDir, path)
 								t.Logf("  - %s", relPath)
@@ -124,5 +124,46 @@ func TestCreateWorkflow_DryRun(t *testing.T) {
 
 	if len(entries) > 0 {
 		t.Errorf("Expected no files in dry-run mode, but found %d", len(entries))
+	}
+}
+
+func TestCreateWorkflow_WithGitInit(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "ritual-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	workflow := NewCreateWorkflow()
+
+	answers := map[string]interface{}{
+		"project_name": "test-project",
+		"module_name":  "github.com/test/test-project",
+		"port":         8080,
+	}
+
+	// Execute with git initialization
+	err = workflow.ExecuteWithOptions(CreateOptions{
+		RitualPath: "../../rituals/minimal",
+		TargetPath: tempDir,
+		Answers:    answers,
+		DryRun:     false,
+		InitGit:    true,
+	})
+	
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	// Verify .git directory was created
+	gitDir := filepath.Join(tempDir, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		t.Error("Expected .git directory to be created")
+	}
+
+	// Verify .git/config exists
+	gitConfig := filepath.Join(gitDir, "config")
+	if _, err := os.Stat(gitConfig); os.IsNotExist(err) {
+		t.Error("Expected .git/config file to be created")
 	}
 }

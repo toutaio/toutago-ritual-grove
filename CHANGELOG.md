@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Git Repository Initialization** (`touta ritual init --git`)
+  - Automatically initialize git repository after project creation
+  - Creates initial commit with all generated files
+  - Gracefully handles missing git or configuration
+
 ### Changed
 - **Improved Test Coverage**
   - fileops package: 50.9% → 65.3% (+14.4%)
   - goops package: 58.3% → 64.3% (+6.0%)
+  - internal/cli: 80.0% → 78.3% (refactored with new features)
   - Overall coverage: 74.7% → 75.4% (+0.7%)
   - Added comprehensive Name() and Validate() tests for all task types
 

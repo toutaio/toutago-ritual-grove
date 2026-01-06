@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -47,6 +48,7 @@ Use rituals to create:
 func initCommand() *cobra.Command {
 	var outputPath string
 	var skipQuestions bool
+	var initGit bool
 
 	cmd := &cobra.Command{
 		Use:   "init <ritual-name>",
@@ -58,19 +60,21 @@ the appropriate files and structure based on your answers.
 
 Example:
   touta ritual init basic-site
-  touta ritual init blog --output ./my-blog`,
+  touta ritual init blog --output ./my-blog
+  touta ritual init blog --git --output ./my-blog`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ritualName := args[0]
 			if outputPath == "" {
 				outputPath = "."
 			}
-			return initRitual(ritualName, outputPath, skipQuestions)
+			return initRitual(ritualName, outputPath, skipQuestions, initGit)
 		},
 	}
 
 	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Output directory (default: current directory)")
 	cmd.Flags().BoolVar(&skipQuestions, "yes", false, "Skip questions and use defaults")
+	cmd.Flags().BoolVar(&initGit, "git", false, "Initialize git repository after creation")
 
 	return cmd
 }
@@ -173,7 +177,7 @@ func planCommand() *cobra.Command {
 }
 
 // initRitual initializes a project from a ritual
-func initRitual(ritualName, outputPath string, skipQuestions bool) error {
+func initRitual(ritualName, outputPath string, skipQuestions bool, initGit bool) error {
 	// Create registry
 	reg := registry.NewRegistry()
 
@@ -253,11 +257,41 @@ func initRitual(ritualName, outputPath string, skipQuestions bool) error {
 		return fmt.Errorf("failed to generate files: %w", err)
 	}
 
+	// Initialize git repository if requested
+	if initGit {
+		if err := initGitRepository(outputPath); err != nil {
+			fmt.Printf("⚠️  Warning: failed to initialize git repository: %v\n", err)
+		} else {
+			fmt.Printf("✓ Initialized git repository\n")
+		}
+	}
+
 	fmt.Printf("\n✅ Project initialized successfully!\n\n")
 	fmt.Printf("Next steps:\n")
 	fmt.Printf("  cd %s\n", outputPath)
 	fmt.Printf("  go mod tidy\n")
 	fmt.Printf("  touta serve\n\n")
+
+	return nil
+}
+
+// initGitRepository initializes a git repository (duplicated from internal/cli/create.go for now)
+func initGitRepository(targetPath string) error {
+	cmd := exec.Command("git", "init")
+	cmd.Dir = targetPath
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git init failed: %s: %w", string(output), err)
+	}
+
+	cmd = exec.Command("git", "add", ".")
+	cmd.Dir = targetPath
+	if err := cmd.Run(); err != nil {
+		return nil
+	}
+
+	cmd = exec.Command("git", "commit", "-m", "Initial commit from ritual")
+	cmd.Dir = targetPath
+	_ = cmd.Run()
 
 	return nil
 }

@@ -256,7 +256,7 @@ func TestCreateRitual(t *testing.T) {
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatalf("Failed to change directory: %v", err)
 	}
-	defer os.Chdir(oldDir)
+	defer func() { _ = os.Chdir(oldDir) }()
 
 	ritualName := "my-ritual"
 	if err := createRitual(ritualName); err != nil {
@@ -422,7 +422,7 @@ func TestInitRitual_InvalidRitual(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test with non-existent ritual
-	err := initRitual("nonexistent-ritual", tmpDir, true)
+	err := initRitual("nonexistent-ritual", tmpDir, true, false)
 	if err == nil {
 		t.Error("Expected error for non-existent ritual")
 	}
@@ -433,7 +433,7 @@ func TestInitRitual_ValidRitual(t *testing.T) {
 	outputDir := filepath.Join(tmpDir, "my-site")
 
 	// Test with a valid built-in ritual (basic-site exists)
-	err := initRitual("basic-site", outputDir, true)
+	err := initRitual("basic-site", outputDir, true, false)
 	if err != nil {
 		// This may fail in test environments where rituals are not installed
 		t.Skip("Skipping test - built-in rituals may not be available in test environment")
