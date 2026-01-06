@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- HTMX templates for blog ritual with interactive features
+- HTMX app.js with notification system and loading indicators
+- HTMX layout templates with navigation
+- Frontend build configuration for HTMX projects
+
 ### Changed
 - **Configuration Flexibility**
   - Inertia middleware now uses configured port and host from ritual variables instead of hardcoded values
