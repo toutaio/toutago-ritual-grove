@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SSR setup and troubleshooting guides
   - Frontend migration guide for switching between Traditional, Inertia.js, and HTMX
   - Ritual creation guide with examples and best practices
+- **Conditional File Generation**
+  - Added condition evaluation support for template and static files
+  - Files can be conditionally generated based on ritual variables
+  - Support for complex conditions using Go template syntax
+  - Comprehensive test coverage for condition evaluation
 - **Inertia.js Hook Tasks**
   - SetupInertiaMiddleware task for adding Inertia middleware to main.go
   - AddInertiaHandlers task for generating Inertia-compatible CRUD handlers

@@ -96,6 +96,17 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 
 	// Generate template files
 	for _, tmpl := range manifest.Files.Templates {
+		// Evaluate condition if present
+		if tmpl.Condition != "" {
+			shouldGenerate, err := evaluateCondition(tmpl.Condition, g.variables.All())
+			if err != nil {
+				return fmt.Errorf("failed to evaluate condition for %s: %w", tmpl.Source, err)
+			}
+			if !shouldGenerate {
+				continue // Skip this file
+			}
+		}
+
 		srcPath := filepath.Join(ritualPath, tmpl.Source)
 
 		// Render destination path (it may contain template variables)
@@ -129,6 +140,17 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 
 	// Copy static files
 	for _, static := range manifest.Files.Static {
+		// Evaluate condition if present
+		if static.Condition != "" {
+			shouldGenerate, err := evaluateCondition(static.Condition, g.variables.All())
+			if err != nil {
+				return fmt.Errorf("failed to evaluate condition for %s: %w", static.Source, err)
+			}
+			if !shouldGenerate {
+				continue // Skip this file
+			}
+		}
+
 		srcPath := filepath.Join(ritualPath, static.Source)
 
 		// Render destination path (it may contain template variables)

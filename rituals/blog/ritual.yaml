@@ -220,6 +220,23 @@ files:
       dest: frontend/components/Footer.vue
       condition: "{{ eq .frontend_type \"inertia-vue\" }}"
 
+    # HTMX frontend files
+    - src: templates/frontend/htmx/app.js.tmpl
+      dest: frontend/app.js
+      condition: "{{ eq .frontend_type \"htmx\" }}"
+
+    - src: templates/frontend/htmx/esbuild.config.js.tmpl
+      dest: esbuild.config.js
+      condition: "{{ eq .frontend_type \"htmx\" }}"
+
+    - src: templates/frontend/htmx/package.json.tmpl
+      dest: package.json
+      condition: "{{ eq .frontend_type \"htmx\" }}"
+
+    - src: templates/views/htmx/layout.html.tmpl
+      dest: views/layout.html
+      condition: "{{ eq .frontend_type \"htmx\" }}"
+
     - src: templates/.env.example.tmpl
       dest: .env.example
 
