@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Task Documentation**
+  - Complete hook tasks reference guide covering all 30+ available tasks
+  - Usage examples for each task type
+  - Error handling and custom task creation guidance
 - **System Operation Tasks** (fully tested, 75.2% coverage):
   - wait-for-service - Wait for HTTP services or TCP ports to become available with timeout and retry
   - notify - Send log or webhook notifications during ritual execution
