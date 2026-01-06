@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-06
+
 ### Added
+- **Comprehensive Example Applications**
+  - Full blog application with Inertia.js and Vue 3 example
+  - Admin panel example with dashboard, user management, and analytics
+  - Real-time chat application example with WebSocket support
+  - HTMX progressive enhancement example with modern patterns
 - **Comprehensive Testing**
   - Blog ritual integration tests for all frontend types (Inertia-Vue, HTMX, traditional)
   - Test coverage for frontend choice question validation
