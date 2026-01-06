@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Config File Support** (`touta ritual init --config`)
+  - Load answers from YAML or JSON configuration files
+  - Supports `.yaml`, `.yml`, and `.json` formats
+  - Eliminates need for interactive prompts
+  - Example: `touta ritual init blog --config answers.yaml`
 - **Git Repository Initialization** (`touta ritual init --git`)
   - Automatically initialize git repository after project creation
   - Creates initial commit with all generated files
@@ -17,8 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Improved Test Coverage**
   - fileops package: 50.9% → 65.3% (+14.4%)
   - goops package: 58.3% → 64.3% (+6.0%)
-  - internal/cli: 80.0% → 78.3% (refactored with new features)
-  - Overall coverage: 74.7% → 75.4% (+0.7%)
+  - internal/cli: 80.0% → 79.7% (new features)
+  - pkg/cli: 70.1% → 65.4% (refactored with new features)
+  - Overall coverage: 74.7% → 75.2% (+0.5%)
   - Added comprehensive Name() and Validate() tests for all task types
 
 ## [0.4.0] - 2026-01-06

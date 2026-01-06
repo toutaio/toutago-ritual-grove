@@ -1,12 +1,15 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/toutaio/toutago-ritual-grove/internal/commands"
 	"github.com/toutaio/toutago-ritual-grove/internal/generator"
@@ -49,6 +52,7 @@ func initCommand() *cobra.Command {
 	var outputPath string
 	var skipQuestions bool
 	var initGit bool
+	var configFile string
 
 	cmd := &cobra.Command{
 		Use:   "init <ritual-name>",
@@ -61,20 +65,22 @@ the appropriate files and structure based on your answers.
 Example:
   touta ritual init basic-site
   touta ritual init blog --output ./my-blog
-  touta ritual init blog --git --output ./my-blog`,
+  touta ritual init blog --git --output ./my-blog
+  touta ritual init blog --config answers.yaml`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ritualName := args[0]
 			if outputPath == "" {
 				outputPath = "."
 			}
-			return initRitual(ritualName, outputPath, skipQuestions, initGit)
+			return initRitual(ritualName, outputPath, skipQuestions, initGit, configFile)
 		},
 	}
 
 	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Output directory (default: current directory)")
 	cmd.Flags().BoolVar(&skipQuestions, "yes", false, "Skip questions and use defaults")
 	cmd.Flags().BoolVar(&initGit, "git", false, "Initialize git repository after creation")
+	cmd.Flags().StringVarP(&configFile, "config", "c", "", "Load answers from config file (YAML or JSON)")
 
 	return cmd
 }
@@ -177,7 +183,7 @@ func planCommand() *cobra.Command {
 }
 
 // initRitual initializes a project from a ritual
-func initRitual(ritualName, outputPath string, skipQuestions bool, initGit bool) error {
+func initRitual(ritualName, outputPath string, skipQuestions bool, initGit bool, configFile string) error {
 	// Create registry
 	reg := registry.NewRegistry()
 
@@ -205,9 +211,19 @@ func initRitual(ritualName, outputPath string, skipQuestions bool, initGit bool)
 		return fmt.Errorf("invalid ritual: %w", err)
 	}
 
-	// Run questionnaire
+	// Load answers from config file or run questionnaire
 	variables := make(map[string]interface{})
-	if !skipQuestions && len(manifest.Questions) > 0 {
+	
+	if configFile != "" {
+		// Load from config file
+		loadedAnswers, err := loadAnswersFromFile(configFile)
+		if err != nil {
+			return fmt.Errorf("failed to load config file: %w", err)
+		}
+		variables = loadedAnswers
+		fmt.Printf("📄 Loaded answers from: %s\n", configFile)
+	} else if !skipQuestions && len(manifest.Questions) > 0 {
+		// Run interactive questionnaire
 		adapter := questionnaire.NewCLIAdapter(manifest.Questions, nil)
 		answers, err := adapter.Run()
 		if err != nil {
@@ -641,4 +657,38 @@ func updateProject(projectPath, toVersion string, dryRun, force bool) error {
 // runMigrations runs pending migrations
 func runMigrations(projectPath string, up bool, toVersion string) error {
 	return fmt.Errorf("migration command not yet implemented - use 'update' command instead")
+}
+
+// loadAnswersFromFile loads answers from a YAML or JSON config file
+func loadAnswersFromFile(configPath string) (map[string]interface{}, error) {
+// Check if file exists
+if _, err := os.Stat(configPath); os.IsNotExist(err) {
+return nil, fmt.Errorf("config file not found: %s", configPath)
+}
+
+// Read file content
+content, err := os.ReadFile(configPath)
+if err != nil {
+return nil, fmt.Errorf("failed to read config file: %w", err)
+}
+
+// Determine format based on file extension
+ext := strings.ToLower(filepath.Ext(configPath))
+
+var answers map[string]interface{}
+
+switch ext {
+case ".yaml", ".yml":
+if err := yaml.Unmarshal(content, &answers); err != nil {
+return nil, fmt.Errorf("failed to parse YAML config: %w", err)
+}
+case ".json":
+if err := json.Unmarshal(content, &answers); err != nil {
+return nil, fmt.Errorf("failed to parse JSON config: %w", err)
+}
+default:
+return nil, fmt.Errorf("unsupported config file format: %s (supported: .yaml, .yml, .json)", ext)
+}
+
+return answers, nil
 }

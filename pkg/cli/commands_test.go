@@ -422,7 +422,7 @@ func TestInitRitual_InvalidRitual(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test with non-existent ritual
-	err := initRitual("nonexistent-ritual", tmpDir, true, false)
+	err := initRitual("nonexistent-ritual", tmpDir, true, false, "")
 	if err == nil {
 		t.Error("Expected error for non-existent ritual")
 	}
@@ -433,7 +433,7 @@ func TestInitRitual_ValidRitual(t *testing.T) {
 	outputDir := filepath.Join(tmpDir, "my-site")
 
 	// Test with a valid built-in ritual (basic-site exists)
-	err := initRitual("basic-site", outputDir, true, false)
+	err := initRitual("basic-site", outputDir, true, false, "")
 	if err != nil {
 		// This may fail in test environments where rituals are not installed
 		t.Skip("Skipping test - built-in rituals may not be available in test environment")
