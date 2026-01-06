@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Testing**
+  - Blog ritual integration tests for all frontend types (Inertia-Vue, HTMX, traditional)
+  - Test coverage for frontend choice question validation
+  - Ritual structure validation tests
 - **Hook Tasks System**
   - env-set task for managing environment variables in .env files
   - Support for quoted values in environment files
