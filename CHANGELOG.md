@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Declarative Hook Task System** (Cross-Platform)
+  - Task interface and context for cross-platform hook execution
+  - Task registry system for registering and creating tasks
+  - File operation tasks (mkdir, copy, move, remove, chmod)
+  - Comprehensive test coverage for task system (100%)
 - Comprehensive test coverage for plan command
   - Test coverage improved from 54.9% to 73.4% in commands package
   - Plan command runPlan function coverage increased from 19.4% to 69.4%
@@ -23,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added tests for createBackup, loadNewRitual, saveUpdatedState
   - Added tests for parseVersions with valid and invalid inputs
   - Added tests for displayUpdateInfo with breaking and non-breaking updates
+
+### Changed
+- Hooks system now supports declarative tasks (replacing script-based hooks)
 
 ## [0.3.0] - 2026-01-05
 
