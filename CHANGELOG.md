@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-01-06
+
 ### Added
 - **Comprehensive Task Documentation**
   - Complete hook tasks reference guide covering all 30+ available tasks
@@ -45,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed golangci-lint configuration format for latest version compatibility
+
+### Metrics
+- Overall test coverage: 74.7%
+- All core packages above 70% coverage
+- Comprehensive testing for all task types
 
 ## [0.3.0] - 2026-01-06
 
