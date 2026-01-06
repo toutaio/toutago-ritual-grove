@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - go-fmt task for formatting Go code
   - go-run task for running Go programs with arguments and environment variables
   - exec-go task for running arbitrary Go commands
+  - **HTTP Operation Tasks** (fully tested):
+    - http-get - Send HTTP GET requests with custom headers
+    - http-post - Send HTTP POST requests with body and headers
+    - http-download - Download files from URLs
+    - http-health-check - Perform health checks with configurable retries and delays
+  - **Validation Tasks** (fully tested):
+    - validate-go-version - Check if Go version meets minimum requirement
+    - validate-dependencies - Verify required commands are available
+    - validate-config - Check if configuration file exists and is valid
+    - env-check - Validate required environment variables are set
+    - port-check - Check if a port is available
 
 ## [0.3.0] - 2026-01-06
 
