@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{"{{"}} if .title {{"}}"}}{{"{{"}} .title {{"}}"}} - {{"{{"}} end {{"}}"}}{{ .AppName }}</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/app.js" defer></script>
+    <style>
+        #loading-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 1rem 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 0.5rem;
+            z-index: 9999;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-indicator">Loading...</div>
+    
+    <header>
+        <nav>
+            <h1><a href="/" hx-get="/" hx-target="#content" hx-push-url="true">{{ .AppName }}</a></h1>
+            <ul>
+                <li><a href="/posts" hx-get="/posts" hx-target="#content" hx-push-url="true">Posts</a></li>
+                <li><a href="/categories" hx-get="/categories" hx-target="#content" hx-push-url="true">Categories</a></li>
+                {{"{{"}} if .EnableComments {{"}}"}}
+                <li><a href="/admin" hx-get="/admin" hx-target="#content" hx-push-url="true">Admin</a></li>
+                {{"{{"}} end {{"}}"}}
+            </ul>
+        </nav>
+    </header>
+    
+    <main id="content">
+        {{"{{"}} template "content" . {{"}}"}}
+    </main>
+    
+    <footer>
+        <p>&copy; {{"{{"}} .Year {{"}}"}} {{ .AppName }}. Built with Toutā + HTMX.</p>
+    </footer>
+</body>
+</html>

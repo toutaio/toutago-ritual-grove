@@ -1,0 +1,16 @@
+const esbuild = require('esbuild');
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+esbuild.build({
+    entryPoints: ['frontend/app.js'],
+    bundle: true,
+    minify: !isDev,
+    sourcemap: isDev,
+    outfile: 'public/js/app.js',
+    loader: {
+        '.js': 'js',
+    },
+    target: ['es2020'],
+    logLevel: 'info',
+}).catch(() => process.exit(1));
