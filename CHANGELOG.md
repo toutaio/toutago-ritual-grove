@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Inertia.js Frontend Integration**
+  - Frontend framework choice question (traditional, inertia-vue, htmx)
+  - SSR configuration option for Inertia.js
+  - Conditional question support based on frontend type
+  - Tests for frontend integration schema and blog ritual
 - **Declarative Hook Task System** (Cross-Platform)
   - Task interface and context for cross-platform hook execution
   - Task registry system for registering and creating tasks

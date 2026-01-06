@@ -117,6 +117,23 @@ questions:
     prompt: "Enable Markdown support for posts?"
     default: true
 
+  - name: frontend_type
+    type: choice
+    prompt: "Select frontend framework:"
+    choices:
+      - traditional
+      - inertia-vue
+      - htmx
+    default: traditional
+    required: true
+
+  - name: enable_ssr
+    type: boolean
+    prompt: "Enable Server-Side Rendering (SSR)?"
+    default: false
+    condition:
+      expression: "{{ eq .frontend_type \"inertia-vue\" }}"
+
 files:
   templates:
     - src: templates/main.go.tmpl
