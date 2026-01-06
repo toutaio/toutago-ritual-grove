@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Inertia middleware now uses configured port and host from ritual variables instead of hardcoded values
   - Makefile docker-run command now uses configured port dynamically
   - File permissions changed from 0644 to 0600 for improved security
+- **Build System Enhancements**
+  - Enhanced esbuild configuration with production optimization
+  - Added SSR build support with separate entry point
+  - Improved build output with size analysis and better logging
+  - Added code splitting for better performance
+  - New npm scripts: `build:ssr`, `watch`, and `types` for TypeScript generation
 
 ### Added
 - **Inertia.js Hook Tasks**
