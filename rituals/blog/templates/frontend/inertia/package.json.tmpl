@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node esbuild.config.js --watch",
-    "build": "node esbuild.config.js"
+    "build": "NODE_ENV=production node esbuild.config.js",
+    "build:ssr": "NODE_ENV=production node esbuild.config.js --ssr",
+    "watch": "node esbuild.config.js --watch",
+    "types": "go run cmd/main.go generate-types"
   },
   "dependencies": {
     "@toutaio/inertia-vue": "^0.2.0",
