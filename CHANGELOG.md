@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Hook Tasks System**
+  - env-set task for managing environment variables in .env files
+  - Support for quoted values in environment files
+  - Automatic file creation and key updates
 - HTMX templates for blog ritual with interactive features
 - HTMX app.js with notification system and loading indicators
 - HTMX layout templates with navigation
