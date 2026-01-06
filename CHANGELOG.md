@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Inertia.js Hook Tasks**
+  - SetupInertiaMiddleware task for adding Inertia middleware to main.go
+  - AddInertiaHandlers task for generating Inertia-compatible CRUD handlers
+  - AddSharedData task for configuring shared data functions
+  - GenerateTypeScriptTypes task for auto-generating TypeScript types from Go structs
+  - UpdateRoutesForInertia task for adding Inertia routes
+  - Complete test coverage for all Inertia hook tasks
 - **Inertia.js Frontend Integration**
   - Frontend framework choice question (traditional, inertia-vue, htmx)
   - SSR configuration option for Inertia.js
