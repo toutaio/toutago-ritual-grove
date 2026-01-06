@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Configuration Flexibility**
+  - Inertia middleware now uses configured port and host from ritual variables instead of hardcoded values
+  - Makefile docker-run command now uses configured port dynamically
+  - File permissions changed from 0644 to 0600 for improved security
+
 ### Added
 - **Inertia.js Hook Tasks**
   - SetupInertiaMiddleware task for adding Inertia middleware to main.go
