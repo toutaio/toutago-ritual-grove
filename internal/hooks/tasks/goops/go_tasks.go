@@ -304,7 +304,7 @@ func init() {
 	tasks.Register("go-run", func(config map[string]interface{}) (tasks.Task, error) {
 		file, _ := config["file"].(string)
 		dir, _ := config["dir"].(string)
-		
+
 		argsRaw, _ := config["args"].([]interface{})
 		args := make([]string, 0, len(argsRaw))
 		for _, a := range argsRaw {
@@ -312,7 +312,7 @@ func init() {
 				args = append(args, str)
 			}
 		}
-		
+
 		envMap := make(map[string]string)
 		if envRaw, ok := config["env"].(map[string]interface{}); ok {
 			for k, v := range envRaw {
@@ -321,7 +321,7 @@ func init() {
 				}
 			}
 		}
-		
+
 		return &GoRunTask{File: file, Args: args, Dir: dir, Env: envMap}, nil
 	})
 
