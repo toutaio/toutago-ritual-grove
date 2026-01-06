@@ -328,3 +328,109 @@ func TestChmodTask(t *testing.T) {
 		t.Errorf("Expected 0755, got %04o", info.Mode().Perm())
 	}
 }
+
+// Test all Name() methods
+func TestTaskNames(t *testing.T) {
+	tests := []struct {
+		task interface{ Name() string }
+		want string
+	}{
+		{&MkdirTask{}, "mkdir"},
+		{&CopyTask{}, "copy"},
+		{&MoveTask{}, "move"},
+		{&RemoveTask{}, "remove"},
+		{&ChmodTask{}, "chmod"},
+		{&TemplateRenderTask{}, "template-render"},
+		{&ValidateFilesTask{}, "validate-files"},
+	}
+
+	for _, tt := range tests {
+		if got := tt.task.Name(); got != tt.want {
+			t.Errorf("Name() = %v, want %v", got, tt.want)
+		}
+	}
+}
+
+// Test all Validate() methods
+func TestCopyTaskValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		task    *CopyTask
+		wantErr bool
+	}{
+		{"valid", &CopyTask{Src: "/tmp/src", Dest: "/tmp/dest"}, false},
+		{"missing src", &CopyTask{Dest: "/tmp/dest"}, true},
+		{"missing dest", &CopyTask{Src: "/tmp/src"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.task.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMoveTaskValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		task    *MoveTask
+		wantErr bool
+	}{
+		{"valid", &MoveTask{Src: "/tmp/src", Dest: "/tmp/dest"}, false},
+		{"missing src", &MoveTask{Dest: "/tmp/dest"}, true},
+		{"missing dest", &MoveTask{Src: "/tmp/src"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.task.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRemoveTaskValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		task    *RemoveTask
+		wantErr bool
+	}{
+		{"valid", &RemoveTask{Path: "/tmp/file"}, false},
+		{"missing path", &RemoveTask{}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.task.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestChmodTaskValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		task    *ChmodTask
+		wantErr bool
+	}{
+		{"valid", &ChmodTask{Path: "/tmp/file", Perm: 0755}, false},
+		{"missing path", &ChmodTask{Perm: 0755}, true},
+		{"zero perm", &ChmodTask{Path: "/tmp/file", Perm: 0}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.task.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

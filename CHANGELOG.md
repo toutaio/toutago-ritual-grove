@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Improved Test Coverage**
+  - fileops package: 50.9% → 65.3% (+14.4%)
+  - goops package: 58.3% → 64.3% (+6.0%)
+  - Overall coverage: 74.7% → 75.4% (+0.7%)
+  - Added comprehensive Name() and Validate() tests for all task types
+
 ## [0.4.0] - 2026-01-06
 
 ### Added

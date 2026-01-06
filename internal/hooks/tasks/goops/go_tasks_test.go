@@ -330,3 +330,73 @@ func TestExecGoTaskValidation(t *testing.T) {
 		t.Error("Expected validation error for empty command")
 	}
 }
+
+// Test all Name() methods
+func TestGoTaskNames(t *testing.T) {
+	tests := []struct {
+		task interface{ Name() string }
+		want string
+	}{
+		{&GoModDownloadTask{}, "go-mod-download"},
+		{&GoBuildTask{}, "go-build"},
+		{&GoTestTask{}, "go-test"},
+		{&GoFmtTask{}, "go-fmt"},
+		{&GoRunTask{}, "go-run"},
+		{&ExecGoTask{}, "exec-go"},
+	}
+
+	for _, tt := range tests {
+		if got := tt.task.Name(); got != tt.want {
+			t.Errorf("Name() = %v, want %v", got, tt.want)
+		}
+	}
+}
+
+// Test Validate() methods
+func TestGoModDownloadTaskValidation(t *testing.T) {
+	task := &GoModDownloadTask{}
+	if err := task.Validate(); err != nil {
+		t.Errorf("Unexpected validation error: %v", err)
+	}
+}
+
+func TestGoBuildTaskValidation(t *testing.T) {
+	task := &GoBuildTask{}
+	if err := task.Validate(); err != nil {
+		t.Errorf("Unexpected validation error: %v", err)
+	}
+}
+
+func TestGoTestTaskValidation(t *testing.T) {
+	task := &GoTestTask{}
+	if err := task.Validate(); err != nil {
+		t.Errorf("Unexpected validation error: %v", err)
+	}
+}
+
+func TestGoFmtTaskValidation(t *testing.T) {
+	task := &GoFmtTask{}
+	if err := task.Validate(); err != nil {
+		t.Errorf("Unexpected validation error: %v", err)
+	}
+}
+
+func TestGoRunTaskValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		task    *GoRunTask
+		wantErr bool
+	}{
+		{"valid with file", &GoRunTask{File: "main.go"}, false},
+		{"missing file", &GoRunTask{}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.task.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
