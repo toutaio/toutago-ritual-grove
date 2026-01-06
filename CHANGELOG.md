@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Ritual List Filtering** (`touta ritual list --tag --name --author`)
+  - Filter rituals by tags (OR logic - matches any tag)
+  - Filter by name pattern (case-insensitive substring match)
+  - Filter by author name
+  - Display tags in list output
+  - Combined filtering support
+  - Examples:
+    - `touta ritual list --tag web,api`
+    - `touta ritual list --name blog`
+    - `touta ritual list --tag web --author john`
 - **Config File Support** (`touta ritual init --config`)
   - Load answers from YAML or JSON configuration files
   - Supports `.yaml`, `.yml`, and `.json` formats
@@ -20,11 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Improved Test Coverage**
+  - internal/registry: 83.3% → 83.8% (+0.5%)
+  - pkg/cli: 65.4% → 68.2% (+2.8%)
   - fileops package: 50.9% → 65.3% (+14.4%)
   - goops package: 58.3% → 64.3% (+6.0%)
   - internal/cli: 80.0% → 79.7% (new features)
-  - pkg/cli: 70.1% → 65.4% (refactored with new features)
-  - Overall coverage: 74.7% → 75.2% (+0.5%)
+  - Overall coverage: 74.7% → 75.3% (+0.6%)
   - Added comprehensive Name() and Validate() tests for all task types
 
 ## [0.4.0] - 2026-01-06

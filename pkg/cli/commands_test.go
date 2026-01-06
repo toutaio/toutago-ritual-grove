@@ -378,9 +378,23 @@ func TestMigrateCommand(t *testing.T) {
 
 func TestListRituals(t *testing.T) {
 	// listRituals should work with the built-in rituals
-	err := listRituals()
+	err := listRituals([]string{}, "", "")
 	if err != nil {
 		t.Errorf("listRituals() failed: %v", err)
+	}
+}
+
+func TestListRituals_WithFilters(t *testing.T) {
+	// Test filtering with tags
+	err := listRituals([]string{"web"}, "", "")
+	if err != nil {
+		t.Errorf("listRituals() with tag filter failed: %v", err)
+	}
+
+	// Test filtering with name
+	err = listRituals([]string{}, "blog", "")
+	if err != nil {
+		t.Errorf("listRituals() with name filter failed: %v", err)
 	}
 }
 

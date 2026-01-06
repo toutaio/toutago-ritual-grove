@@ -87,6 +87,10 @@ Example:
 
 // listCommand lists available rituals
 func listCommand() *cobra.Command {
+	var tags []string
+	var nameFilter string
+	var author string
+
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List available rituals",
@@ -95,11 +99,21 @@ func listCommand() *cobra.Command {
 Rituals are stored in:
   - Built-in: <ritual-grove>/rituals/
   - Local: ~/.touta/rituals/
-  - Project: ./rituals/`,
+  - Project: ./rituals/
+
+Filter rituals using flags:
+  --tag web           # Filter by single tag
+  --tag web,api       # Filter by multiple tags
+  --name blog         # Filter by name pattern
+  --author john       # Filter by author`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listRituals()
+			return listRituals(tags, nameFilter, author)
 		},
 	}
+
+	cmd.Flags().StringSliceVar(&tags, "tag", []string{}, "Filter by tags (comma-separated)")
+	cmd.Flags().StringVar(&nameFilter, "name", "", "Filter by name pattern")
+	cmd.Flags().StringVar(&author, "author", "", "Filter by author")
 
 	return cmd
 }
@@ -313,7 +327,7 @@ func initGitRepository(targetPath string) error {
 }
 
 // listRituals lists available rituals
-func listRituals() error {
+func listRituals(tags []string, nameFilter string, author string) error {
 	reg := registry.NewRegistry()
 
 	// Scan for rituals
@@ -321,20 +335,55 @@ func listRituals() error {
 		return fmt.Errorf("failed to scan for rituals: %w", err)
 	}
 
-	rituals := reg.List()
+	// Get all rituals or filtered rituals
+	var rituals []*registry.RitualMetadata
+	if len(tags) > 0 || nameFilter != "" || author != "" {
+		// Apply filters
+		filter := registry.FilterOptions{
+			Tags:        tags,
+			NamePattern: nameFilter,
+			Author:      author,
+		}
+		rituals = reg.Filter(filter)
+	} else {
+		rituals = reg.List()
+	}
 
 	if len(rituals) == 0 {
 		fmt.Println("No rituals found.")
-		fmt.Println("\nTo create a ritual, use: touta ritual create <name>")
+		if len(tags) > 0 || nameFilter != "" || author != "" {
+			fmt.Println("\nTry different filter criteria or run without filters.")
+		} else {
+			fmt.Println("\nTo create a ritual, use: touta ritual create <name>")
+		}
 		return nil
 	}
 
-	fmt.Println("Available rituals:")
-	fmt.Println()
+	// Show filter summary if filters were applied
+	if len(tags) > 0 || nameFilter != "" || author != "" {
+		fmt.Printf("Found %d ritual(s) matching filters:\n", len(rituals))
+		if len(tags) > 0 {
+			fmt.Printf("  Tags: %s\n", strings.Join(tags, ", "))
+		}
+		if nameFilter != "" {
+			fmt.Printf("  Name: %s\n", nameFilter)
+		}
+		if author != "" {
+			fmt.Printf("  Author: %s\n", author)
+		}
+		fmt.Println()
+	} else {
+		fmt.Println("Available rituals:")
+		fmt.Println()
+	}
+
 	for _, r := range rituals {
 		fmt.Printf("  📦 %s (%s)\n", r.Name, r.Version)
 		if r.Description != "" {
 			fmt.Printf("     %s\n", r.Description)
+		}
+		if len(r.Tags) > 0 {
+			fmt.Printf("     Tags: %s\n", strings.Join(r.Tags, ", "))
 		}
 		fmt.Println()
 	}
