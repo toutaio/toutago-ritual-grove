@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Full Stack (Inertia + Vue) ritual with complete scaffolding
+- Template files for Vue 3 with Composition API
+- Vite configuration for fast development
+- TypeScript support with type generation
+- Layout and page component templates
+- Optional authentication scaffolding
+- Optional SSR support configuration
+
 ## [0.3.0] - 2026-01-06
 
 ### Added

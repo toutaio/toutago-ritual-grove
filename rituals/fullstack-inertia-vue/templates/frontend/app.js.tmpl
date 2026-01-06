@@ -1,0 +1,34 @@
+import { createApp, h } from 'vue'
+import { createInertiaApp } from '@toutaio/inertia-vue'
+
+createInertiaApp({
+  resolve: name => {
+    const pages = import.meta.glob('./pages/**/*.vue', { eager: true })
+    const page = pages[`./pages/${name}.vue`]
+    
+    if (!page) {
+      throw new Error(`Page not found: ${name}`)
+    }
+    
+    // Set default layout
+    if (!page.default.layout) {
+      const layouts = import.meta.glob('./layouts/**/*.vue', { eager: true })
+      page.default.layout = layouts['./layouts/Default.vue']?.default
+    }
+    
+    return page
+  },
+  
+  setup({ el, App, props, plugin }) {
+    createApp({ render: () => h(App, props) })
+      .use(plugin)
+      .mount(el)
+  },
+  
+  progress: {
+    delay: 250,
+    color: '#4f46e5',
+    includeCSS: true,
+    showSpinner: false,
+  },
+})

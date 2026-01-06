@@ -14,9 +14,9 @@ import (
 // TestFrontendQuestionSchema validates that rituals can include frontend choice.
 func TestFrontendQuestionSchema(t *testing.T) {
 	tests := []struct {
-		name           string
-		yamlContent    string
-		expectValid    bool
+		name            string
+		yamlContent     string
+		expectValid     bool
 		expectedChoices []string
 	}{
 		{
@@ -78,11 +78,11 @@ questions:
 		t.Run(tt.name, func(t *testing.T) {
 			var config ritual.Manifest
 			err := yaml.Unmarshal([]byte(tt.yamlContent), &config)
-			
+
 			if tt.expectValid {
 				require.NoError(t, err, "Should parse valid YAML")
 				assert.NotEmpty(t, config.Ritual.Name)
-				
+
 				// Find frontend_type question
 				var frontendQ *ritual.Question
 				for i := range config.Questions {
@@ -91,7 +91,7 @@ questions:
 						break
 					}
 				}
-				
+
 				if len(tt.expectedChoices) > 0 {
 					require.NotNil(t, frontendQ, "Should have frontend_type question")
 					assert.Equal(t, string(ritual.QuestionTypeChoice), string(frontendQ.Type))
@@ -107,14 +107,14 @@ questions:
 // TestBlogRitualFrontendChoice validates blog ritual has frontend choice.
 func TestBlogRitualFrontendChoice(t *testing.T) {
 	ritualPath := filepath.Join("..", "rituals", "blog", "ritual.yaml")
-	
+
 	data, err := os.ReadFile(ritualPath)
 	require.NoError(t, err, "Should read blog ritual.yaml")
-	
+
 	var config ritual.Manifest
 	err = yaml.Unmarshal(data, &config)
 	require.NoError(t, err, "Should parse blog ritual.yaml")
-	
+
 	// Find frontend_type question
 	var frontendQ *ritual.Question
 	for i := range config.Questions {
@@ -123,7 +123,7 @@ func TestBlogRitualFrontendChoice(t *testing.T) {
 			break
 		}
 	}
-	
+
 	require.NotNil(t, frontendQ, "Blog ritual should have frontend_type question")
 	assert.Equal(t, string(ritual.QuestionTypeChoice), string(frontendQ.Type))
 	assert.Contains(t, frontendQ.Choices, "traditional")
@@ -157,7 +157,7 @@ dependencies:
 	var config ritual.Manifest
 	err := yaml.Unmarshal([]byte(yamlContent), &config)
 	require.NoError(t, err, "Should parse YAML with conditional dependencies")
-	
+
 	assert.Contains(t, config.Dependencies.Packages, "github.com/toutaio/toutago-inertia")
 }
 
@@ -187,9 +187,9 @@ files:
 	var config ritual.Manifest
 	err := yaml.Unmarshal([]byte(yamlContent), &config)
 	require.NoError(t, err, "Should parse YAML with conditional files")
-	
+
 	assert.Len(t, config.Files.Templates, 3)
-	
+
 	// Verify conditional files have conditions
 	hasCondition := false
 	for _, file := range config.Files.Templates {

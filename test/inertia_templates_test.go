@@ -12,7 +12,7 @@ import (
 // TestInertiaVueTemplateStructure validates Inertia-Vue templates exist.
 func TestInertiaVueTemplateStructure(t *testing.T) {
 	basePath := filepath.Join("..", "rituals", "blog", "templates", "frontend", "inertia")
-	
+
 	requiredFiles := []string{
 		"app.js.tmpl",
 		"esbuild.config.js.tmpl",
@@ -25,7 +25,7 @@ func TestInertiaVueTemplateStructure(t *testing.T) {
 		"components/Header.vue.tmpl",
 		"components/Footer.vue.tmpl",
 	}
-	
+
 	for _, file := range requiredFiles {
 		path := filepath.Join(basePath, file)
 		_, err := os.Stat(path)
@@ -36,12 +36,12 @@ func TestInertiaVueTemplateStructure(t *testing.T) {
 // TestInertiaAppTemplate validates the app.js template.
 func TestInertiaAppTemplate(t *testing.T) {
 	path := filepath.Join("..", "rituals", "blog", "templates", "frontend", "inertia", "app.js.tmpl")
-	
+
 	content, err := os.ReadFile(path)
 	require.NoError(t, err, "Should read app.js.tmpl")
-	
+
 	contentStr := string(content)
-	
+
 	// Check for required Inertia setup
 	assert.Contains(t, contentStr, "createInertiaApp", "Should import createInertiaApp")
 	assert.Contains(t, contentStr, "createSSRApp", "Should import createSSRApp or createApp")
@@ -51,12 +51,12 @@ func TestInertiaAppTemplate(t *testing.T) {
 // TestEsbuildConfigTemplate validates the esbuild config template.
 func TestEsbuildConfigTemplate(t *testing.T) {
 	path := filepath.Join("..", "rituals", "blog", "templates", "frontend", "inertia", "esbuild.config.js.tmpl")
-	
+
 	content, err := os.ReadFile(path)
 	require.NoError(t, err, "Should read esbuild.config.js.tmpl")
-	
+
 	contentStr := string(content)
-	
+
 	// Check for required esbuild configuration
 	assert.Contains(t, contentStr, "entryPoints", "Should have entryPoints")
 	assert.Contains(t, contentStr, "bundle", "Should enable bundle")
@@ -67,17 +67,17 @@ func TestEsbuildConfigTemplate(t *testing.T) {
 // TestPackageJsonTemplate validates the package.json template.
 func TestPackageJsonTemplate(t *testing.T) {
 	path := filepath.Join("..", "rituals", "blog", "templates", "frontend", "inertia", "package.json.tmpl")
-	
+
 	content, err := os.ReadFile(path)
 	require.NoError(t, err, "Should read package.json.tmpl")
-	
+
 	contentStr := string(content)
-	
+
 	// Check for required dependencies
 	assert.Contains(t, contentStr, "@toutaio/inertia-vue", "Should include @toutaio/inertia-vue")
 	assert.Contains(t, contentStr, "vue", "Should include vue")
 	assert.Contains(t, contentStr, "esbuild", "Should include esbuild")
-	
+
 	// Check for scripts
 	assert.Contains(t, contentStr, "\"dev\"", "Should have dev script")
 	assert.Contains(t, contentStr, "\"build\"", "Should have build script")
@@ -86,10 +86,10 @@ func TestPackageJsonTemplate(t *testing.T) {
 // TestVuePageTemplates validates Vue page component templates.
 func TestVuePageTemplates(t *testing.T) {
 	basePath := filepath.Join("..", "rituals", "blog", "templates", "frontend", "inertia", "pages")
-	
+
 	tests := []struct {
-		file           string
-		shouldContain  []string
+		file          string
+		shouldContain []string
 	}{
 		{
 			file: "Home.vue.tmpl",
@@ -118,13 +118,13 @@ func TestVuePageTemplates(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.file, func(t *testing.T) {
 			path := filepath.Join(basePath, tt.file)
 			content, err := os.ReadFile(path)
 			require.NoError(t, err, "Should read %s", tt.file)
-			
+
 			contentStr := string(content)
 			for _, expected := range tt.shouldContain {
 				assert.Contains(t, contentStr, expected, "Should contain: %s", expected)
@@ -136,7 +136,7 @@ func TestVuePageTemplates(t *testing.T) {
 // TestVueComponentTemplates validates Vue component templates.
 func TestVueComponentTemplates(t *testing.T) {
 	basePath := filepath.Join("..", "rituals", "blog", "templates", "frontend", "inertia", "components")
-	
+
 	tests := []struct {
 		file          string
 		shouldContain []string
@@ -159,13 +159,13 @@ func TestVueComponentTemplates(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.file, func(t *testing.T) {
 			path := filepath.Join(basePath, tt.file)
 			content, err := os.ReadFile(path)
 			require.NoError(t, err, "Should read %s", tt.file)
-			
+
 			contentStr := string(content)
 			for _, expected := range tt.shouldContain {
 				assert.Contains(t, contentStr, expected, "Should contain: %s", expected)

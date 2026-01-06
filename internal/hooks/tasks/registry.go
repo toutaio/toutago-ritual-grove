@@ -33,11 +33,11 @@ func (r *Registry) Get(name string, config map[string]interface{}) (Task, error)
 	r.mu.RLock()
 	factory, ok := r.factories[name]
 	r.mu.RUnlock()
-	
+
 	if !ok {
 		return nil, fmt.Errorf("task not found: %s", name)
 	}
-	
+
 	return factory(config)
 }
 
@@ -45,7 +45,7 @@ func (r *Registry) Get(name string, config map[string]interface{}) (Task, error)
 func (r *Registry) List() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.factories))
 	for name := range r.factories {
 		names = append(names, name)

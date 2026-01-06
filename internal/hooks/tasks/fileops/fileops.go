@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	
+
 	"github.com/toutaio/toutago-ritual-grove/internal/hooks/tasks"
 )
 
@@ -27,7 +27,7 @@ func (t *MkdirTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) err
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(taskCtx.WorkingDir(), path)
 	}
-	
+
 	return os.MkdirAll(path, t.Perm)
 }
 
@@ -53,20 +53,20 @@ func (t *CopyTask) Name() string {
 
 func (t *CopyTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) error {
 	src, dest := t.Src, t.Dest
-	
+
 	if !filepath.IsAbs(src) {
 		src = filepath.Join(taskCtx.WorkingDir(), src)
 	}
 	if !filepath.IsAbs(dest) {
 		dest = filepath.Join(taskCtx.WorkingDir(), dest)
 	}
-	
+
 	// Check if source exists.
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return fmt.Errorf("source error: %w", err)
 	}
-	
+
 	if srcInfo.IsDir() {
 		return copyDir(src, dest)
 	}
@@ -89,23 +89,23 @@ func copyFile(src, dest string) error {
 		return err
 	}
 	defer srcFile.Close()
-	
+
 	// Create destination directory if needed.
 	destDir := filepath.Dir(dest)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return err
 	}
-	
+
 	destFile, err := os.Create(dest)
 	if err != nil {
 		return err
 	}
 	defer destFile.Close()
-	
+
 	if _, err := io.Copy(destFile, srcFile); err != nil {
 		return err
 	}
-	
+
 	// Copy permissions.
 	srcInfo, err := os.Stat(src)
 	if err != nil {
@@ -119,21 +119,21 @@ func copyDir(src, dest string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Create destination directory.
 	if err := os.MkdirAll(dest, srcInfo.Mode()); err != nil {
 		return err
 	}
-	
+
 	entries, err := os.ReadDir(src)
 	if err != nil {
 		return err
 	}
-	
+
 	for _, entry := range entries {
 		srcPath := filepath.Join(src, entry.Name())
 		destPath := filepath.Join(dest, entry.Name())
-		
+
 		if entry.IsDir() {
 			if err := copyDir(srcPath, destPath); err != nil {
 				return err
@@ -144,7 +144,7 @@ func copyDir(src, dest string) error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -160,14 +160,14 @@ func (t *MoveTask) Name() string {
 
 func (t *MoveTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) error {
 	src, dest := t.Src, t.Dest
-	
+
 	if !filepath.IsAbs(src) {
 		src = filepath.Join(taskCtx.WorkingDir(), src)
 	}
 	if !filepath.IsAbs(dest) {
 		dest = filepath.Join(taskCtx.WorkingDir(), dest)
 	}
-	
+
 	return os.Rename(src, dest)
 }
 
@@ -195,7 +195,7 @@ func (t *RemoveTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) er
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(taskCtx.WorkingDir(), path)
 	}
-	
+
 	return os.RemoveAll(path)
 }
 
@@ -221,7 +221,7 @@ func (t *ChmodTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) err
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(taskCtx.WorkingDir(), path)
 	}
-	
+
 	return os.Chmod(path, t.Perm)
 }
 
@@ -246,24 +246,24 @@ func init() {
 		}
 		return &MkdirTask{Path: path, Perm: perm}, nil
 	})
-	
+
 	tasks.Register("copy", func(config map[string]interface{}) (tasks.Task, error) {
 		src, _ := config["src"].(string)
 		dest, _ := config["dest"].(string)
 		return &CopyTask{Src: src, Dest: dest}, nil
 	})
-	
+
 	tasks.Register("move", func(config map[string]interface{}) (tasks.Task, error) {
 		src, _ := config["src"].(string)
 		dest, _ := config["dest"].(string)
 		return &MoveTask{Src: src, Dest: dest}, nil
 	})
-	
+
 	tasks.Register("remove", func(config map[string]interface{}) (tasks.Task, error) {
 		path, _ := config["path"].(string)
 		return &RemoveTask{Path: path}, nil
 	})
-	
+
 	tasks.Register("chmod", func(config map[string]interface{}) (tasks.Task, error) {
 		path, _ := config["path"].(string)
 		permFloat, _ := config["perm"].(float64)

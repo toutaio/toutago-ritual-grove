@@ -40,7 +40,7 @@ func main() {
 		task := &inertia.SetupInertiaMiddlewareTask{ProjectDir: tmpDir}
 		taskCtx := tasks.NewTaskContext()
 		taskCtx.SetWorkingDir(tmpDir)
-		
+
 		err = task.Execute(context.Background(), taskCtx)
 		require.NoError(t, err)
 
@@ -56,7 +56,7 @@ func main() {
 		tmpDir := t.TempDir()
 		task := &inertia.SetupInertiaMiddlewareTask{ProjectDir: tmpDir}
 		taskCtx := tasks.NewTaskContext()
-		
+
 		err := task.Execute(context.Background(), taskCtx)
 		assert.Error(t, err)
 	})
@@ -74,7 +74,7 @@ func TestAddInertiaHandlers(t *testing.T) {
 		taskCtx := tasks.NewTaskContext()
 		taskCtx.SetWorkingDir(tmpDir)
 		taskCtx.Set("resource", "posts")
-		
+
 		err := task.Execute(context.Background(), taskCtx)
 		require.NoError(t, err)
 
@@ -105,7 +105,7 @@ func TestAddSharedData(t *testing.T) {
 		taskCtx := tasks.NewTaskContext()
 		taskCtx.SetWorkingDir(tmpDir)
 		taskCtx.Set("shared_data", []string{"user", "flash"})
-		
+
 		err := task.Execute(context.Background(), taskCtx)
 		require.NoError(t, err)
 
@@ -155,7 +155,7 @@ type Post struct {
 		taskCtx.SetWorkingDir(tmpDir)
 		taskCtx.Set("models_dir", modelsDir)
 		taskCtx.Set("output_dir", typesDir)
-		
+
 		err = task.Execute(context.Background(), taskCtx)
 		require.NoError(t, err)
 
@@ -199,7 +199,7 @@ func Setup(router *cosan.Router) {
 		taskCtx := tasks.NewTaskContext()
 		taskCtx.SetWorkingDir(tmpDir)
 		taskCtx.Set("resource", "posts")
-		
+
 		err = task.Execute(context.Background(), taskCtx)
 		require.NoError(t, err)
 

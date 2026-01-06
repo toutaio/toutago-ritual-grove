@@ -1,0 +1,85 @@
+package main
+
+import (
+	"log"
+	"os"
+
+	"github.com/toutaio/toutago"
+	"github.com/toutaio/toutago-cosan-router"
+	"github.com/toutaio/toutago-inertia"
+	"github.com/toutaio/toutago-nasc-dependency-injector"
+)
+
+func main() {
+	// Create Toutago application
+	app := toutago.New()
+
+	// Setup dependency injection
+	container := nasc.NewContainer()
+
+	// Configure Inertia
+	inertiaConfig := inertia.Config{
+		RootView:    "app",
+		RootViewDir: "public",
+		Version:     "1.0.0",
+		{{if .use_ssr}}SSREnabled:  true,
+		SSRURL:      "http://localhost:13714",{{end}}
+	}
+
+	inertiaMiddleware := inertia.New(inertiaConfig)
+	container.Register("inertia", inertiaMiddleware)
+
+	// Create router
+	router := cosan.NewRouter()
+
+	// Apply Inertia middleware
+	router.Use(inertiaMiddleware.Middleware())
+
+	// Routes
+	router.Get("/", func(ctx *cosan.Context) error {
+		return inertiaMiddleware.Render(ctx, "Home", map[string]interface{}{
+			"appName": "{{.project_name}}",
+			"message": "Welcome to your new Toutago application!",
+		})
+	})
+
+	{{if .use_auth}}// Auth routes
+	router.Get("/login", func(ctx *cosan.Context) error {
+		return inertiaMiddleware.Render(ctx, "Auth/Login", nil)
+	})
+
+	router.Post("/login", func(ctx *cosan.Context) error {
+		// TODO: Implement authentication
+		return inertiaMiddleware.Redirect(ctx, "/dashboard")
+	})
+
+	router.Get("/dashboard", func(ctx *cosan.Context) error {
+		return inertiaMiddleware.Render(ctx, "Dashboard", map[string]interface{}{
+			"user": map[string]string{
+				"name":  "John Doe",
+				"email": "john@example.com",
+			},
+		})
+	}){{end}}
+
+	// API routes
+	api := router.Group("/api")
+	{
+		api.Get("/health", func(ctx *cosan.Context) error {
+			return ctx.JSON(200, map[string]string{
+				"status": "ok",
+			})
+		})
+	}
+
+	// Start server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "{{.port}}"
+	}
+
+	log.Printf("Starting server on :%s", port)
+	if err := router.Listen(":" + port); err != nil {
+		log.Fatal(err)
+	}
+}

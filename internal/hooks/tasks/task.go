@@ -11,10 +11,10 @@ import (
 type Task interface {
 	// Name returns the task identifier.
 	Name() string
-	
+
 	// Execute runs the task with the given context.
 	Execute(ctx context.Context, taskCtx *TaskContext) error
-	
+
 	// Validate checks if the task configuration is valid.
 	Validate() error
 }
@@ -87,7 +87,7 @@ func (tc *TaskContext) SetEnv(key, value string) {
 func (tc *TaskContext) AllEnv() map[string]string {
 	tc.mu.RLock()
 	defer tc.mu.RUnlock()
-	
+
 	result := make(map[string]string)
 	for _, e := range os.Environ() {
 		// Parse KEY=VALUE.
@@ -98,11 +98,11 @@ func (tc *TaskContext) AllEnv() map[string]string {
 			}
 		}
 	}
-	
+
 	// Override with context env.
 	for k, v := range tc.env {
 		result[k] = v
 	}
-	
+
 	return result
 }

@@ -1,0 +1,57 @@
+<template>
+  <div>
+    <div class="bg-white shadow rounded-lg p-6">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">{{ message }}</h2>
+      
+      <div class="prose max-w-none">
+        <p class="text-gray-600 mb-4">
+          You've successfully created a new Toutago application with Inertia.js and Vue 3!
+        </p>
+        
+        <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">Getting Started</h3>
+        <ul class="list-disc list-inside text-gray-600 space-y-2">
+          <li>Edit <code class="bg-gray-100 px-2 py-1 rounded">main.go</code> to add your backend routes</li>
+          <li>Create new Vue pages in <code class="bg-gray-100 px-2 py-1 rounded">frontend/pages/</code></li>
+          <li>Add components in <code class="bg-gray-100 px-2 py-1 rounded">frontend/components/</code></li>
+          <li>Customize layouts in <code class="bg-gray-100 px-2 py-1 rounded">frontend/layouts/</code></li>
+        </ul>
+
+        <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">Development</h3>
+        <div class="bg-gray-900 text-gray-100 p-4 rounded-lg">
+          <p class="font-mono text-sm mb-2"># Run the development server:</p>
+          <p class="font-mono text-sm mb-4">npm run dev</p>
+          
+          <p class="font-mono text-sm mb-2"># In another terminal, run the Go server:</p>
+          <p class="font-mono text-sm">go run main.go</p>
+        </div>
+
+        <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">Features</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-blue-900">Inertia.js</h4>
+            <p class="text-blue-700 text-sm">Modern monolith with SPA experience</p>
+          </div>
+          <div class="bg-green-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-green-900">Vue 3</h4>
+            <p class="text-green-700 text-sm">Composition API & script setup</p>
+          </div>
+          <div class="bg-purple-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-purple-900">TypeScript</h4>
+            <p class="text-purple-700 text-sm">Type-safe frontend development</p>
+          </div>
+          <div class="bg-yellow-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-yellow-900">Vite</h4>
+            <p class="text-yellow-700 text-sm">Lightning-fast HMR & builds</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+defineProps({
+  appName: String,
+  message: String
+})
+</script>
