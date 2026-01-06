@@ -1,0 +1,102 @@
+<script setup>
+import { Link } from '@toutaio/inertia-vue'
+</script>
+
+<template>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>{{ .app_name }}</h3>
+          <p>A modern blog built with Toutā and Inertia.js</p>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Links</h4>
+          <ul>
+            <li><Link href="/">Home</Link></li>
+            <li><Link href="/posts">Posts</Link></li>
+            <li><Link href="/categories">Categories</Link></li>
+            <li><Link href="/about">About</Link></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Social</h4>
+          <ul>
+            <li><a href="#" target="_blank" rel="noopener">Twitter</a></li>
+            <li><a href="#" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="#" target="_blank" rel="noopener">LinkedIn</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; {{ '{{ new Date().getFullYear() }}' }} {{ .app_name }}. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</template>
+
+<style scoped>
+.footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  padding: 3rem 0 1rem;
+  margin-top: 4rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.footer-section h3,
+.footer-section h4 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.footer-section p {
+  color: #666;
+  line-height: 1.6;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-section ul li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-section ul li a {
+  color: #666;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-section ul li a:hover {
+  color: #007bff;
+}
+
+.footer-bottom {
+  padding-top: 2rem;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.footer-bottom p {
+  color: #999;
+  font-size: 0.875rem;
+}
+</style>

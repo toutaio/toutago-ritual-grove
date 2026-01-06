@@ -1,0 +1,105 @@
+<script setup>
+import { Link } from '@toutaio/inertia-vue'
+import { usePage } from '@toutaio/inertia-vue'
+import { computed } from 'vue'
+
+const page = usePage()
+const user = computed(() => page.props.auth?.user)
+</script>
+
+<template>
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <Link href="/">{{ .app_name }}</Link>
+      </div>
+      
+      <nav class="nav">
+        <Link href="/">Home</Link>
+        <Link href="/posts">Posts</Link>
+        <Link href="/categories">Categories</Link>
+        
+        <div v-if="user" class="user-menu">
+          <span class="user-name">{{ '{{ user.name }}' }}</span>
+          <Link href="/posts/create" class="btn btn-sm">New Post</Link>
+          <Link href="/logout" method="post" as="button" class="btn btn-sm btn-secondary">Logout</Link>
+        </div>
+        <div v-else class="auth-links">
+          <Link href="/login">Login</Link>
+          <Link href="/register" class="btn btn-sm">Register</Link>
+        </div>
+      </nav>
+    </div>
+  </header>
+</template>
+
+<style scoped>
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 1rem 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo a {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #333;
+}
+
+.nav {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav a {
+  text-decoration: none;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.nav a:hover {
+  color: #007bff;
+}
+
+.user-menu,
+.auth-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-secondary {
+  background: #6c757d;
+}
+</style>

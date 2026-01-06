@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SSR configuration option for Inertia.js
   - Conditional question support based on frontend type
   - Tests for frontend integration schema and blog ritual
+  - Complete Inertia-Vue templates for blog ritual:
+    - Vue page components (Home, Posts/Index, Posts/Show, Posts/Edit)
+    - Vue layout components (Layout, Header, Footer)
+    - Frontend build configuration (esbuild, package.json)
+    - Client-side app entry point with SSR support
+  - Conditional file generation based on frontend_type
+  - Integration with @toutaio/inertia-vue package
 - **Declarative Hook Task System** (Cross-Platform)
   - Task interface and context for cross-platform hook execution
   - Task registry system for registering and creating tasks

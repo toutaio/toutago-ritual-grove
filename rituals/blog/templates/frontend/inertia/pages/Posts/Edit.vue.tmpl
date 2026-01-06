@@ -1,0 +1,218 @@
+<script setup>
+import { useForm } from '@toutaio/inertia-vue'
+import Layout from '../../components/Layout.vue'
+
+const props = defineProps({
+  post: Object,
+  categories: Array,
+})
+
+const form = useForm({
+  title: props.post?.title || '',
+  content: props.post?.content || '',
+  category_id: props.post?.category_id || '',
+  published: props.post?.published || false,
+})
+
+const submit = () => {
+  if (props.post) {
+    form.put(`/posts/${props.post.id}`)
+  } else {
+    form.post('/posts')
+  }
+}
+</script>
+
+<template>
+  <Layout>
+    <div class="post-edit">
+      <h1>{{ '{{ post ? "Edit Post" : "Create Post" }}' }}</h1>
+
+      <form @submit.prevent="submit" class="post-form">
+        <div class="form-group">
+          <label for="title">Title:</label>
+          <input 
+            type="text" 
+            id="title" 
+            v-model="form.title" 
+            required 
+            :class="{ 'error': form.errors.title }"
+          />
+          <span v-if="form.errors.title" class="error-message">{{ '{{ form.errors.title }}' }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="category">Category:</label>
+          <select 
+            id="category" 
+            v-model="form.category_id"
+            :class="{ 'error': form.errors.category_id }"
+          >
+            <option value="">Select a category</option>
+            <option v-for="category in categories" :key="category.id" :value="category.id">
+              {{ '{{ category.name }}' }}
+            </option>
+          </select>
+          <span v-if="form.errors.category_id" class="error-message">{{ '{{ form.errors.category_id }}' }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="content">Content:</label>
+{{- if .enable_markdown }}
+          <textarea 
+            id="content" 
+            v-model="form.content" 
+            rows="15" 
+            required
+            :class="{ 'error': form.errors.content }"
+            placeholder="Write your post content in Markdown..."
+          ></textarea>
+          <small>Supports Markdown formatting</small>
+{{- else }}
+          <textarea 
+            id="content" 
+            v-model="form.content" 
+            rows="15" 
+            required
+            :class="{ 'error': form.errors.content }"
+          ></textarea>
+{{- end }}
+          <span v-if="form.errors.content" class="error-message">{{ '{{ form.errors.content }}' }}</span>
+        </div>
+
+        <div class="form-group checkbox">
+          <label>
+            <input type="checkbox" v-model="form.published" />
+            Publish immediately
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" :disabled="form.processing">
+            {{ '{{ form.processing ? "Saving..." : (post ? "Update Post" : "Create Post") }}' }}
+          </button>
+          <Link href="/posts" class="btn btn-secondary">Cancel</Link>
+        </div>
+
+        <div v-if="form.recentlySuccessful" class="success-message">
+          Post saved successfully!
+        </div>
+      </form>
+    </div>
+  </Layout>
+</template>
+
+<style scoped>
+.post-edit {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.post-form {
+  margin-top: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+  border-color: #dc3545;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.form-group.checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+
+.form-group.checkbox input {
+  width: auto;
+}
+
+.error-message {
+  display: block;
+  margin-top: 0.25rem;
+  color: #dc3545;
+  font-size: 0.875rem;
+}
+
+.success-message {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.btn-primary:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+</style>

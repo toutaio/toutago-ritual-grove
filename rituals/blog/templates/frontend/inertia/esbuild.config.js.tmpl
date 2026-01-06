@@ -1,0 +1,28 @@
+import * as esbuild from 'esbuild'
+import vue from 'esbuild-plugin-vue3'
+
+const isDev = process.argv.includes('--watch')
+
+const config = {
+  entryPoints: ['frontend/app.js'],
+  bundle: true,
+  outdir: 'public/build',
+  plugins: [vue()],
+  loader: {
+    '.vue': 'js',
+  },
+  define: {
+    'process.env.NODE_ENV': isDev ? '"development"' : '"production"',
+  },
+  minify: !isDev,
+  sourcemap: isDev,
+}
+
+if (isDev) {
+  const ctx = await esbuild.context(config)
+  await ctx.watch()
+  console.log('Watching for changes...')
+} else {
+  await esbuild.build(config)
+  console.log('Build complete!')
+}

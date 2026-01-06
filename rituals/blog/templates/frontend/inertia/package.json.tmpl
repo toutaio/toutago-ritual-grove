@@ -1,0 +1,18 @@
+{
+  "name": "{{ .module_path }}",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.js --watch",
+    "build": "node esbuild.config.js"
+  },
+  "dependencies": {
+    "@toutaio/inertia-vue": "^0.2.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.0",
+    "esbuild-plugin-vue3": "^0.4.0"
+  }
+}
