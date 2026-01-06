@@ -26,7 +26,11 @@ import (
 
 func main() {
 	router := cosan.NewRouter()
-	router.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	router.Run(":" + port)
 }
 `
 		err := os.WriteFile(mainFile, []byte(content), 0644)

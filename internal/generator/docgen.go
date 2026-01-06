@@ -367,7 +367,11 @@ func (g *DocGenerator) GenerateDeploymentGuide(targetPath string, config Deploym
 		sb.WriteString("## Docker Deployment\n\n")
 		sb.WriteString("```bash\n")
 		sb.WriteString("docker build -t myapp .\n")
-		sb.WriteString("docker run -p 8080:8080 myapp\n")
+		port := config.Port
+		if port == 0 {
+			port = 8080
+		}
+		sb.WriteString(fmt.Sprintf("docker run -p %d:%d myapp\n", port, port))
 		sb.WriteString("```\n\n")
 	}
 
