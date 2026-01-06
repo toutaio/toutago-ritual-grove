@@ -70,3 +70,8 @@ func Get(name string, config map[string]interface{}) (Task, error) {
 func List() []string {
 	return globalRegistry.List()
 }
+
+// Create is an alias for Get, for backward compatibility.
+func Create(name string, config map[string]interface{}) (Task, error) {
+	return Get(name, config)
+}

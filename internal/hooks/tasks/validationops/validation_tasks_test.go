@@ -32,7 +32,7 @@ func TestValidateGoVersionTask(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			task := &ValidateGoVersionTask{MinVersion: tt.minVersion}
-			
+
 			err := task.Validate()
 			if tt.name == "missing version" {
 				if err == nil {
@@ -109,7 +109,7 @@ func TestValidateDependenciesTask(t *testing.T) {
 
 func TestValidateConfigTask(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Create a valid config file.
 	configPath := filepath.Join(tmpDir, "config.yaml")
 	err := os.WriteFile(configPath, []byte("key: value\n"), 0600)

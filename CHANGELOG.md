@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **System Operation Tasks** (fully tested, 75.2% coverage):
+  - wait-for-service - Wait for HTTP services or TCP ports to become available with timeout and retry
+  - notify - Send log or webhook notifications during ritual execution
 - Full Stack (Inertia + Vue) ritual with complete scaffolding
 - Template files for Vue 3 with Composition API
 - Vite configuration for fast development
@@ -35,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - validate-config - Check if configuration file exists and is valid
     - env-check - Validate required environment variables are set
     - port-check - Check if a port is available
+
+### Fixed
+- Fixed golangci-lint configuration format for latest version compatibility
 
 ## [0.3.0] - 2026-01-06
 
