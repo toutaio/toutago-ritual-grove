@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Example Ritual Documentation (Task 19.1)**
+  - Comprehensive README for simple-app example
+  - Comprehensive README for minimal-app example
+  - Shows questionnaire design, conditional questions, templates
+  - Includes customization guides and usage examples
+  - Comparison table between examples
+  - Template syntax reference and best practices
+
 - **State Checkpoint System (Task 9.7)**
   - New `CheckpointManager` for point-in-time state restoration
   - Create checkpoints with custom labels before risky operations
@@ -37,8 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Clear getting started instructions for each ritual
 
 ### Changed
-- Tasks 7.10, 7.11, 8.10, 8.11, 9.7, 9.10 marked as complete
+- Tasks 7.10, 7.11, 8.10, 8.11, 9.7, 9.8, 9.9, 9.10, 19.1 marked as complete
 - Dry-run mode already fully implemented (marked complete)
+- Automatic backups and point-in-time restore verified and marked complete
+- Example ritual documentation significantly enhanced
 - Overall test coverage maintained at 75%+ across all packages
 - Code quality verified with golangci-lint
 
