@@ -109,7 +109,7 @@ func (cm *CheckpointManager) ListCheckpoints() ([]Checkpoint, error) {
 		return nil, fmt.Errorf("failed to read checkpoints directory: %w", err)
 	}
 
-	var checkpoints []Checkpoint
+	checkpoints := make([]Checkpoint, 0, len(entries))
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
 			continue
