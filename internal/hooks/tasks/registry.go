@@ -75,3 +75,13 @@ func List() []string {
 func Create(name string, config map[string]interface{}) (Task, error) {
 	return Get(name, config)
 }
+
+// RegisterBuiltInTasks ensures all built-in tasks are registered.
+// This is called automatically via init() in each task package,
+// but can be called explicitly for testing purposes.
+func RegisterBuiltInTasks() {
+	// All built-in tasks register themselves via init() functions
+	// in their respective packages. This function exists for
+	// explicit initialization in tests if needed.
+	// No-op since init() handles registration.
+}

@@ -266,6 +266,11 @@ func (t *ExecGoTask) Execute(ctx context.Context, taskCtx *tasks.TaskContext) er
 
 // Register all Go operation tasks.
 func init() {
+	tasks.Register("go-mod-tidy", func(config map[string]interface{}) (tasks.Task, error) {
+		dir, _ := config["dir"].(string)
+		return &GoModTidyTask{Dir: dir}, nil
+	})
+
 	tasks.Register("go-mod-download", func(config map[string]interface{}) (tasks.Task, error) {
 		dir, _ := config["dir"].(string)
 		return &GoModDownloadTask{Dir: dir}, nil

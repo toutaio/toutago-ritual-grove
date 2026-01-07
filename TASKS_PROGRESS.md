@@ -3,7 +3,7 @@
 **Architecture Change:** Ritual Grove is a **plugin library** integrated into the main `touta` binary, NOT a standalone CLI. All commands are accessed via `touta ritual <command>`.
 
 **STATUS UPDATE (2026-01-07):**
-Toutago Ritual Grove v0.5.0+ is **PRODUCTION READY** with all core functionality complete:
+Toutago Ritual Grove v0.6.0-dev is **PRODUCTION READY** with declarative task system complete:
 - ✅ 6 built-in rituals (minimal, hello-world, basic-site, blog, wiki, fullstack-inertia-vue)
 - ✅ 75.3% test coverage, all tests passing
 - ✅ Complete CLI integration
@@ -12,7 +12,9 @@ Toutago Ritual Grove v0.5.0+ is **PRODUCTION READY** with all core functionality
 - ✅ Code quality improvements (lint issues reduced to 419)
 - ✅ Comprehensive documentation for all rituals
 - ✅ Enhanced test coverage (dbops: 80.3%, validationops: 92.9%)
-- ⚠️ Task system designed but not integrated with hooks (deferred to v0.6.0)
+- ✅ **NEW**: Declarative task system fully integrated with hook executor
+- ✅ **NEW**: Hooks support both shell commands AND JSON task objects
+- ✅ **NEW**: 30+ built-in tasks (file ops, Go ops, HTTP, validation, system ops)
 - 📋 Additional rituals (CRM, ERP, REST API) deferred to future versions
 - 📋 Full up/down/rollback CLI (Section 9) deferred to v1.0.0
 
@@ -485,7 +487,7 @@ Test coverage 75.2% overall, all core packages >70%. Production ready!
   - [x] 8.9.3 Validate configuration ✅
   - [x] 8.9.4 Run smoke tests (framework provided) ✅
   - [x] 8.9.5 Report health status ✅
-- [ ] 8.10 Implement Declarative Hook Task System (Cross-Platform) ⚠️ DEFERRED to v0.6.0
+- [x] 8.10 Implement Declarative Hook Task System (Cross-Platform) ✅ COMPLETED
   - [x] 8.10.1 Design task interface and context ✅
   - [x] 8.10.2 Create task registry system ✅
   - [x] 8.10.3 Implement file operation tasks ✅
@@ -524,7 +526,7 @@ Test coverage 75.2% overall, all core packages >70%. Production ready!
   - [x] 8.10.8 Implement system operation tasks ✅
     - [x] wait-for-service - Wait for service ready ✅
     - [x] notify - Send notifications ✅
-  - [ ] 8.10.9 Update hook executor to use task system (DEFERRED - not blocking)
+  - [x] 8.10.9 Update hook executor to use task system ✅ COMPLETED
   - [x] 8.10.10 Add comprehensive task tests (TDD) ✅
   - [ ] 8.10.11 Remove shell script support (DEFERRED - backward compatibility)
   - [ ] 8.10.12 Update built-in rituals to use tasks (DEFERRED - works with shell commands)

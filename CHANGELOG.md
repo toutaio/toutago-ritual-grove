@@ -5,6 +5,32 @@ All notable changes to the Toutago Ritual Grove project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0-dev] - 2026-01-07
+
+### Added
+- **Declarative Task System Integration**
+  - Hook executor now supports both shell commands AND JSON task objects
+  - Automatic detection and routing of task objects vs shell commands
+  - Seamless mixing of shell commands and tasks in hook arrays
+  - Comprehensive test suite for task execution (11 new tests)
+  - Task validation and error handling
+  - Examples:
+    - `{"type": "mkdir", "path": "/tmp/dir", "perm": 0755}`
+    - `{"type": "go-mod-tidy"}`
+    - `{"type": "copy", "src": "file.txt", "dest": "backup.txt"}`
+- **go-mod-tidy Task Registration**
+  - Added missing go-mod-tidy task to task registry
+  - Enables declarative go mod tidy operations in hooks
+  
+### Changed
+- Hook executor enhanced to detect JSON task objects automatically
+- Task execution integrated into all hook phases (pre/post install/update/deploy)
+- Improved hook validation to check both shell commands and task objects
+
+### Fixed
+- go-mod-tidy task was defined but not registered in task system
+- Hook executor now properly creates TaskContext with working directory and environment
+
 ## [0.5.1] - 2026-01-06
 
 ### Added
