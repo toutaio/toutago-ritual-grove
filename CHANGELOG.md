@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Comprehensive Documentation (Tasks 18.5, 18.6, 18.10)**
+  - Complete CLI command reference (9 commands documented)
+  - All flags, options, and usage examples
+  - Common workflows and exit codes
+  - Best practices guide covering design, security, performance
+  - Versioning and testing strategies
+  - Anti-patterns to avoid
+  - CHANGELOG following Keep a Changelog format
+
 - **Enhanced Ritual Validation (Tasks 17.1-17.3)**
   - File reference validation ensures templates/static files exist
   - Version constraint validation (min < max checks)
