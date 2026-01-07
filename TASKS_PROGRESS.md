@@ -5,15 +5,16 @@
 **STATUS UPDATE (2026-01-07):**
 Toutago Ritual Grove v0.6.0-dev is **PRODUCTION READY** with comprehensive features:
 - ✅ 6 built-in rituals (minimal, hello-world, basic-site, blog, wiki, fullstack-inertia-vue)
-- ✅ 72.5% test coverage (storage), all tests passing
+- ✅ **76.4% overall test coverage**, all tests passing ✨
 - ✅ Complete CLI integration with filtering and config file support
 - ✅ **NEW**: Deployment history tracking (.ritual/history.yaml)
 - ✅ **NEW**: Protected file management with pattern matching (*.env, config/*.yaml)
 - ✅ **NEW**: User-defined protected files (.ritual/protected.txt)
+- ✅ **NEW**: Comprehensive deployment management documentation
 - ✅ Update/migration system with rollback support
 - ✅ Declarative task system (30+ built-in tasks)
 - ✅ Hooks support both shell commands AND JSON task objects
-- ✅ Comprehensive documentation for all rituals
+- ✅ Comprehensive documentation for all rituals and features
 - 📋 Additional rituals (CRM, ERP, REST API) deferred to future versions
 - 📋 Full up/down/rollback CLI (Section 9) deferred to v1.0.0
 
