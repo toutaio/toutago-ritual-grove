@@ -89,8 +89,7 @@ func runPlan(cmd *cobra.Command, args []string) error {
 
 	// Output plan
 	if jsonOutput {
-		// TODO: Implement JSON output
-		return fmt.Errorf("JSON output not yet implemented")
+		return outputPlanJSON(plan)
 	} else {
 		report := planner.GenerateReport(plan)
 		fmt.Println(report)
