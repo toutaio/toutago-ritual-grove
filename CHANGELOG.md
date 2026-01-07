@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Enhanced Ritual Validation (Tasks 17.1-17.3)**
+  - File reference validation ensures templates/static files exist
+  - Version constraint validation (min < max checks)
+  - Question conditional logic validation
+  - Circular condition dependency detection
+  - Common mistake warnings (unprotected configs, missing tests)
+  - Migration reversibility checks
+  - 6 new comprehensive test suites (all passing)
+  - TDD approach throughout
+
 - **Example Ritual Documentation (Task 19.1)**
   - Comprehensive README for simple-app example
   - Comprehensive README for minimal-app example
