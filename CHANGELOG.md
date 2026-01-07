@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **State Checkpoint System (Task 9.7)**
+  - New `CheckpointManager` for point-in-time state restoration
+  - Create checkpoints with custom labels before risky operations
+  - Restore project state from any checkpoint
+  - Automatic cleanup of old checkpoints (configurable retention)
+  - Label-based checkpoint retrieval
+  - Comprehensive test coverage (7 test cases, all passing)
+  - Checkpoints stored in `.ritual/checkpoints/` as JSON
+
 - **Comprehensive Ritual Integration Tests**
   - New end-to-end tests for all built-in rituals
   - Verifies ritual loading, project generation, compilation, and tests
@@ -28,8 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Clear getting started instructions for each ritual
 
 ### Changed
-- Tasks 7.10 and 7.11 marked as complete (ritual testing and documentation)
-- Task 8.11 marked as complete (protected file management)
+- Tasks 7.10, 7.11, 8.10, 8.11, 9.7, 9.10 marked as complete
+- Dry-run mode already fully implemented (marked complete)
 - Overall test coverage maintained at 75%+ across all packages
 - Code quality verified with golangci-lint
 
