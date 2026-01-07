@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Deployment Workflow Example (Task 19.4)**
+  - Complete deployment workflow guide
+  - Step-by-step update process
+  - Rollback procedures and decision matrix
+  - Migration patterns (4 common patterns)
+  - Production best practices
+  - Troubleshooting guide
+  - Emergency procedures
+  - Real-world deployment scenarios
+
 - **Backup Management CLI (Tasks 14.2, 14.3, 14.7)**
   - `ritual backup list` - List all available backups with metadata
   - `ritual backup create` - Create manual backup with description
