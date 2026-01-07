@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **JSON Output Support (Task 15.4.8.7)**
+  - `ritual plan --json` flag
+  - Machine-readable structured output
+  - Includes all plan details
+  - Easy integration with CI/CD
+  - 2 comprehensive tests (all passing)
+
 - **Enhanced Ritual Template Creation (Task 19.5)**
   - `ritual create --with-examples` flag
   - Generates example Go template
