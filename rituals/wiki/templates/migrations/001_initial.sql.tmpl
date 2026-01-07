@@ -1,0 +1,44 @@
+-- Initial wiki schema
+CREATE TABLE IF NOT EXISTS pages (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    content TEXT NOT NULL,
+    version INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS revisions (
+    id SERIAL PRIMARY KEY,
+    page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    comment TEXT,
+    version INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+{{if .enable_tags}}
+CREATE TABLE IF NOT EXISTS tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS page_tags (
+    page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
+    tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (page_id, tag_id)
+);
+
+CREATE INDEX idx_page_tags_page ON page_tags(page_id);
+CREATE INDEX idx_page_tags_tag ON page_tags(tag_id);
+{{end}}
+
+CREATE INDEX idx_pages_slug ON pages(slug);
+CREATE INDEX idx_revisions_page ON revisions(page_id);
+{{if .enable_search}}
+CREATE INDEX idx_pages_title_search ON pages USING gin(to_tsvector('english', title));
+CREATE INDEX idx_pages_content_search ON pages USING gin(to_tsvector('english', content));
+{{end}}

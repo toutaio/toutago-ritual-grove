@@ -1,0 +1,71 @@
+package main
+
+import (
+	"log"
+	"os"
+
+	"{{.module_path}}/handlers"
+	"github.com/toutaio/toutago"
+	"github.com/toutaio/toutago-cosan-router"
+	"github.com/toutaio/toutago-fith-renderer"
+	"github.com/toutaio/toutago-datamapper"
+)
+
+func main() {
+	// Initialize application
+	app := toutago.New()
+
+	// Set up template renderer
+	renderer := fith.New("views")
+	app.SetRenderer(renderer)
+
+	// Set up database
+	dbConfig := &datamapper.Config{
+		Driver:   "{{.database}}",
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     getEnv("DB_PORT", "5432"),
+		Database: getEnv("DB_NAME", "{{.wiki_name}}"),
+		User:     getEnv("DB_USER", "postgres"),
+		Password: getEnv("DB_PASSWORD", ""),
+	}
+	
+	db, err := datamapper.Connect(dbConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// Set up router
+	router := cosan.NewRouter()
+
+	// Page routes
+	pageHandler := handlers.NewPageHandler(db, renderer)
+	router.GET("/", pageHandler.Home)
+	router.GET("/wiki/:slug", pageHandler.Show)
+	router.GET("/wiki/:slug/edit", pageHandler.Edit)
+	router.POST("/wiki/:slug", pageHandler.Update)
+	router.GET("/wiki/:slug/history", pageHandler.History)
+	router.GET("/new", pageHandler.New)
+	router.POST("/create", pageHandler.Create)
+{{if .enable_search}}
+	// Search routes
+	searchHandler := handlers.NewSearchHandler(db, renderer)
+	router.GET("/search", searchHandler.Search)
+{{end}}
+
+	app.SetRouter(router)
+
+	// Start server
+	port := "{{.port}}"
+	log.Printf("{{.wiki_name}} starting on port %s\n", port)
+	if err := app.Start(":" + port); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}

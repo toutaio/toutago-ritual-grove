@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - {{.wiki_name}}</title>
+    <link rel="stylesheet" href="/static/wiki.css">
+</head>
+<body>
+    <header>
+        <h1><a href="/">{{.wiki_name}}</a></h1>
+        <nav>
+            <a href="/new">New Page</a>
+{{if .enable_search}}
+            <form action="/search" method="get" class="search-form">
+                <input type="search" name="q" placeholder="Search..." />
+                <button type="submit">Search</button>
+            </form>
+{{end}}
+        </nav>
+    </header>
+
+    <main>
+        {{if .Pages}}
+        <h2>Recent Pages</h2>
+        <ul class="page-list">
+            {{range .Pages}}
+            <li>
+                <a href="/wiki/{{.Slug}}">{{.Title}}</a>
+                <span class="meta">v{{.Version}} - Updated {{.UpdatedAt}}</span>
+            </li>
+            {{end}}
+        </ul>
+        {{else}}
+        <p>No pages yet. <a href="/new">Create the first page!</a></p>
+        {{end}}
+    </main>
+
+    <footer>
+        <p>Powered by {{.wiki_name}}</p>
+    </footer>
+    <script src="/static/wiki.js"></script>
+</body>
+</html>

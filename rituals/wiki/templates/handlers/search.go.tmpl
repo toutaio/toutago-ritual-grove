@@ -1,0 +1,55 @@
+package handlers
+
+import (
+	"net/http"
+
+	"{{.module_path}}/models"
+	"github.com/toutaio/toutago-cosan-router"
+	"github.com/toutaio/toutago-fith-renderer"
+	"github.com/toutaio/toutago-datamapper"
+)
+
+// SearchHandler handles wiki search operations
+type SearchHandler struct {
+	db       *datamapper.DB
+	renderer *fith.Renderer
+}
+
+// NewSearchHandler creates a new search handler
+func NewSearchHandler(db *datamapper.DB, renderer *fith.Renderer) *SearchHandler {
+	return &SearchHandler{
+		db:       db,
+		renderer: renderer,
+	}
+}
+
+// Search performs full-text search on wiki pages
+func (h *SearchHandler) Search(c *cosan.Context) error {
+	query := c.QueryParam("q")
+	if query == "" {
+		return c.Render("search.html", map[string]interface{}{
+			"Query":   "",
+			"Results": []models.Page{},
+		})
+	}
+
+	var pages []models.Page
+	searchQuery := `
+		SELECT * FROM pages 
+		WHERE title ILIKE $1 OR content ILIKE $1 
+		ORDER BY updated_at DESC 
+		LIMIT 50
+	`
+	searchTerm := "%" + query + "%"
+	
+	if err := h.db.Select(&pages, searchQuery, searchTerm); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Search failed",
+		})
+	}
+
+	return c.Render("search.html", map[string]interface{}{
+		"Query":   query,
+		"Results": pages,
+	})
+}

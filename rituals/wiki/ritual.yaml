@@ -1,0 +1,157 @@
+ritual:
+  name: wiki
+  version: 1.0.0
+  description: Knowledge base with version control, search, and tagging
+  author: Toutā Team
+  tags:
+    - wiki
+    - knowledge-base
+    - documentation
+    - version-control
+  template_engine: go-template
+
+compatibility:
+  min_touta_version: "0.2.0"
+  min_go_version: "1.21"
+
+dependencies:
+  packages:
+    - github.com/toutaio/toutago
+    - github.com/toutaio/toutago-cosan-router
+    - github.com/toutaio/toutago-fith-renderer
+    - github.com/toutaio/toutago-datamapper
+    - github.com/yuin/goldmark
+  database:
+    required: true
+    types:
+      - postgres
+      - mysql
+
+questions:
+  - name: wiki_name
+    prompt: "What is your wiki name?"
+    type: text
+    required: true
+    default: "My Wiki"
+    
+  - name: module_path
+    prompt: "What is your Go module path?"
+    type: text
+    required: true
+    default: "github.com/yourorg/wiki"
+    
+  - name: port
+    prompt: "Which port should the server listen on?"
+    type: number
+    default: 8080
+    validate:
+      min: 1024
+      max: 65535
+      
+  - name: database
+    prompt: "Which database do you want to use?"
+    type: choice
+    required: true
+    choices:
+      - postgres
+      - mysql
+    default: postgres
+    
+  - name: enable_search
+    prompt: "Enable full-text search?"
+    type: boolean
+    default: true
+    
+  - name: enable_tags
+    prompt: "Enable page tagging?"
+    type: boolean
+    default: true
+    
+  - name: enable_attachments
+    prompt: "Enable file attachments?"
+    type: boolean
+    default: false
+    
+  - name: max_revisions
+    prompt: "Maximum revisions to keep per page (0 = unlimited)"
+    type: number
+    default: 100
+    validate:
+      min: 0
+      max: 1000
+
+files:
+  templates:
+    - src: templates/main.go.tmpl
+      dest: main.go
+      
+    - src: templates/go.mod.tmpl
+      dest: go.mod
+      
+    - src: templates/models/page.go.tmpl
+      dest: models/page.go
+      
+    - src: templates/models/revision.go.tmpl
+      dest: models/revision.go
+      
+    - src: templates/models/tag.go.tmpl
+      dest: models/tag.go
+      condition: "{{.enable_tags}}"
+      
+    - src: templates/handlers/pages.go.tmpl
+      dest: handlers/pages.go
+      
+    - src: templates/handlers/search.go.tmpl
+      dest: handlers/search.go
+      condition: "{{.enable_search}}"
+      
+    - src: templates/views/base.html.tmpl
+      dest: views/base.html
+      
+    - src: templates/views/page.html.tmpl
+      dest: views/page.html
+      
+    - src: templates/views/edit.html.tmpl
+      dest: views/edit.html
+      
+    - src: templates/views/history.html.tmpl
+      dest: views/history.html
+      
+    - src: templates/migrations/001_initial.sql.tmpl
+      dest: migrations/001_initial.sql
+      
+  static:
+    - src: static/wiki.css
+      dest: static/wiki.css
+    - src: static/wiki.js
+      dest: static/wiki.js
+      
+  directories:
+    - models
+    - handlers
+    - views
+    - migrations
+    - static
+    - uploads
+
+hooks:
+  post_generation:
+    - task: go-mod-tidy
+    - task: go-fmt
+      config:
+        paths: ["."]
+
+migrations:
+  - from_version: "0.0.0"
+    to_version: "1.0.0"
+    description: "Initial wiki schema"
+    up:
+      sql:
+        - "CREATE TABLE pages (id SERIAL PRIMARY KEY, title VARCHAR(255), slug VARCHAR(255) UNIQUE, content TEXT, version INT DEFAULT 1, created_at TIMESTAMP, updated_at TIMESTAMP);"
+        - "CREATE TABLE revisions (id SERIAL PRIMARY KEY, page_id INT REFERENCES pages(id), content TEXT, author VARCHAR(255), created_at TIMESTAMP);"
+        - "CREATE INDEX idx_pages_slug ON pages(slug);"
+    down:
+      sql:
+        - "DROP INDEX IF EXISTS idx_pages_slug;"
+        - "DROP TABLE IF EXISTS revisions;"
+        - "DROP TABLE IF EXISTS pages;"

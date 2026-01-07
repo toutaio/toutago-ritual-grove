@@ -1,0 +1,33 @@
+package models
+
+import (
+	"time"
+)
+
+// Page represents a wiki page
+type Page struct {
+	ID        int       `json:"id" db:"id"`
+	Title     string    `json:"title" db:"title"`
+	Slug      string    `json:"slug" db:"slug"`
+	Content   string    `json:"content" db:"content"`
+	Version   int       `json:"version" db:"version"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+{{if .enable_tags}}
+	Tags      []Tag     `json:"tags,omitempty"`
+{{end}}
+}
+
+// Validate checks if the page is valid
+func (p *Page) Validate() error {
+	if p.Title == "" {
+		return ErrInvalidTitle
+	}
+	if p.Slug == "" {
+		return ErrInvalidSlug
+	}
+	if p.Content == "" {
+		return ErrInvalidContent
+	}
+	return nil
+}

@@ -1,0 +1,212 @@
+package handlers
+
+import (
+	"net/http"
+	"strings"
+	"time"
+
+	"{{.module_path}}/models"
+	"github.com/toutaio/toutago-cosan-router"
+	"github.com/toutaio/toutago-fith-renderer"
+	"github.com/toutaio/toutago-datamapper"
+	"github.com/yuin/goldmark"
+)
+
+// PageHandler handles wiki page operations
+type PageHandler struct {
+	db       *datamapper.DB
+	renderer *fith.Renderer
+	md       goldmark.Markdown
+}
+
+// NewPageHandler creates a new page handler
+func NewPageHandler(db *datamapper.DB, renderer *fith.Renderer) *PageHandler {
+	return &PageHandler{
+		db:       db,
+		renderer: renderer,
+		md:       goldmark.New(),
+	}
+}
+
+// Home displays the wiki home page
+func (h *PageHandler) Home(c *cosan.Context) error {
+	// Get recent pages
+	var pages []models.Page
+	query := "SELECT * FROM pages ORDER BY updated_at DESC LIMIT 10"
+	if err := h.db.Select(&pages, query); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to load pages",
+		})
+	}
+
+	return c.Render("base.html", map[string]interface{}{
+		"Title": "{{.wiki_name}}",
+		"Pages": pages,
+	})
+}
+
+// Show displays a single wiki page
+func (h *PageHandler) Show(c *cosan.Context) error {
+	slug := c.Param("slug")
+
+	var page models.Page
+	query := "SELECT * FROM pages WHERE slug = $1"
+	if err := h.db.Get(&page, query, slug); err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Page not found",
+		})
+	}
+
+	// Render markdown
+	var buf strings.Builder
+	if err := h.md.Convert([]byte(page.Content), &buf); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to render content",
+		})
+	}
+
+	return c.Render("page.html", map[string]interface{}{
+		"Page":           page,
+		"RenderedContent": buf.String(),
+	})
+}
+
+// Edit shows the edit form for a page
+func (h *PageHandler) Edit(c *cosan.Context) error {
+	slug := c.Param("slug")
+
+	var page models.Page
+	query := "SELECT * FROM pages WHERE slug = $1"
+	if err := h.db.Get(&page, query, slug); err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Page not found",
+		})
+	}
+
+	return c.Render("edit.html", map[string]interface{}{
+		"Page": page,
+	})
+}
+
+// Update updates a wiki page
+func (h *PageHandler) Update(c *cosan.Context) error {
+	slug := c.Param("slug")
+
+	// Get current page
+	var page models.Page
+	query := "SELECT * FROM pages WHERE slug = $1"
+	if err := h.db.Get(&page, query, slug); err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Page not found",
+		})
+	}
+
+	// Create revision before updating
+	revision := &models.Revision{
+		PageID:    page.ID,
+		Content:   page.Content,
+		Author:    c.FormValue("author"),
+		Comment:   c.FormValue("comment"),
+		Version:   page.Version,
+		CreatedAt: time.Now(),
+	}
+
+	insertRevision := "INSERT INTO revisions (page_id, content, author, comment, version, created_at) VALUES ($1, $2, $3, $4, $5, $6)"
+	if _, err := h.db.Exec(insertRevision, revision.PageID, revision.Content, revision.Author, revision.Comment, revision.Version, revision.CreatedAt); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to save revision",
+		})
+	}
+
+	// Update page
+	page.Content = c.FormValue("content")
+	page.Version++
+	page.UpdatedAt = time.Now()
+
+	updatePage := "UPDATE pages SET content = $1, version = $2, updated_at = $3 WHERE id = $4"
+	if _, err := h.db.Exec(updatePage, page.Content, page.Version, page.UpdatedAt, page.ID); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to update page",
+		})
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/wiki/"+slug)
+}
+
+// History shows page revision history
+func (h *PageHandler) History(c *cosan.Context) error {
+	slug := c.Param("slug")
+
+	var page models.Page
+	query := "SELECT * FROM pages WHERE slug = $1"
+	if err := h.db.Get(&page, query, slug); err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Page not found",
+		})
+	}
+
+	var revisions []models.Revision
+	revQuery := "SELECT * FROM revisions WHERE page_id = $1 ORDER BY created_at DESC LIMIT {{.max_revisions}}"
+	if err := h.db.Select(&revisions, revQuery, page.ID); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to load revisions",
+		})
+	}
+
+	return c.Render("history.html", map[string]interface{}{
+		"Page":      page,
+		"Revisions": revisions,
+	})
+}
+
+// New shows the new page form
+func (h *PageHandler) New(c *cosan.Context) error {
+	return c.Render("edit.html", map[string]interface{}{
+		"Page": models.Page{},
+	})
+}
+
+// Create creates a new wiki page
+func (h *PageHandler) Create(c *cosan.Context) error {
+	title := c.FormValue("title")
+	slug := slugify(title)
+	content := c.FormValue("content")
+
+	page := &models.Page{
+		Title:     title,
+		Slug:      slug,
+		Content:   content,
+		Version:   1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := page.Validate(); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	query := "INSERT INTO pages (title, slug, content, version, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+	if err := h.db.QueryRow(query, page.Title, page.Slug, page.Content, page.Version, page.CreatedAt, page.UpdatedAt).Scan(&page.ID); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to create page",
+		})
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/wiki/"+slug)
+}
+
+// slugify converts a title to a URL-safe slug
+func slugify(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "-")
+	// Remove non-alphanumeric characters except hyphens
+	var result strings.Builder
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
