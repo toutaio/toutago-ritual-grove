@@ -171,6 +171,8 @@ This checks:
 
 // createCommand creates a new ritual template
 func createCommand() *cobra.Command {
+	var withExamples bool
+	
 	cmd := &cobra.Command{
 		Use:   "create <name>",
 		Short: "Create a new ritual template",
@@ -181,13 +183,17 @@ This will create:
   - templates/ directory
   - static/ directory
   - migrations/ directory (optional)
-  - README.md`,
+  - README.md
+
+Use --with-examples to include example files and documentation.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ritualName := args[0]
-			return createRitual(ritualName)
+			return createRitualWithTemplates(ritualName, withExamples)
 		},
 	}
+	
+	cmd.Flags().BoolVar(&withExamples, "with-examples", false, "Include example templates and files")
 
 	return cmd
 }
