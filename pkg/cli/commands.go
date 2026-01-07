@@ -43,6 +43,7 @@ Use rituals to create:
 	cmd.AddCommand(searchCommand())
 	cmd.AddCommand(updateCommand())
 	cmd.AddCommand(migrateCommand())
+	cmd.AddCommand(commands.NewBackupCommand())
 
 	return cmd
 }
