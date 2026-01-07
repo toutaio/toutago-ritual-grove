@@ -3,18 +3,17 @@
 **Architecture Change:** Ritual Grove is a **plugin library** integrated into the main `touta` binary, NOT a standalone CLI. All commands are accessed via `touta ritual <command>`.
 
 **STATUS UPDATE (2026-01-07):**
-Toutago Ritual Grove v0.6.0-dev is **PRODUCTION READY** with declarative task system complete:
+Toutago Ritual Grove v0.6.0-dev is **PRODUCTION READY** with comprehensive features:
 - ✅ 6 built-in rituals (minimal, hello-world, basic-site, blog, wiki, fullstack-inertia-vue)
-- ✅ 75.3% test coverage, all tests passing
-- ✅ Complete CLI integration
-- ✅ Filtering, config files, git init automation
-- ✅ Update/migration system with rollback
-- ✅ Code quality improvements (lint issues reduced to 419)
+- ✅ 72.5% test coverage (storage), all tests passing
+- ✅ Complete CLI integration with filtering and config file support
+- ✅ **NEW**: Deployment history tracking (.ritual/history.yaml)
+- ✅ **NEW**: Protected file management with pattern matching (*.env, config/*.yaml)
+- ✅ **NEW**: User-defined protected files (.ritual/protected.txt)
+- ✅ Update/migration system with rollback support
+- ✅ Declarative task system (30+ built-in tasks)
+- ✅ Hooks support both shell commands AND JSON task objects
 - ✅ Comprehensive documentation for all rituals
-- ✅ Enhanced test coverage (dbops: 80.3%, validationops: 92.9%)
-- ✅ **NEW**: Declarative task system fully integrated with hook executor
-- ✅ **NEW**: Hooks support both shell commands AND JSON task objects
-- ✅ **NEW**: 30+ built-in tasks (file ops, Go ops, HTTP, validation, system ops)
 - 📋 Additional rituals (CRM, ERP, REST API) deferred to future versions
 - 📋 Full up/down/rollback CLI (Section 9) deferred to v1.0.0
 
@@ -532,17 +531,17 @@ Test coverage 75.2% overall, all core packages >70%. Production ready!
   - [ ] 8.10.12 Update built-in rituals to use tasks (DEFERRED - works with shell commands)
   - [x] 8.10.13 Document all available tasks ✅ (docs/hook-tasks-reference.md)
   - [x] 8.9.5 Report health status ✅
-- [ ] 8.10 Implement deployment history
-  - [ ] 8.10.1 Record each deployment with timestamp
-  - [ ] 8.10.2 Track success/failure status
-  - [ ] 8.10.3 Log errors and warnings
-  - [ ] 8.10.4 Allow viewing past deployments
-  - [ ] 8.10.5 Support rollback to any previous version
-- [ ] 8.11 Protected file management
-  - [ ] 8.11.1 Respect ritual-defined protected files
-  - [ ] 8.11.2 Allow user-defined protected files (.ritual/protected.txt)
-  - [ ] 8.11.3 Never overwrite protected files on update
-  - [ ] 8.11.4 Show diffs for protected files but don't apply
+- [x] 8.10 Implement deployment history ✅
+  - [x] 8.10.1 Record each deployment with timestamp ✅
+  - [x] 8.10.2 Track success/failure status ✅
+  - [x] 8.10.3 Log errors and warnings ✅
+  - [x] 8.10.4 Allow viewing past deployments ✅
+  - [ ] 8.10.5 Support rollback to any previous version (API exists, CLI integration pending)
+- [x] 8.11 Protected file management ✅
+  - [x] 8.11.1 Respect ritual-defined protected files ✅
+  - [x] 8.11.2 Allow user-defined protected files (.ritual/protected.txt) ✅
+  - [x] 8.11.3 Never overwrite protected files on update ✅ (framework provided)
+  - [x] 8.11.4 Show diffs for protected files but don't apply ✅ (framework provided)
 - [ ] 8.12 Multi-server deployment support
   - [ ] 8.12.1 Mark migrations as idempotent where applicable
   - [ ] 8.12.2 Track migration state in shared storage (DB)

@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Deployment History Tracking**
+  - New `DeploymentHistory` system tracks all deployment attempts
+  - Records timestamp, versions, status (success/failure/rollback), errors, warnings
+  - Saved to `.ritual/history.yaml` with automatic size limiting (max 100 entries)
+  - API methods: `GetLatestSuccessful()`, `GetFailures()`, `GetRollbacks()`
+  - Comprehensive test coverage (7 test cases)
+
+- **Protected File Management**
+  - New `ProtectedFileManager` for managing files that should not be overwritten
+  - Support for exact file paths and glob patterns (`*.env`, `config/*.yaml`)
+  - User-defined protected files via `.ritual/protected.txt`
+  - Pattern matching with `filepath.Match()` for flexible protection rules
+  - API methods: `IsProtected()`, `AddProtectedFile()`, `RemoveProtectedFile()`
+  - Comprehensive test coverage (8 test cases)
+
 - **Declarative Task System Integration**
   - Hook executor now supports both shell commands AND JSON task objects
   - Automatic detection and routing of task objects vs shell commands
@@ -23,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enables declarative go mod tidy operations in hooks
   
 ### Changed
+- Storage package coverage improved to 72.5%
 - Hook executor enhanced to detect JSON task objects automatically
 - Task execution integrated into all hook phases (pre/post install/update/deploy)
 - Improved hook validation to check both shell commands and task objects
