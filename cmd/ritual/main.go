@@ -79,6 +79,11 @@ func main() {
 	case "deploy":
 		fmt.Println("Deploying project...")
 		fmt.Println("(Not implemented yet)")
+	case "clean":
+		if err := runCleanCommand(os.Args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	case "help", "--help", "-h":
 		printUsage()
 	default:
@@ -96,6 +101,7 @@ func printUsage() {
 	fmt.Println("Commands:")
 	fmt.Println("  list [--json] [--path <dir>]   List available rituals")
 	fmt.Println("  create <name>                   Create project from ritual")
+	fmt.Println("  clean [--all|--embedded]        Clear ritual cache")
 	fmt.Println("  mixin add <name>                Add mixin to project")
 	fmt.Println("  mixin list                      List available mixins")
 	fmt.Println("  deploy                          Deploy project")
@@ -258,4 +264,52 @@ func runCreateCommand(ritualName, projectPath string, dryRun, useDefaults bool) 
 
 	// Execute workflow
 	return cli.Execute(meta.Path, projectPath, answers, dryRun)
+}
+
+// runCleanCommand clears the ritual cache
+func runCleanCommand(args []string) error {
+reg := registry.NewRegistry()
+
+clearAll := false
+clearEmbedded := false
+
+for _, arg := range args {
+switch arg {
+case "--all":
+clearAll = true
+case "--embedded":
+clearEmbedded = true
+}
+}
+
+// Default: clear embedded cache only
+if !clearAll && !clearEmbedded {
+clearEmbedded = true
+}
+
+if clearAll {
+fmt.Printf("Clearing all cached rituals at: %s\n", reg.GetCachePath())
+
+// Show cache size before clearing
+if size, err := reg.GetCacheSize(); err == nil {
+fmt.Printf("Cache size: %.2f MB\n", float64(size)/(1024*1024))
+}
+
+if err := reg.ClearCache(); err != nil {
+return fmt.Errorf("failed to clear cache: %w", err)
+}
+
+fmt.Println("✓ All cache cleared successfully")
+} else if clearEmbedded {
+fmt.Println("Clearing embedded ritual cache...")
+
+if err := reg.ClearEmbeddedCache(); err != nil {
+return fmt.Errorf("failed to clear embedded cache: %w", err)
+}
+
+fmt.Println("✓ Embedded ritual cache cleared successfully")
+fmt.Println("  Next scan will re-extract embedded rituals from the binary")
+}
+
+return nil
 }

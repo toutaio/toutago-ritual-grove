@@ -44,7 +44,7 @@ files:
 
 	// Create registry and index the ritual
 	registry := &Registry{
-		cache:       make(map[string]*RitualMetadata),
+		rituals:       make(map[string]*RitualMetadata),
 		cacheDir:    tmpDir,
 		searchPaths: []string{tmpDir},
 	}
@@ -103,7 +103,7 @@ files:
 
 func TestCheckForUpdatesNotFound(t *testing.T) {
 	registry := &Registry{
-		cache:    make(map[string]*RitualMetadata),
+		rituals:    make(map[string]*RitualMetadata),
 		cacheDir: "/tmp",
 	}
 
@@ -131,7 +131,7 @@ func TestCheckAllUpdates(t *testing.T) {
 	}
 
 	registry := &Registry{
-		cache:       make(map[string]*RitualMetadata),
+		rituals:       make(map[string]*RitualMetadata),
 		cacheDir:    tmpDir,
 		searchPaths: []string{tmpDir},
 	}
@@ -250,7 +250,7 @@ files:
 	}
 
 	registry := &Registry{
-		cache:       make(map[string]*RitualMetadata),
+		rituals:       make(map[string]*RitualMetadata),
 		cacheDir:    tmpDir,
 		searchPaths: []string{tmpDir},
 	}
@@ -306,7 +306,7 @@ files:
 	}
 
 	registry := &Registry{
-		cache:       make(map[string]*RitualMetadata),
+		rituals:       make(map[string]*RitualMetadata),
 		cacheDir:    tmpDir,
 		searchPaths: []string{tmpDir},
 	}
@@ -376,7 +376,7 @@ files:
 	}
 
 	registry := &Registry{
-		cache:       make(map[string]*RitualMetadata),
+		rituals:       make(map[string]*RitualMetadata),
 		cacheDir:    tmpDir,
 		searchPaths: []string{tmpDir},
 	}

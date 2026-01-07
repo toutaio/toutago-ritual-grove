@@ -8,7 +8,7 @@ func TestRegistry_Filter(t *testing.T) {
 	reg := NewRegistry()
 	
 	// Add test rituals to registry
-	reg.cache = map[string]*RitualMetadata{
+	reg.rituals = map[string]*RitualMetadata{
 		"blog": {
 			Name:        "blog",
 			Version:     "1.0.0",
@@ -88,7 +88,7 @@ func TestRegistry_FilterByDatabase(t *testing.T) {
 	reg := NewRegistry()
 	
 	// Add test rituals with database requirements
-	reg.cache = map[string]*RitualMetadata{
+	reg.rituals = map[string]*RitualMetadata{
 		"blog": {
 			Name:        "blog",
 			Version:     "1.0.0",

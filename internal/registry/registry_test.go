@@ -35,12 +35,12 @@ func TestSearch(t *testing.T) {
 	reg := NewRegistry()
 
 	// Add some test metadata
-	reg.cache["blog"] = &RitualMetadata{
+	reg.rituals["blog"] = &RitualMetadata{
 		Name:        "blog",
 		Description: "A blogging platform",
 		Tags:        []string{"web", "content"},
 	}
-	reg.cache["wiki"] = &RitualMetadata{
+	reg.rituals["wiki"] = &RitualMetadata{
 		Name:        "wiki",
 		Description: "A wiki system",
 		Tags:        []string{"web", "documentation"},
@@ -70,7 +70,7 @@ func TestSearch(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	reg := NewRegistry()
-	reg.cache["test"] = &RitualMetadata{
+	reg.rituals["test"] = &RitualMetadata{
 		Name: "test",
 	}
 
@@ -95,15 +95,15 @@ func TestGet(t *testing.T) {
 func TestFilterByTag(t *testing.T) {
 	reg := NewRegistry()
 
-	reg.cache["blog"] = &RitualMetadata{
+	reg.rituals["blog"] = &RitualMetadata{
 		Name: "blog",
 		Tags: []string{"web", "content"},
 	}
-	reg.cache["wiki"] = &RitualMetadata{
+	reg.rituals["wiki"] = &RitualMetadata{
 		Name: "wiki",
 		Tags: []string{"web", "documentation"},
 	}
-	reg.cache["api"] = &RitualMetadata{
+	reg.rituals["api"] = &RitualMetadata{
 		Name: "api",
 		Tags: []string{"rest", "backend"},
 	}
@@ -169,9 +169,9 @@ func TestGetDefaultSearchPaths(t *testing.T) {
 func TestList(t *testing.T) {
 	reg := NewRegistry()
 
-	reg.cache["ritual1"] = &RitualMetadata{Name: "ritual1"}
-	reg.cache["ritual2"] = &RitualMetadata{Name: "ritual2"}
-	reg.cache["ritual3"] = &RitualMetadata{Name: "ritual3"}
+	reg.rituals["ritual1"] = &RitualMetadata{Name: "ritual1"}
+	reg.rituals["ritual2"] = &RitualMetadata{Name: "ritual2"}
+	reg.rituals["ritual3"] = &RitualMetadata{Name: "ritual3"}
 
 	list := reg.List()
 	if len(list) != 3 {
@@ -197,7 +197,7 @@ func TestScan(t *testing.T) {
 	}
 
 	// Check that the ritual was discovered
-	if len(reg.cache) == 0 {
+	if len(reg.rituals) == 0 {
 		t.Error("expected at least one ritual after scan")
 	}
 }
@@ -213,7 +213,7 @@ func TestLoad(t *testing.T) {
 	reg := NewRegistry()
 
 	// Add ritual to cache first
-	reg.cache["my-ritual"] = &RitualMetadata{
+	reg.rituals["my-ritual"] = &RitualMetadata{
 		Name:    "my-ritual",
 		Version: "1.0.0",
 		Path:    ritualDir,
@@ -233,14 +233,14 @@ func TestLoad(t *testing.T) {
 func TestFilterByCompatibility(t *testing.T) {
 	reg := NewRegistry()
 
-	reg.cache["compat1"] = &RitualMetadata{
+	reg.rituals["compat1"] = &RitualMetadata{
 		Name: "compat1",
 		Compatibility: &ritual.Compatibility{
 			MinToutaVersion: "1.0.0",
 			MaxToutaVersion: "2.0.0",
 		},
 	}
-	reg.cache["compat2"] = &RitualMetadata{
+	reg.rituals["compat2"] = &RitualMetadata{
 		Name: "compat2",
 		Compatibility: &ritual.Compatibility{
 			MinToutaVersion: "2.0.0",

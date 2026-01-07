@@ -14,7 +14,7 @@ type FilterOptions struct {
 func (r *Registry) Filter(opts FilterOptions) []*RitualMetadata {
 	var results []*RitualMetadata
 
-	for _, meta := range r.cache {
+	for _, meta := range r.rituals {
 		if opts.matches(meta) {
 			results = append(results, meta)
 		}

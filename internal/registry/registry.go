@@ -41,7 +41,7 @@ type RitualMetadata struct {
 // Registry manages ritual discovery and loading
 type Registry struct {
 	searchPaths []string
-	cache       map[string]*RitualMetadata
+	rituals     map[string]*RitualMetadata
 	cacheDir    string
 }
 
@@ -52,7 +52,7 @@ func NewRegistry() *Registry {
 
 	return &Registry{
 		searchPaths: getDefaultSearchPaths(),
-		cache:       make(map[string]*RitualMetadata),
+		rituals:     make(map[string]*RitualMetadata),
 		cacheDir:    cacheDir,
 	}
 }
@@ -118,16 +118,31 @@ func (r *Registry) scanEmbedded() error {
 		return fmt.Errorf("failed to list embedded rituals: %w", err)
 	}
 
-	// Extract embedded rituals to cache if not already present
+	// Extract embedded rituals to cache if not already present or outdated
 	embeddedDir := filepath.Join(r.cacheDir, "embedded")
 
 	for _, name := range ritualNames {
 		ritualPath := filepath.Join(embeddedDir, name)
 
-		// Check if already extracted and valid
+		// Check if need to extract/re-extract
+		needsExtraction := false
+
 		ritualFile := filepath.Join(ritualPath, "ritual.yaml")
 		if _, err := os.Stat(ritualFile); os.IsNotExist(err) {
-			// Need to extract this ritual
+			// Doesn't exist, need to extract
+			needsExtraction = true
+		} else {
+			// Exists, check if version matches embedded version
+			needsExtraction = r.shouldReExtract(ritualPath, name)
+		}
+
+		if needsExtraction {
+			// Remove old version if exists
+			if err := os.RemoveAll(ritualPath); err != nil && !os.IsNotExist(err) {
+				continue
+			}
+
+			// Extract this ritual
 			if err := r.extractEmbeddedRitual(name, embeddedDir); err != nil {
 				continue // Skip rituals that fail to extract
 			}
@@ -351,15 +366,15 @@ func (r *Registry) indexRitual(path string, source Source) error {
 		Compatibility: &manifest.Compatibility,
 	}
 
-	// Add to cache
-	r.cache[meta.Name] = meta
+	// Add to registry
+	r.rituals[meta.Name] = meta
 
 	return nil
 }
 
 // Get retrieves metadata for a specific ritual
 func (r *Registry) Get(name string) (*RitualMetadata, error) {
-	meta, exists := r.cache[name]
+	meta, exists := r.rituals[name]
 	if !exists {
 		return nil, fmt.Errorf("ritual '%s' not found", name)
 	}
@@ -379,8 +394,8 @@ func (r *Registry) Load(name string) (*ritual.Manifest, error) {
 
 // List returns all available rituals
 func (r *Registry) List() []*RitualMetadata {
-	result := make([]*RitualMetadata, 0, len(r.cache))
-	for _, meta := range r.cache {
+	result := make([]*RitualMetadata, 0, len(r.rituals))
+	for _, meta := range r.rituals {
 		result = append(result, meta)
 	}
 	return result
@@ -391,7 +406,7 @@ func (r *Registry) Search(query string) []*RitualMetadata {
 	var results []*RitualMetadata
 	queryLower := strings.ToLower(query)
 
-	for _, meta := range r.cache {
+	for _, meta := range r.rituals {
 		if r.matchesQuery(meta, queryLower) {
 			results = append(results, meta)
 		}
@@ -427,7 +442,7 @@ func (r *Registry) FilterByTag(tag string) []*RitualMetadata {
 	var results []*RitualMetadata
 	tagLower := strings.ToLower(tag)
 
-	for _, meta := range r.cache {
+	for _, meta := range r.rituals {
 		for _, metaTag := range meta.Tags {
 			if strings.ToLower(metaTag) == tagLower {
 				results = append(results, meta)
@@ -443,7 +458,7 @@ func (r *Registry) FilterByTag(tag string) []*RitualMetadata {
 func (r *Registry) FilterByCompatibility(toutaVersion string) []*RitualMetadata {
 	var results []*RitualMetadata
 
-	for _, meta := range r.cache {
+	for _, meta := range r.rituals {
 		if meta.Compatibility == nil {
 			// No compatibility restrictions
 			results = append(results, meta)
@@ -507,4 +522,95 @@ func (r *Registry) SortByName(rituals []*RitualMetadata) []*RitualMetadata {
 	})
 
 	return sorted
+}
+
+// ClearCache removes all cached rituals
+func (r *Registry) ClearCache() error {
+// Remove cache directory contents but keep the directory
+if err := os.RemoveAll(r.cacheDir); err != nil {
+return fmt.Errorf("failed to clear cache: %w", err)
+}
+
+// Recreate cache directory
+if err := os.MkdirAll(r.cacheDir, 0750); err != nil {
+return fmt.Errorf("failed to recreate cache directory: %w", err)
+}
+
+return nil
+}
+
+// ClearEmbeddedCache removes only the embedded ritual cache
+func (r *Registry) ClearEmbeddedCache() error {
+embeddedDir := filepath.Join(r.cacheDir, "embedded")
+
+if err := os.RemoveAll(embeddedDir); err != nil && !os.IsNotExist(err) {
+return fmt.Errorf("failed to clear embedded cache: %w", err)
+}
+
+return nil
+}
+
+// GetCacheSize returns the total size of the cache in bytes
+func (r *Registry) GetCacheSize() (int64, error) {
+var size int64
+
+err := filepath.Walk(r.cacheDir, func(path string, info os.FileInfo, err error) error {
+if err != nil {
+return err
+}
+if !info.IsDir() {
+size += info.Size()
+}
+return nil
+})
+
+if err != nil {
+return 0, fmt.Errorf("failed to calculate cache size: %w", err)
+}
+
+return size, nil
+}
+
+// shouldReExtract checks if cached ritual should be re-extracted
+func (r *Registry) shouldReExtract(cachedPath, ritualName string) bool {
+// Load cached manifest
+loader := ritual.NewLoader(cachedPath)
+cachedManifest, err := loader.Load(cachedPath)
+if err != nil {
+// Can't load cached version, re-extract
+return true
+}
+
+// Load embedded manifest (from memory)
+ritualFS := embedded.GetFS()
+manifestPath := filepath.Join(ritualName, "ritual.yaml")
+
+manifestFile, err := ritualFS.Open(manifestPath)
+if err != nil {
+// Can't read embedded version, keep cached
+return false
+}
+defer manifestFile.Close()
+
+// Read manifest data
+manifestData, err := io.ReadAll(manifestFile)
+if err != nil {
+// Can't read embedded version, keep cached
+return false
+}
+
+embeddedManifest, err := ritual.LoadFromBytes(manifestData)
+if err != nil {
+// Can't parse embedded version, keep cached
+return false
+}
+
+// Compare versions - re-extract if different
+return cachedManifest.Ritual.Version != embeddedManifest.Ritual.Version
+}
+
+
+// GetCachePath returns the cache directory path
+func (r *Registry) GetCachePath() string {
+return r.cacheDir
 }

@@ -126,7 +126,7 @@ files:
 	// Test cloning
 	cacheDir := filepath.Join(tmpDir, "cache")
 	registry := &Registry{
-		cache:    make(map[string]*RitualMetadata),
+		rituals:    make(map[string]*RitualMetadata),
 		cacheDir: cacheDir,
 	}
 
@@ -260,7 +260,7 @@ func TestGitSourceWithBranch(t *testing.T) {
 	// Test cloning dev branch
 	cacheDir := filepath.Join(tmpDir, "cache")
 	registry := &Registry{
-		cache:    make(map[string]*RitualMetadata),
+		rituals:    make(map[string]*RitualMetadata),
 		cacheDir: cacheDir,
 	}
 
@@ -345,7 +345,7 @@ func TestScanGitRepoMonoRepo(t *testing.T) {
 
 	// Scan the mono-repo
 	registry := &Registry{
-		cache:    make(map[string]*RitualMetadata),
+		rituals:    make(map[string]*RitualMetadata),
 		cacheDir: tmpDir,
 	}
 
@@ -423,7 +423,7 @@ func TestLoadFromGit(t *testing.T) {
 	// Test LoadFromGit
 	cacheDir := filepath.Join(tmpDir, "cache")
 	registry := &Registry{
-		cache:    make(map[string]*RitualMetadata),
+		rituals:    make(map[string]*RitualMetadata),
 		cacheDir: cacheDir,
 	}
 

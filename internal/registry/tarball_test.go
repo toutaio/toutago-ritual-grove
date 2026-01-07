@@ -68,8 +68,8 @@ func TestMultipleTarballsInDirectory(t *testing.T) {
 	}
 
 	// All rituals should be discovered
-	if len(reg.cache) < len(tarballs) {
-		t.Errorf("Expected at least %d rituals, got %d", len(tarballs), len(reg.cache))
+	if len(reg.rituals) < len(tarballs) {
+		t.Errorf("Expected at least %d rituals, got %d", len(tarballs), len(reg.rituals))
 	}
 
 	for _, tb := range tarballs {
