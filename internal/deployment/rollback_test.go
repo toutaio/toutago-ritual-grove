@@ -12,11 +12,17 @@ func TestRollback_CreateBackup(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
-	os.MkdirAll(projectDir, 0750)
+	if err := os.MkdirAll(projectDir, 0750); err != nil {
+		t.Fatalf("Failed to create project dir: %v", err)
+	}
 
 	// Create some files
-	os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main"), 0600)
-	os.WriteFile(filepath.Join(projectDir, "config.yaml"), []byte("port: 8080"), 0600)
+	if err := os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main"), 0600); err != nil {
+		t.Fatalf("Failed to write main.go: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(projectDir, "config.yaml"), []byte("port: 8080"), 0600); err != nil {
+		t.Fatalf("Failed to write config.yaml: %v", err)
+	}
 
 	backupPath, err := rb.CreateBackup(projectDir)
 	if err != nil {

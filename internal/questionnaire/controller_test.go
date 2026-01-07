@@ -128,7 +128,9 @@ func TestController_ConditionalQuestions(t *testing.T) {
 	}
 
 	// Answer false - should skip database_type
-	ctrl.SubmitAnswer("use_database", false)
+	if err := ctrl.SubmitAnswer("use_database", false); err != nil {
+		t.Fatalf("Failed to submit answer: %v", err)
+	}
 
 	// Next question should be nil (no more questions)
 	q, _ = ctrl.GetNextQuestion()
@@ -140,7 +142,9 @@ func TestController_ConditionalQuestions(t *testing.T) {
 	ctrl.Reset()
 
 	_, _ = ctrl.GetNextQuestion()
-	ctrl.SubmitAnswer("use_database", true)
+	if err := ctrl.SubmitAnswer("use_database", true); err != nil {
+		t.Fatalf("Failed to submit answer: %v", err)
+	}
 
 	// Should now ask for database_type
 	q, _ = ctrl.GetNextQuestion()
@@ -166,15 +170,21 @@ func TestController_Progress(t *testing.T) {
 		t.Errorf("Expected 0/3, got %d/%d", answered, total)
 	}
 
-	ctrl.GetNextQuestion()
-	ctrl.SubmitAnswer("q1", "a1")
+	if _, err := ctrl.GetNextQuestion(); err != nil {
+		t.Fatalf("Failed to get question: %v", err)
+	}
+	if err := ctrl.SubmitAnswer("q1", "a1"); err != nil {
+		t.Fatalf("Failed to submit answer: %v", err)
+	}
 
 	answered, total = ctrl.GetProgress()
 	if answered != 1 || total != 3 {
 		t.Errorf("Expected 1/3, got %d/%d", answered, total)
 	}
 
-	ctrl.GetNextQuestion()
+	if _, err := ctrl.GetNextQuestion(); err != nil {
+		t.Fatalf("Failed to get question: %v", err)
+	}
 	ctrl.SubmitAnswer("q2", "a2")
 
 	answered, total = ctrl.GetProgress()
