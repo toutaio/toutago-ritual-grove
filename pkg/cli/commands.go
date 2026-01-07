@@ -44,6 +44,7 @@ Use rituals to create:
 	cmd.AddCommand(updateCommand())
 	cmd.AddCommand(migrateCommand())
 	cmd.AddCommand(commands.NewBackupCommand())
+	cmd.AddCommand(commands.NewCleanCommand())
 
 	return cmd
 }
