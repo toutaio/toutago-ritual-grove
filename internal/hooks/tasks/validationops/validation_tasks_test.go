@@ -318,3 +318,124 @@ func TestValidationTasksValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestValidationTasks_Registration(t *testing.T) {
+	tests := []struct {
+		name       string
+		taskName   string
+		config     map[string]interface{}
+		shouldFail bool
+	}{
+		{
+			name:     "validate-go-version with valid version",
+			taskName: "validate-go-version",
+			config: map[string]interface{}{
+				"min_version": "1.18",
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "validate-go-version without version",
+			taskName:   "validate-go-version",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+		{
+			name:     "validate-dependencies with valid deps",
+			taskName: "validate-dependencies",
+			config: map[string]interface{}{
+				"dependencies": []interface{}{"go", "git"},
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "validate-dependencies without deps",
+			taskName:   "validate-dependencies",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+		{
+			name:     "validate-config with file",
+			taskName: "validate-config",
+			config: map[string]interface{}{
+				"file": "config.yaml",
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "validate-config without file",
+			taskName:   "validate-config",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+		{
+			name:     "env-check with required vars",
+			taskName: "env-check",
+			config: map[string]interface{}{
+				"required": []interface{}{"HOME", "PATH"},
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "env-check without required vars",
+			taskName:   "env-check",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+		{
+			name:     "port-check with valid port",
+			taskName: "port-check",
+			config: map[string]interface{}{
+				"port": float64(8080),
+			},
+			shouldFail: false,
+		},
+		{
+			name:     "port-check with invalid port",
+			taskName: "port-check",
+			config: map[string]interface{}{
+				"port": float64(-1),
+			},
+			shouldFail: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task, err := tasks.Create(tt.taskName, tt.config)
+			if tt.shouldFail {
+				if err == nil {
+					t.Error("Expected error but got none")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if task == nil {
+					t.Error("Expected task but got nil")
+				}
+			}
+		})
+	}
+}
+
+func TestTaskNames(t *testing.T) {
+	tests := []struct {
+		task         tasks.Task
+		expectedName string
+	}{
+		{&ValidateGoVersionTask{}, "validate-go-version"},
+		{&ValidateDependenciesTask{}, "validate-dependencies"},
+		{&ValidateConfigTask{}, "validate-config"},
+		{&EnvCheckTask{}, "env-check"},
+		{&PortCheckTask{}, "port-check"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expectedName, func(t *testing.T) {
+			if got := tt.task.Name(); got != tt.expectedName {
+				t.Errorf("Name() = %v, want %v", got, tt.expectedName)
+			}
+		})
+	}
+}

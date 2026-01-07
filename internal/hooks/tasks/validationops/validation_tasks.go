@@ -282,7 +282,13 @@ func init() {
 	})
 
 	tasks.Register("port-check", func(config map[string]interface{}) (tasks.Task, error) {
-		port, _ := config["port"].(int)
+		var port int
+		switch v := config["port"].(type) {
+		case int:
+			port = v
+		case float64:
+			port = int(v)
+		}
 
 		task := &PortCheckTask{
 			Port: port,
