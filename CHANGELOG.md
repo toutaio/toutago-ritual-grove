@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Backup Management CLI (Tasks 14.2, 14.3, 14.7)**
+  - `ritual backup list` - List all available backups with metadata
+  - `ritual backup create` - Create manual backup with description
+  - `ritual backup restore` - Restore from specific backup
+  - `ritual backup clean` - Clean old backups with retention policy
+  - Automatic backups before updates (already existed)
+  - Human-readable size formatting
+  - Comprehensive tests (6 test cases, all passing)
+
 - **Comprehensive Documentation (Tasks 18.5, 18.6, 18.10)**
   - Complete CLI command reference (9 commands documented)
   - All flags, options, and usage examples
