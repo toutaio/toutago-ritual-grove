@@ -7,15 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Wiki Ritual**: Complete knowledge base application
-  - Version control with full revision history
-  - Markdown support with Goldmark renderer
-  - Full-text search (PostgreSQL/MySQL)
-  - Optional tagging system for page organization
-  - Responsive UI with auto-save drafts
-  - Configurable revision limits per page
-  - Clean slug-based URLs
+### Changed
+- Code quality improvements
+  - Fixed lint warnings (prealloc, errcheck)
+  - Improved code consistency
+  
+### Fixed
+- Minor lint issues in test files and hook executor
 
 ## [0.5.0] - 2026-01-06
 

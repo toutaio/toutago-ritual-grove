@@ -104,10 +104,12 @@ func TestBlogRitualWithTraditional(t *testing.T) {
 	// Verify questions exist
 	assert.NotEmpty(t, manifest.Questions, "Should have questions")
 
+	const frontendTypeFieldName = "frontend_type"
+	
 	// Find frontend_type question
 	var frontendQuestion *ritual.Question
 	for i := range manifest.Questions {
-		if manifest.Questions[i].Name == "frontend_type" {
+		if manifest.Questions[i].Name == frontendTypeFieldName {
 			frontendQuestion = &manifest.Questions[i]
 			break
 		}

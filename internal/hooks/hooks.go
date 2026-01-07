@@ -140,7 +140,7 @@ func (e *HookExecutor) executeHook(command, phase string, index, total int) erro
 
 // envSlice converts env map to slice of KEY=VALUE strings
 func (e *HookExecutor) envSlice() []string {
-	var result []string
+	result := make([]string, 0, len(e.env))
 	for key, value := range e.env {
 		result = append(result, fmt.Sprintf("%s=%s", key, value))
 	}

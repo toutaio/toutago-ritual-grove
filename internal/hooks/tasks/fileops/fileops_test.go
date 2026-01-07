@@ -193,9 +193,9 @@ func TestCopyTaskDirectory(t *testing.T) {
 
 	// Create source directory with files.
 	srcDir := filepath.Join(tmpDir, "src")
-	os.MkdirAll(filepath.Join(srcDir, "subdir"), 0755)
-	os.WriteFile(filepath.Join(srcDir, "file1.txt"), []byte("content1"), 0644)
-	os.WriteFile(filepath.Join(srcDir, "subdir", "file2.txt"), []byte("content2"), 0644)
+	_ = os.MkdirAll(filepath.Join(srcDir, "subdir"), 0755)
+	_ = os.WriteFile(filepath.Join(srcDir, "file1.txt"), []byte("content1"), 0644)
+	_ = os.WriteFile(filepath.Join(srcDir, "subdir", "file2.txt"), []byte("content2"), 0644)
 
 	dstDir := filepath.Join(tmpDir, "dst")
 
