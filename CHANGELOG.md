@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Enhanced Ritual Template Creation (Task 19.5)**
+  - `ritual create --with-examples` flag
+  - Generates example Go template
+  - Includes comprehensive .gitignore
+  - Migration guide with examples
+  - YAML with helpful comments
+  - README documenting hooks
+  - 7 comprehensive tests (all passing)
+  - TDD approach followed
+
 - **Deployment Workflow Example (Task 19.4)**
   - Complete deployment workflow guide
   - Step-by-step update process
