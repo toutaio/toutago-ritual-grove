@@ -68,7 +68,7 @@ func testRitual(t *testing.T, ritualsDir, ritualName string) {
 	}
 
 	// Create default answers for questionnaire
-	answers := createDefaultAnswers(t, manifest, projectPath)
+	answers := createDefaultAnswers(manifest, projectPath)
 
 	// Create variables from answers
 	vars := generator.NewVariables()
@@ -99,7 +99,7 @@ func testRitual(t *testing.T, ritualsDir, ritualName string) {
 	runGeneratedTests(t, projectPath)
 }
 
-func createDefaultAnswers(t *testing.T, manifest *ritual.Manifest, projectPath string) map[string]interface{} {
+func createDefaultAnswers(manifest *ritual.Manifest, projectPath string) map[string]interface{} {
 	answers := make(map[string]interface{})
 
 	// Common default answers

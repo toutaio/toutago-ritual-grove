@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Comprehensive Ritual Integration Tests**
+  - New end-to-end tests for all built-in rituals
+  - Verifies ritual loading, project generation, compilation, and tests
+  - TDD approach identified real issues with import paths and templates
+  - Automatic validation of all 6 built-in rituals (minimal, hello-world, basic-site, blog, wiki, fullstack-inertia-vue)
+  - Tests verify generated projects compile successfully with `go build`
+
 - **Deployment History Tracking**
   - New `DeploymentHistory` system tracks all deployment attempts
   - Records timestamp, versions, status (success/failure/rollback), errors, warnings
