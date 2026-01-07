@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Cache Management System**
+  - `ritual clean` command to clear ritual cache
+  - Automatic version checking for embedded rituals
+  - Re-extract rituals when embedded version changes
+  - Cache size reporting
+  - Comprehensive cache management tests
+
+### Fixed
+- Embedded rituals now automatically update when binary is rebuilt
+- Old cached rituals no longer persist after recompilation
+
+### Changed
+- Renamed internal registry field from `cache` to `rituals` for clarity
+
+### Added (Previous)
 - **Semantic Versioning Utilities (Task 8.2.3)**
   - Full semver 2.0 support
   - Parse and compare versions
