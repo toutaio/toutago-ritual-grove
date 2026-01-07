@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - README documentation for hello-world ritual
+- Comprehensive test coverage for dbops package (39.5% → 80.3%)
+- Comprehensive test coverage for validationops package (59.1% → 92.9%)
 
 ### Changed
 - Code quality improvements
@@ -16,11 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed lint warnings (prealloc, errcheck, lll)
   - Improved function signature formatting
   - Reduced lint issues from 434 to 419
+  - Fixed port-check task registration to handle float64 values
   
 ### Fixed
 - Unchecked error in fmt.Sscanf call
 - Line length violations in command handlers
 - Inefficient slice allocations
+- Port validation in task registration system
 
 ## [0.5.0] - 2026-01-06
 
