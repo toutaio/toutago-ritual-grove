@@ -185,29 +185,137 @@ func TestDBRestoreTask_Validate(t *testing.T) {
 
 // Integration tests would require a database connection.
 func TestDBTasks_Execute(t *testing.T) {
-	t.Skip("Database tasks require actual database connection for integration testing")
-
 	taskCtx := tasks.NewTaskContext()
 	taskCtx.SetWorkingDir("/tmp/test")
 	ctx := context.Background()
 
-	t.Run("db-exec", func(t *testing.T) {
+	t.Run("db-exec with SQL returns not implemented", func(t *testing.T) {
 		task := &DBExecTask{SQL: "SELECT 1"}
-		_ = task.Execute(ctx, taskCtx)
+		err := task.Execute(ctx, taskCtx)
+		if err == nil {
+			t.Fatal("Expected error for unimplemented task")
+		}
+		if err.Error() != "db-exec task not yet implemented - requires database connection" {
+			t.Errorf("Unexpected error message: %v", err)
+		}
 	})
 
-	t.Run("db-seed", func(t *testing.T) {
-		task := &DBSeedTask{File: "seeds/test.sql"}
-		_ = task.Execute(ctx, taskCtx)
+	t.Run("db-seed returns not implemented", func(t *testing.T) {
+		task := &DBSeedTask{File: "/nonexistent/seeds/test.sql"}
+		err := task.Execute(ctx, taskCtx)
+		if err == nil {
+			t.Fatal("Expected error for unimplemented task")
+		}
 	})
 
-	t.Run("db-backup", func(t *testing.T) {
+	t.Run("db-backup returns not implemented", func(t *testing.T) {
 		task := &DBBackupTask{Output: "test-backup.sql"}
-		_ = task.Execute(ctx, taskCtx)
+		err := task.Execute(ctx, taskCtx)
+		if err == nil {
+			t.Fatal("Expected error for unimplemented task")
+		}
+		if err.Error() != "db-backup task not yet implemented - requires database connection" {
+			t.Errorf("Unexpected error message: %v", err)
+		}
 	})
 
-	t.Run("db-restore", func(t *testing.T) {
-		task := &DBRestoreTask{File: "test-backup.sql"}
-		_ = task.Execute(ctx, taskCtx)
+	t.Run("db-restore returns not implemented", func(t *testing.T) {
+		task := &DBRestoreTask{File: "/nonexistent/test-backup.sql"}
+		err := task.Execute(ctx, taskCtx)
+		if err == nil {
+			t.Fatal("Expected error for unimplemented task")
+		}
 	})
+}
+
+func TestDBTasks_Registration(t *testing.T) {
+	tests := []struct {
+		name       string
+		taskName   string
+		config     map[string]interface{}
+		shouldFail bool
+	}{
+		{
+			name:     "db-exec with SQL",
+			taskName: "db-exec",
+			config: map[string]interface{}{
+				"sql": "SELECT 1",
+			},
+			shouldFail: false,
+		},
+		{
+			name:     "db-exec with file",
+			taskName: "db-exec",
+			config: map[string]interface{}{
+				"file": "schema.sql",
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "db-exec without SQL or file",
+			taskName:   "db-exec",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+		{
+			name:     "db-seed with file",
+			taskName: "db-seed",
+			config: map[string]interface{}{
+				"file": "seeds.sql",
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "db-seed without file",
+			taskName:   "db-seed",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+		{
+			name:     "db-backup with output",
+			taskName: "db-backup",
+			config: map[string]interface{}{
+				"output": "backup.sql",
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "db-backup without output",
+			taskName:   "db-backup",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+		{
+			name:     "db-restore with file",
+			taskName: "db-restore",
+			config: map[string]interface{}{
+				"file": "backup.sql",
+			},
+			shouldFail: false,
+		},
+		{
+			name:       "db-restore without file",
+			taskName:   "db-restore",
+			config:     map[string]interface{}{},
+			shouldFail: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task, err := tasks.Create(tt.taskName, tt.config)
+			if tt.shouldFail {
+				if err == nil {
+					t.Error("Expected error but got none")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if task == nil {
+					t.Error("Expected task but got nil")
+				}
+			}
+		})
+	}
 }
