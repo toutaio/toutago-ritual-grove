@@ -66,7 +66,26 @@ touta ritual deploy
 
 # Update to newer ritual version
 touta ritual update
+
+# Clean ritual cache (useful after upgrading touta)
+touta ritual clean --force
 ```
+
+## Troubleshooting
+
+### Rituals Not Updating After Rebuild
+
+If you rebuild the `touta` binary but rituals still show old content, you need to clean the ritual cache:
+
+```bash
+# Clear the ritual cache
+touta ritual clean --force
+
+# Now rituals will be re-extracted from the new binary
+touta ritual list
+```
+
+The cache is stored in `~/.toutago/ritual-cache/`. Embedded rituals are extracted once and cached for performance. After rebuilding `touta`, the cache may contain outdated versions.
 
 ## Configuration
 
