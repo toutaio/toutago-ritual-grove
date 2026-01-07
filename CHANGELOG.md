@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0-dev] - 2026-01-07
 
 ### Added
+- **Semantic Versioning Utilities (Task 8.2.3)**
+  - Full semver 2.0 support
+  - Parse and compare versions
+  - Check version compatibility
+  - Detect breaking changes
+  - Generate next versions
+  - 6 comprehensive test suites (all passing)
+
 - **JSON Output Support (Task 15.4.8.7)**
   - `ritual plan --json` flag
   - Machine-readable structured output
