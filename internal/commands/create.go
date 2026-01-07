@@ -24,7 +24,11 @@ func NewCreateHandler() *CreateHandler {
 }
 
 // Execute creates a project from a ritual with given answers
-func (h *CreateHandler) Execute(ritualPath, targetPath string, answers map[string]interface{}, opts CreateOptions) error {
+func (h *CreateHandler) Execute(
+	ritualPath, targetPath string,
+	answers map[string]interface{},
+	opts CreateOptions,
+) error {
 	// Validate inputs
 	if ritualPath == "" {
 		return fmt.Errorf("ritual path is required")

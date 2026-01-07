@@ -7,13 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- README documentation for hello-world ritual
+
 ### Changed
 - Code quality improvements
-  - Fixed lint warnings (prealloc, errcheck)
-  - Improved code consistency
+  - Fixed error checking in inertia tasks
+  - Fixed lint warnings (prealloc, errcheck, lll)
+  - Improved function signature formatting
+  - Reduced lint issues from 434 to 419
   
 ### Fixed
-- Minor lint issues in test files and hook executor
+- Unchecked error in fmt.Sscanf call
+- Line length violations in command handlers
+- Inefficient slice allocations
 
 ## [0.5.0] - 2026-01-06
 

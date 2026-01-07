@@ -38,7 +38,7 @@ func (t *SetupInertiaMiddlewareTask) Execute(ctx context.Context, taskCtx *tasks
 		case float64:
 			port = int(v)
 		case string:
-			fmt.Sscanf(v, "%d", &port)
+			_, _ = fmt.Sscanf(v, "%d", &port) // Ignore scanf errors, keep default port
 		}
 	}
 
@@ -406,7 +406,7 @@ func Get%s(ctx *cosan.Context) interface{} {
 }
 
 func convertStructToTS(name string, structType *ast.StructType) string {
-	var fields []string
+	fields := make([]string, 0, len(structType.Fields.List))
 	for _, field := range structType.Fields.List {
 		if len(field.Names) == 0 {
 			continue

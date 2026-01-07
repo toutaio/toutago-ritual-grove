@@ -129,7 +129,13 @@ func (h *UpdateHandler) loadNewRitual(ritualName string) (*ritual.Manifest, erro
 	return newManifest, nil
 }
 
-func (h *UpdateHandler) runMigrations(projectPath string, state *storage.State, manifest *ritual.Manifest, backupPath string, force bool) error {
+func (h *UpdateHandler) runMigrations(
+	projectPath string,
+	state *storage.State,
+	manifest *ritual.Manifest,
+	backupPath string,
+	force bool,
+) error {
 	migrationRunner := migration.NewRunner(projectPath)
 	migrations := h.getMigrationsToRun(state, manifest)
 
@@ -167,7 +173,7 @@ func (h *UpdateHandler) saveUpdatedState(state *storage.State, targetVersion, pr
 
 // getMigrationsToRun determines which migrations need to be run
 func (h *UpdateHandler) getMigrationsToRun(state *storage.State, manifest *ritual.Manifest) []*ritual.Migration {
-	var migrationsToRun []*ritual.Migration
+	migrationsToRun := make([]*ritual.Migration, 0, len(manifest.Migrations))
 
 	// Get all migrations from manifest
 	for i := range manifest.Migrations {
