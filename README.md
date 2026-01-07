@@ -25,13 +25,16 @@ Ritual Grove is a powerful system for building production-ready applications usi
 - 🎯 **Create Complete Applications** - Generate production-ready apps from rituals (blog, CRM, wiki, API server, etc.)
 - 📦 **Package Management** - Automatic dependency resolution and package installation
 - 🔄 **Lifecycle Management** - Deploy, update, and rollback applications
+- 📊 **Deployment History** - Track all deployments with timestamps, status, and error logs
+- 🛡️ **Protected Files** - Glob patterns to prevent overwriting user customizations
 - 🧩 **Mixin System** - Add features to existing projects (auth, comments, admin, etc.)
 - 🏢 **Multi-Tenancy** - Built-in support for multi-tenant applications
 - 📝 **Interactive Setup** - Smart questionnaires with validation and helpers
 - 🔌 **Pluggable Templates** - Fíth (default), Go templates, or custom engines
 - 📚 **Multi-Source Loading** - Built-in rituals, Git repos, or local tarballs
-- 🔐 **File Protection** - Preserves user modifications during updates
+- 🔐 **File Protection** - Preserves user modifications during updates (`.ritual/protected.txt`)
 - 🔒 **Lock Files** - Reproducible builds with `ritual.lock`
+- 📋 **Declarative Tasks** - 30+ built-in tasks for hooks (file ops, Go ops, HTTP, validation)
 
 ## Installation
 
@@ -170,7 +173,20 @@ Together, **Ritual Grove** symbolizes a sacred space where application creation 
 
 ## Documentation
 
-See [docs/](docs/) for detailed documentation on ritual format, examples, and usage.
+### Core Guides
+- [Deployment Management](docs/deployment-management.md) - History tracking and protected files
+- [Hook Tasks Reference](docs/hook-tasks-reference.md) - All available declarative tasks
+- [Ritual Format](docs/ritual-format.md) - Complete ritual.yaml specification
+
+### Built-in Rituals
+- [Minimal](rituals/minimal/README.md) - Empty starting point
+- [Hello World](rituals/hello-world/README.md) - Simple HTTP server
+- [Basic Site](rituals/basic-site/README.md) - Multi-page website with routing
+- [Blog](rituals/blog/README.md) - Blog with posts, categories, comments
+- [Wiki](rituals/wiki/README.md) - Wiki with pages and search
+- [Fullstack Inertia Vue](rituals/fullstack-inertia-vue/README.md) - Modern SPA with Inertia.js
+
+See [docs/](docs/) for more detailed documentation.
 
 ## Contributing
 
