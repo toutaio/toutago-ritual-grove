@@ -3,12 +3,15 @@
 **Architecture Change:** Ritual Grove is a **plugin library** integrated into the main `touta` binary, NOT a standalone CLI. All commands are accessed via `touta ritual <command>`.
 
 **STATUS UPDATE (2026-01-07):**
-Toutago Ritual Grove v0.5.0 is **PRODUCTION READY** with all core functionality complete:
-- ✅ 4 built-in rituals (minimal, blog, wiki, basic-site)
-- ✅ 75.2% test coverage, all tests passing
+Toutago Ritual Grove v0.5.0+ is **PRODUCTION READY** with all core functionality complete:
+- ✅ 6 built-in rituals (minimal, hello-world, basic-site, blog, wiki, fullstack-inertia-vue)
+- ✅ 75.3% test coverage, all tests passing
 - ✅ Complete CLI integration
 - ✅ Filtering, config files, git init automation
 - ✅ Update/migration system with rollback
+- ✅ Code quality improvements (lint issues reduced to 419)
+- ✅ Comprehensive documentation for all rituals
+- ✅ Enhanced test coverage (dbops: 80.3%, validationops: 92.9%)
 - ⚠️ Task system designed but not integrated with hooks (deferred to v0.6.0)
 - 📋 Additional rituals (CRM, ERP, REST API) deferred to future versions
 - 📋 Full up/down/rollback CLI (Section 9) deferred to v1.0.0
