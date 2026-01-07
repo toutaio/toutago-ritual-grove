@@ -2,6 +2,8 @@ package validator
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -9,11 +11,18 @@ import (
 )
 
 // Validator validates ritual manifests
-type Validator struct{}
+type Validator struct{
+	ritualPath string
+}
 
 // NewValidator creates a new validator
 func NewValidator() *Validator {
 	return &Validator{}
+}
+
+// SetRitualPath sets the base path for the ritual (for file reference validation)
+func (v *Validator) SetRitualPath(path string) {
+	v.ritualPath = path
 }
 
 // Validate validates a ritual manifest
@@ -220,4 +229,247 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// ValidateFileReferences checks that all referenced template/static files exist
+func (v *Validator) ValidateFileReferences(manifest *ritual.Manifest) error {
+if v.ritualPath == "" {
+return nil // Skip if no path set
+}
+
+for _, tmpl := range manifest.Files.Templates {
+// Check if source file exists
+filePath := filepath.Join(v.ritualPath, tmpl.Source)
+if _, err := os.Stat(filePath); os.IsNotExist(err) {
+return fmt.Errorf("template file not found: %s", tmpl.Source)
+}
+}
+
+for _, static := range manifest.Files.Static {
+filePath := filepath.Join(v.ritualPath, static.Source)
+if _, err := os.Stat(filePath); os.IsNotExist(err) {
+return fmt.Errorf("static file not found: %s", static.Source)
+}
+}
+
+return nil
+}
+
+// ValidateVersionConstraints checks that version constraints are logically valid
+func (v *Validator) ValidateVersionConstraints(manifest *ritual.Manifest) error {
+if manifest.Compatibility.MinToutaVersion != "" && manifest.Compatibility.MaxToutaVersion != "" {
+// Simple string comparison (more sophisticated semver comparison could be added)
+min := manifest.Compatibility.MinToutaVersion
+max := manifest.Compatibility.MaxToutaVersion
+
+if compareVersions(min, max) > 0 {
+return fmt.Errorf("min_touta_version (%s) is greater than max_touta_version (%s)", min, max)
+}
+}
+
+return nil
+}
+
+// ValidateQuestionConditions validates question conditional logic
+func (v *Validator) ValidateQuestionConditions(manifest *ritual.Manifest) error {
+// Build map of question names
+questionNames := make(map[string]bool)
+for _, q := range manifest.Questions {
+questionNames[q.Name] = true
+}
+
+// Check each question's conditions
+for _, q := range manifest.Questions {
+if q.Condition != nil {
+if err := v.validateCondition(q.Condition, questionNames, q.Name); err != nil {
+return fmt.Errorf("invalid condition for question %s: %w", q.Name, err)
+}
+}
+}
+
+// Check for circular dependencies
+if err := v.detectCircularConditions(manifest.Questions); err != nil {
+return err
+}
+
+return nil
+}
+
+func (v *Validator) validateCondition(cond *ritual.QuestionCondition, validNames map[string]bool, currentQuestion string) error {
+if cond.Field != "" {
+if !validNames[cond.Field] {
+return fmt.Errorf("condition references non-existent field: %s", cond.Field)
+}
+if cond.Field == currentQuestion {
+return fmt.Errorf("question cannot depend on itself")
+}
+}
+
+// Recursively validate And/Or/Not conditions
+for _, subCond := range cond.And {
+if err := v.validateCondition(&subCond, validNames, currentQuestion); err != nil {
+return err
+}
+}
+for _, subCond := range cond.Or {
+if err := v.validateCondition(&subCond, validNames, currentQuestion); err != nil {
+return err
+}
+}
+if cond.Not != nil {
+if err := v.validateCondition(cond.Not, validNames, currentQuestion); err != nil {
+return err
+}
+}
+
+return nil
+}
+
+func (v *Validator) detectCircularConditions(questions []ritual.Question) error {
+// Build dependency graph
+deps := make(map[string][]string)
+for _, q := range questions {
+if q.Condition != nil {
+deps[q.Name] = v.extractDependencies(q.Condition)
+}
+}
+
+// Check for cycles using DFS
+visited := make(map[string]bool)
+recStack := make(map[string]bool)
+
+for question := range deps {
+if v.hasCycle(question, deps, visited, recStack) {
+return fmt.Errorf("circular dependency detected in question conditions involving: %s", question)
+}
+}
+
+return nil
+}
+
+func (v *Validator) extractDependencies(cond *ritual.QuestionCondition) []string {
+var deps []string
+if cond.Field != "" {
+deps = append(deps, cond.Field)
+}
+for _, subCond := range cond.And {
+deps = append(deps, v.extractDependencies(&subCond)...)
+}
+for _, subCond := range cond.Or {
+deps = append(deps, v.extractDependencies(&subCond)...)
+}
+if cond.Not != nil {
+deps = append(deps, v.extractDependencies(cond.Not)...)
+}
+return deps
+}
+
+func (v *Validator) hasCycle(node string, graph map[string][]string, visited, recStack map[string]bool) bool {
+visited[node] = true
+recStack[node] = true
+
+for _, neighbor := range graph[node] {
+if !visited[neighbor] {
+if v.hasCycle(neighbor, graph, visited, recStack) {
+return true
+}
+} else if recStack[neighbor] {
+return true
+}
+}
+
+recStack[node] = false
+return false
+}
+
+// CheckCommonMistakes returns warnings for common ritual authoring mistakes
+func (v *Validator) CheckCommonMistakes(manifest *ritual.Manifest) []string {
+var warnings []string
+
+// Check if config/env files are protected
+protectedMap := make(map[string]bool)
+for _, p := range manifest.Files.Protected {
+protectedMap[p] = true
+}
+
+for _, tmpl := range manifest.Files.Templates {
+dest := tmpl.Destination
+
+// Warn about unprotected config files
+if (strings.Contains(dest, "config") && (strings.Contains(dest, ".yaml") || strings.Contains(dest, ".yml") || strings.Contains(dest, ".json"))) {
+if !protectedMap[dest] && !matchesAnyPattern(dest, manifest.Files.Protected) {
+warnings = append(warnings, fmt.Sprintf("Consider protecting config file: %s", dest))
+}
+}
+
+// Warn about unprotected .env files
+if strings.Contains(dest, ".env") {
+if !protectedMap[dest] && !matchesAnyPattern(dest, manifest.Files.Protected) {
+warnings = append(warnings, fmt.Sprintf("Consider protecting environment file: %s", dest))
+}
+}
+}
+
+// Warn if no tests are generated
+hasTests := false
+for _, tmpl := range manifest.Files.Templates {
+if strings.Contains(tmpl.Destination, "_test.go") {
+hasTests = true
+break
+}
+}
+if !hasTests {
+warnings = append(warnings, "No test files found - consider adding generated tests")
+}
+
+return warnings
+}
+
+// CheckMigrationReversibility returns warnings for migrations without down handlers
+func (v *Validator) CheckMigrationReversibility(manifest *ritual.Manifest) []string {
+var warnings []string
+
+for _, m := range manifest.Migrations {
+hasDown := len(m.Down.SQL) > 0 || m.Down.Script != "" || m.Down.GoCode != ""
+if !hasDown {
+warnings = append(warnings, fmt.Sprintf("Migration %s->%s lacks down handler for rollback",
+m.FromVersion, m.ToVersion))
+}
+}
+
+return warnings
+}
+
+func matchesAnyPattern(path string, patterns []string) bool {
+for _, pattern := range patterns {
+if matched, _ := filepath.Match(pattern, path); matched {
+return true
+}
+if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
+return true
+}
+}
+return false
+}
+
+func compareVersions(v1, v2 string) int {
+parts1 := strings.Split(v1, ".")
+parts2 := strings.Split(v2, ".")
+
+for i := 0; i < len(parts1) && i < len(parts2); i++ {
+if parts1[i] < parts2[i] {
+return -1
+}
+if parts1[i] > parts2[i] {
+return 1
+}
+}
+
+if len(parts1) < len(parts2) {
+return -1
+}
+if len(parts1) > len(parts2) {
+return 1
+}
+return 0
 }
