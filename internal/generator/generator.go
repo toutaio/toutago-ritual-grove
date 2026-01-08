@@ -107,7 +107,7 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 			}
 		}
 
-		srcPath := filepath.Join(ritualPath, tmpl.Source)
+		srcPath := filepath.Join(ritualPath, "templates", tmpl.Source)
 
 		// Render destination path (it may contain template variables)
 		destPathRendered, err := g.engine.Render(tmpl.Destination, g.variables.All())
