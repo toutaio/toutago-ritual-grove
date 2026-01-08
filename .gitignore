@@ -39,3 +39,7 @@ ritual.lock
 # Development
 .air.toml
 tmp/
+
+# Summary files (generated, not committed)
+*SUMMARY*.md
+*_SUMMARY.md

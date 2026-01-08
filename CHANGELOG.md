@@ -5,6 +5,22 @@ All notable changes to the Toutago Ritual Grove project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Docker Support (In Progress)**
+  - Added shared Docker templates in `rituals/_shared/docker/`
+  - Dockerfile.go.tmpl with Air for hot reload
+  - docker-compose.yml.tmpl with conditional database services (PostgreSQL/MySQL)
+  - .dockerignore.tmpl with common exclusions
+  - .air.toml.tmpl for Go hot reload configuration
+  - .env.example.tmpl for environment variables
+  - wait-for-it.sh script for database readiness
+  - Shared frontend templates (package.json.tmpl, esbuild.config.js.tmpl)
+  - DOCKER.md.tmpl comprehensive user documentation
+  - Comprehensive test suite (45+ test cases) for Docker functionality
+  - OpenSpec documentation for Docker architecture and best practices
+
 ## [0.6.1-dev] - 2026-01-08
 
 ### Fixed
