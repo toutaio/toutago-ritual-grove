@@ -42,7 +42,7 @@ return c.JSON(200, post)
 // Create creates a new post
 func (h *PostHandler) Create(c cosan.Context) error {
 var post models.Post
-if err := c.BindJSON(&post); err != nil {
+if err := c.Bind(&post); err != nil {
 return c.JSON(400, map[string]string{"error": "Invalid request"})
 }
 
@@ -54,7 +54,7 @@ return c.JSON(201, post)
 func (h *PostHandler) Update(c cosan.Context) error {
 id := c.Param("id")
 var post models.Post
-if err := c.BindJSON(&post); err != nil {
+if err := c.Bind(&post); err != nil {
 return c.JSON(400, map[string]string{"error": "Invalid request"})
 }
 
