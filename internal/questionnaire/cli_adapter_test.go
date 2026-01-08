@@ -301,3 +301,123 @@ func TestConvertAnswer_EdgeCases(t *testing.T) {
 		})
 	}
 }
+
+func TestStripQuotes(t *testing.T) {
+tests := []struct {
+name     string
+input    string
+expected string
+}{
+{
+name:     "double quotes",
+input:    `"inertia-vue"`,
+expected: "inertia-vue",
+},
+{
+name:     "single quotes",
+input:    "'inertia-vue'",
+expected: "inertia-vue",
+},
+{
+name:     "no quotes",
+input:    "inertia-vue",
+expected: "inertia-vue",
+},
+{
+name:     "mixed quotes",
+input:    `"inertia-vue'`,
+expected: `"inertia-vue'`,
+},
+{
+name:     "empty string",
+input:    "",
+expected: "",
+},
+{
+name:     "only quotes",
+input:    `""`,
+expected: "",
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+result := stripQuotes(tt.input)
+if result != tt.expected {
+t.Errorf("stripQuotes(%q) = %q, want %q", tt.input, result, tt.expected)
+}
+})
+}
+}
+
+func TestCLIAdapter_ChoiceQuestionWithQuotes(t *testing.T) {
+questions := []ritual.Question{
+{
+Name:   "frontend",
+Prompt: "Select frontend:",
+Type:   ritual.QuestionTypeChoice,
+Choices: []string{"traditional", "inertia-vue", "htmx"},
+},
+}
+
+// Test with quoted input
+input := `"inertia-vue"` + "\n"
+adapter := NewCLIAdapter(questions, strings.NewReader(input))
+
+answers, err := adapter.Run()
+if err != nil {
+t.Fatalf("Run() failed: %v", err)
+}
+
+if answers["frontend"] != "inertia-vue" {
+t.Errorf("Expected frontend to be 'inertia-vue', got %v", answers["frontend"])
+}
+}
+
+func TestCLIAdapter_ChoiceQuestionWithNumber(t *testing.T) {
+questions := []ritual.Question{
+{
+Name:   "frontend",
+Prompt: "Select frontend:",
+Type:   ritual.QuestionTypeChoice,
+Choices: []string{"traditional", "inertia-vue", "htmx"},
+},
+}
+
+// Test with number input (1-based)
+input := "2\n"
+adapter := NewCLIAdapter(questions, strings.NewReader(input))
+
+answers, err := adapter.Run()
+if err != nil {
+t.Fatalf("Run() failed: %v", err)
+}
+
+if answers["frontend"] != "inertia-vue" {
+t.Errorf("Expected frontend to be 'inertia-vue' (choice #2), got %v", answers["frontend"])
+}
+}
+
+func TestCLIAdapter_ChoiceQuestionInvalidNumber(t *testing.T) {
+questions := []ritual.Question{
+{
+Name:   "frontend",
+Prompt: "Select frontend:",
+Type:   ritual.QuestionTypeChoice,
+Choices: []string{"traditional", "inertia-vue", "htmx"},
+},
+}
+
+// Test with invalid number, then valid choice
+input := "5\nhtmx\n"
+adapter := NewCLIAdapter(questions, strings.NewReader(input))
+
+answers, err := adapter.Run()
+if err != nil {
+t.Fatalf("Run() failed: %v", err)
+}
+
+if answers["frontend"] != "htmx" {
+t.Errorf("Expected frontend to be 'htmx', got %v", answers["frontend"])
+}
+}

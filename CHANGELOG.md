@@ -5,9 +5,22 @@ All notable changes to the Toutago Ritual Grove project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0-dev] - 2026-01-07
+## [0.6.0-dev] - 2026-01-08
 
 ### Added
+- **Improved CLI Questionnaire UX**
+  - Numbered menu selection for choice questions
+  - Automatic quote stripping from user input
+  - Support for both number (1-based) and name selection
+  - Retry on invalid input with clear error messages
+  - Comprehensive tests for quote handling and numbered choices
+
+### Fixed
+- Choice questions now accept quoted values (e.g., `"inertia-vue"`)
+- Invalid choice numbers now properly retry instead of failing
+- CLI adapter now handles conversion errors gracefully
+
+### Added (Previous)
 - **Cache Management System**
   - `ritual clean` command to clear ritual cache
   - Automatic version checking for embedded rituals
@@ -15,14 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cache size reporting
   - Comprehensive cache management tests
 
-### Fixed
+### Fixed (Previous)
 - Embedded rituals now automatically update when binary is rebuilt
 - Old cached rituals no longer persist after recompilation
 
 ### Changed
 - Renamed internal registry field from `cache` to `rituals` for clarity
 
-### Added (Previous)
+## [0.5.0] - 2026-01-07
 - **Semantic Versioning Utilities (Task 8.2.3)**
   - Full semver 2.0 support
   - Parse and compare versions
