@@ -1,0 +1,122 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-[[.port]]}:[[.port]]"
+    environment:
+      [[- if .database_type]]
+      DB_HOST: db
+      DB_PORT: [[if eq .database_type "postgres"]]5432[[else if eq .database_type "mysql"]]3306[[end]]
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      [[- end]]
+      APP_ENV: development
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+    [[- if .database_type]]
+    depends_on:
+      db:
+        condition: service_healthy
+    [[- end]]
+    volumes:
+      - ./:/app
+      - go-cache:/go/pkg/mod
+      - /app/tmp
+    networks:
+      - app-network
+[[- if .database_type]]
+
+  db:
+    [[- if eq .database_type "postgres"]]
+    image: postgres:16-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_db
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      [[- if .has_migrations]]
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+      [[- end]]
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    [[- else if eq .database_type "mysql"]]
+    image: mysql:8-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_db
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+      [[- if .has_migrations]]
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+      [[- end]]
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    [[- end]]
+[[- end]]
+[[- if .has_frontend]]
+
+  frontend:
+    image: node:20-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_frontend
+    restart: unless-stopped
+    working_dir: /app/frontend
+    command: npm run dev
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app/frontend
+      - node-modules:/app/frontend/node_modules
+    networks:
+      - app-network
+[[- end]]
+
+volumes:
+  [[- if .database_type]]
+  db-data:
+    driver: local
+  [[- end]]
+  go-cache:
+    driver: local
+  [[- if .has_frontend]]
+  node-modules:
+    driver: local
+  [[- end]]
+
+networks:
+  app-network:
+    driver: bridge

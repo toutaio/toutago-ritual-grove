@@ -69,7 +69,7 @@ func TestDockerComposeTemplateRendering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmplPath := filepath.Join("rituals", "_shared", "docker", "docker-compose.yml.tmpl")
+			tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 			
 			_, err := os.Stat(tmplPath)
 			require.NoError(t, err, "docker-compose template should exist")
@@ -102,7 +102,7 @@ func TestComposeFileValidation(t *testing.T) {
 
 // TestServiceDependencies tests that service dependencies are correct
 func TestServiceDependencies(t *testing.T) {
-	tmplPath := filepath.Join("rituals", "_shared", "docker", "docker-compose.yml.tmpl")
+	tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 	
 	_, err := os.Stat(tmplPath)
 	require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestHealthCheckConfiguration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmplPath := filepath.Join("rituals", "_shared", "docker", "docker-compose.yml.tmpl")
+			tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 			
 			tmpl, err := template.ParseFiles(tmplPath)
 			require.NoError(t, err)
@@ -173,7 +173,7 @@ func TestHealthCheckConfiguration(t *testing.T) {
 
 // TestVolumeConfiguration tests volume setup
 func TestVolumeConfiguration(t *testing.T) {
-	tmplPath := filepath.Join("rituals", "_shared", "docker", "docker-compose.yml.tmpl")
+	tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 	
 	tmpl, err := template.ParseFiles(tmplPath)
 	require.NoError(t, err)
@@ -204,7 +204,7 @@ func TestVolumeConfiguration(t *testing.T) {
 
 // TestNetworkConfiguration tests network setup
 func TestNetworkConfiguration(t *testing.T) {
-	tmplPath := filepath.Join("rituals", "_shared", "docker", "docker-compose.yml.tmpl")
+	tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 	
 	tmpl, err := template.ParseFiles(tmplPath)
 	require.NoError(t, err)
@@ -230,7 +230,7 @@ func TestNetworkConfiguration(t *testing.T) {
 
 // TestEnvironmentVariables tests env var configuration
 func TestEnvironmentVariables(t *testing.T) {
-	tmplPath := filepath.Join("rituals", "_shared", "docker", "docker-compose.yml.tmpl")
+	tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 	
 	tmpl, err := template.ParseFiles(tmplPath)
 	require.NoError(t, err)
@@ -265,7 +265,7 @@ func TestEnvironmentVariables(t *testing.T) {
 
 // TestEnvExampleTemplate tests .env.example template
 func TestEnvExampleTemplate(t *testing.T) {
-	tmplPath := filepath.Join("rituals", "_shared", "docker", ".env.example.tmpl")
+	tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", ".env.example.tmpl")
 	
 	_, err := os.Stat(tmplPath)
 	require.NoError(t, err, ".env.example template should exist")
@@ -304,7 +304,7 @@ func TestEnvExampleTemplate(t *testing.T) {
 
 // TestConditionalFrontendService tests frontend service generation
 func TestConditionalFrontendService(t *testing.T) {
-	tmplPath := filepath.Join("rituals", "_shared", "docker", "docker-compose.yml.tmpl")
+	tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 	
 	tmpl, err := template.ParseFiles(tmplPath)
 	require.NoError(t, err)
