@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added Category Vue components (Index.vue and Show.vue)
   - Handlers render Inertia pages instead of JSON for Inertia frontend
   - Main.go template initializes Inertia instance and passes to handlers
+  - Added CosanAdapter to bridge cosan.Context with inertia.InertiaContext
+
+### Fixed
+- **Blog Ritual Inertia.js API Usage**
+  - Fixed handler templates to use correct InertiaContext methods
+  - Changed from incorrect `h.inertia.Render(w, r, ...)` to proper `ic.Render(...)`
+  - Changed from `h.inertia.Location(w, url)` to `ic.Redirect(url)` and `ic.Location(url)`
+  - Handlers now create InertiaContext using adapter pattern
   - Supports SSR configuration when enabled
 
 ### Fixed

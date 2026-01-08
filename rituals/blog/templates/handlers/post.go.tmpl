@@ -2,6 +2,9 @@ package handlers
 
 import (
 "[[ .module_path ]]/internal/models"
+[[ if eq .frontend_type "inertia-vue" -]]
+"[[ .module_path ]]/internal"
+[[ end -]]
 "github.com/toutaio/toutago-cosan-router"
 nasc "github.com/toutaio/toutago-nasc-dependency-injector"
 [[ if eq .frontend_type "inertia-vue" -]]
@@ -35,7 +38,8 @@ posts := []models.Post{
 }
 
 [[ if eq .frontend_type "inertia-vue" -]]
-return h.inertia.Render(c.Response(), c.Request(), "Posts/Index", map[string]interface{}{
+ic := internal.GetInertiaContext(c, h.inertia)
+return ic.Render("Posts/Index", map[string]interface{}{
 "posts": posts,
 })
 [[ else -]]
@@ -54,7 +58,8 @@ post := models.Post{
 _ = id // Use id when implementing
 
 [[ if eq .frontend_type "inertia-vue" -]]
-return h.inertia.Render(c.Response(), c.Request(), "Posts/Show", map[string]interface{}{
+ic := internal.GetInertiaContext(c, h.inertia)
+return ic.Render("Posts/Show", map[string]interface{}{
 "post": post,
 })
 [[ else -]]
@@ -72,7 +77,8 @@ return c.JSON(400, map[string]string{"error": "Invalid request"})
 // TODO: Save to database
 [[ if eq .frontend_type "inertia-vue" -]]
 // Redirect back to posts list after creation
-return h.inertia.Location(c.Response(), "/posts")
+ic := internal.GetInertiaContext(c, h.inertia)
+return ic.Redirect("/posts")
 [[ else -]]
 return c.JSON(201, post)
 [[ end -]]
@@ -90,7 +96,8 @@ return c.JSON(400, map[string]string{"error": "Invalid request"})
 _ = id // Use id when implementing
 [[ if eq .frontend_type "inertia-vue" -]]
 // Redirect back to post detail after update
-return h.inertia.Location(c.Response(), "/posts/" + id)
+ic := internal.GetInertiaContext(c, h.inertia)
+return ic.Redirect("/posts/" + id)
 [[ else -]]
 return c.JSON(200, post)
 [[ end -]]
@@ -104,7 +111,8 @@ id := c.Param("id")
 _ = id // Use id when implementing
 [[ if eq .frontend_type "inertia-vue" -]]
 // Redirect back to posts list after deletion
-return h.inertia.Location(c.Response(), "/posts")
+ic := internal.GetInertiaContext(c, h.inertia)
+return ic.Redirect("/posts")
 [[ else -]]
 return c.JSON(204, nil)
 [[ end -]]

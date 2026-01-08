@@ -1,0 +1,45 @@
+[[ if eq .frontend_type "inertia-vue" -]]
+package internal
+
+import (
+	"net/http"
+	"github.com/toutaio/toutago-cosan-router"
+	"github.com/toutaio/toutago-inertia/pkg/inertia"
+)
+
+// CosanAdapter adapts cosan.Context to inertia.ContextInterface
+type CosanAdapter struct {
+	ctx cosan.Context
+}
+
+// NewCosanAdapter creates a new adapter
+func NewCosanAdapter(ctx cosan.Context) *CosanAdapter {
+	return &CosanAdapter{ctx: ctx}
+}
+
+// Request returns the HTTP request
+func (a *CosanAdapter) Request() *http.Request {
+	return a.ctx.Request()
+}
+
+// Response returns the HTTP response writer
+func (a *CosanAdapter) Response() http.ResponseWriter {
+	return a.ctx.Response()
+}
+
+// Set stores a value in the context
+func (a *CosanAdapter) Set(key string, value interface{}) {
+	a.ctx.Set(key, value)
+}
+
+// Get retrieves a value from the context
+func (a *CosanAdapter) Get(key string) interface{} {
+	return a.ctx.Get(key)
+}
+
+// GetInertiaContext creates an Inertia context from a cosan context
+func GetInertiaContext(c cosan.Context, mgr *inertia.Inertia) *inertia.InertiaContext {
+	adapter := NewCosanAdapter(c)
+	return inertia.NewContext(adapter, mgr)
+}
+[[ end -]]

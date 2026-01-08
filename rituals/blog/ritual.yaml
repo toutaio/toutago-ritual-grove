@@ -164,6 +164,9 @@ files:
       dest: internal/handlers/comment.go
       condition: "enable_comments == true"
 
+    - src: internal/inertia_adapter.go.tmpl
+      dest: internal/inertia_adapter.go
+
     - src: views/layout.html.tmpl
       dest: views/layout.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
