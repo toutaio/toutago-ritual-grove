@@ -16,16 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Supports SSR configuration when enabled
 
 ### Fixed
+- **Template Path Resolution**
+  - Fixed generator to correctly resolve templates from `templates/` subdirectory
+  - Ritual templates now load properly after cache cleanup
 - **Blog Ritual File Conditions**
   - Fixed file conditions to use `[[ ]]` delimiters instead of `{{ }}`
   - Correctly generates frontend files based on selected framework (inertia-vue, htmx, traditional)
   - Vue/Inertia.js files now properly generated when selected
 - **Blog Ritual Templates**
   - Fixed handler templates to properly import nasc package
-  - Fixed go.mod template conditional syntax
+  - Fixed go.mod template conditional syntax with correct `[[ ]]` delimiters
   - Fixed Vue template syntax to avoid Go template conflicts
   - Removed Makefile templates (not used in Toutā projects)
   - Updated handlers to conditionally use Inertia or JSON based on frontend type
+  - Fixed package import paths (removed incorrect `/pkg/` subdirectories)
 
 ### Changed
 - **Template Delimiter Change**
