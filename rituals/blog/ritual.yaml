@@ -245,7 +245,7 @@ files:
       dest: README.md
 
   static:
-    - src: style.css
+    - src: static/style.css
       dest: public/css/style.css
 
 migrations:
