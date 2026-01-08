@@ -13,10 +13,10 @@ const flash = computed(() => page.props.flash || {})
     <Header />
     
     <div v-if="flash.success" class="alert alert-success">
-      {{[[ flash.success ]]}}
+      {{ flash.success }}
     </div>
     <div v-if="flash.error" class="alert alert-error">
-      {{[[ flash.error ]]}}
+      {{ flash.error }}
     </div>
     
     <main class="main-content">

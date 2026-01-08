@@ -20,7 +20,7 @@ const user = computed(() => page.props.auth?.user)
         <Link href="/categories">Categories</Link>
         
         <div v-if="user" class="user-menu">
-          <span class="user-name">{{[[ user.name ]]}}</span>
+          <span class="user-name">{{ user.name }}</span>
           <Link href="/posts/create" class="btn btn-sm">New Post</Link>
           <Link href="/logout" method="post" as="button" class="btn btn-sm btn-secondary">Logout</Link>
         </div>

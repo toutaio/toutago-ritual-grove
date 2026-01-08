@@ -26,7 +26,7 @@ const submit = () => {
 <template>
   <Layout>
     <div class="post-edit">
-      <h1>{{[[ post ? "Edit Post" : "Create Post" ]]}}</h1>
+      <h1>{{ post ? "Edit Post" : "Create Post" }}</h1>
 
       <form @submit.prevent="submit" class="post-form">
         <div class="form-group">
@@ -38,7 +38,7 @@ const submit = () => {
             required 
             :class="{ 'error': form.errors.title }"
           />
-          <span v-if="form.errors.title" class="error-message">{{[[ form.errors.title ]]}}</span>
+          <span v-if="form.errors.title" class="error-message">{{ form.errors.title }}</span>
         </div>
 
         <div class="form-group">
@@ -50,15 +50,15 @@ const submit = () => {
           >
             <option value="">Select a category</option>
             <option v-for="category in categories" :key="category.id" :value="category.id">
-              {{[[ category.name ]]}}
+              {{ category.name }}
             </option>
           </select>
-          <span v-if="form.errors.category_id" class="error-message">{{[[ form.errors.category_id ]]}}</span>
+          <span v-if="form.errors.category_id" class="error-message">{{ form.errors.category_id }}</span>
         </div>
 
         <div class="form-group">
           <label for="content">Content:</label>
-{{- if .enable_markdown ]]
+[[ if .enable_markdown ]]
           <textarea 
             id="content" 
             v-model="form.content" 
@@ -68,7 +68,7 @@ const submit = () => {
             placeholder="Write your post content in Markdown..."
           ></textarea>
           <small>Supports Markdown formatting</small>
-{{- else ]]
+[[ else ]]
           <textarea 
             id="content" 
             v-model="form.content" 
@@ -76,8 +76,8 @@ const submit = () => {
             required
             :class="{ 'error': form.errors.content }"
           ></textarea>
-{{- end ]]
-          <span v-if="form.errors.content" class="error-message">{{[[ form.errors.content ]]}}</span>
+[[ end ]]
+          <span v-if="form.errors.content" class="error-message">{{ form.errors.content }}</span>
         </div>
 
         <div class="form-group checkbox">
@@ -89,7 +89,7 @@ const submit = () => {
 
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" :disabled="form.processing">
-            {{[[ form.processing ? "Saving..." : (post ? "Update Post" : "Create Post") ]]}}
+            {{ form.processing ? "Saving..." : (post ? "Update Post" : "Create Post") }}
           </button>
           <Link href="/posts" class="btn btn-secondary">Cancel</Link>
         </div>

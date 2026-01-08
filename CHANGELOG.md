@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Invalid choice numbers now properly retry instead of failing
 - CLI adapter now handles conversion errors gracefully
 - Blog ritual question conditions now use proper structured format instead of template expressions
+- Vue template files now correctly separate Go template variables (`[[ ]]`) from Vue interpolations (`{{ }}`)
+- All Inertia Vue templates in blog ritual fixed for proper rendering
 - SSR question now appears correctly when Inertia.js frontend is selected
 
 ### Added (Previous)
