@@ -23,11 +23,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both number (1-based) and name selection
   - Retry on invalid input with clear error messages
   - Comprehensive tests for quote handling and numbered choices
+- **Blog Ritual Handlers**
+  - Updated handlers to use Cosán Context API
+  - PostHandler, CategoryHandler, CommentHandler now use `cosan.Context`
+  - All handlers return errors properly
+  - Simplified request/response handling with Context methods
 
 ### Fixed
 - Choice questions now accept quoted values (e.g., `"inertia-vue"`)
 - Invalid choice numbers now properly retry instead of failing
 - CLI adapter now handles conversion errors gracefully
+- **Blog Ritual API Compatibility**
+  - Fixed handler templates to use `nasc.Nasc` instead of `nasc.Container`
+  - Fixed main.go to use `nasc.New()` instead of `nasc.NewContainer()`
+  - Fixed renderer initialization to use `fith.NewWithDir()` instead of `fith.NewRenderer()`
+  - Fixed router initialization to use `cosan.New()` instead of `cosan.NewRouter()`
+  - Fixed handlers to use `c.Bind()` instead of `c.BindJSON()`
+  - Removed non-existent `router.Static()` method, using manual file server instead
+  - Blog ritual now generates working, compilable code
 - Blog ritual question conditions now use proper structured format instead of template expressions
 - Vue template files now correctly separate Go template variables (`[[ ]]`) from Vue interpolations (`{{ }}`)
 - All Inertia Vue templates in blog ritual fixed for proper rendering
