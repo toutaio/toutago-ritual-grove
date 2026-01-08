@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Template Delimiter Change**
-  - Changed template delimiters from `{{ }}` to `[[ ]]`
+  - Changed template delimiters from `{{ }}` to `%% %%` for Vue/JS template files
+  - Changed general template delimiters from `{{ }}` to `[[ ]]` for other files
   - Prevents conflicts with Vue.js, React, and other JavaScript frameworks
   - All ritual templates updated
   - All tests updated
