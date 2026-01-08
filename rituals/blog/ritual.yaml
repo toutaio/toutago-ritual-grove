@@ -166,77 +166,77 @@ files:
 
     - src: templates/views/layout.html.tmpl
       dest: views/layout.html
-      condition: "{{ ne .frontend_type \"inertia-vue\" }}"
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/views/post_list.html.tmpl
       dest: views/post_list.html
-      condition: "{{ ne .frontend_type \"inertia-vue\" }}"
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/views/post_detail.html.tmpl
       dest: views/post_detail.html
-      condition: "{{ ne .frontend_type \"inertia-vue\" }}"
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/views/category_list.html.tmpl
       dest: views/category_list.html
-      condition: "{{ ne .frontend_type \"inertia-vue\" }}"
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     # Inertia.js frontend files
     - src: templates/frontend/inertia/app.js.tmpl
       dest: frontend/app.js
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/esbuild.config.js.tmpl
       dest: esbuild.config.js
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/package.json.tmpl
       dest: package.json
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/pages/Home.vue.tmpl
       dest: frontend/pages/Home.vue
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/pages/Posts/Index.vue.tmpl
       dest: frontend/pages/Posts/Index.vue
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/pages/Posts/Show.vue.tmpl
       dest: frontend/pages/Posts/Show.vue
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/pages/Posts/Edit.vue.tmpl
       dest: frontend/pages/Posts/Edit.vue
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/components/Layout.vue.tmpl
       dest: frontend/components/Layout.vue
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/components/Header.vue.tmpl
       dest: frontend/components/Header.vue
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: templates/frontend/inertia/components/Footer.vue.tmpl
       dest: frontend/components/Footer.vue
-      condition: "{{ eq .frontend_type \"inertia-vue\" }}"
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     # HTMX frontend files
     - src: templates/frontend/htmx/app.js.tmpl
       dest: frontend/app.js
-      condition: "{{ eq .frontend_type \"htmx\" }}"
+      condition: "[[ eq .frontend_type \"htmx\" ]]"
 
     - src: templates/frontend/htmx/esbuild.config.js.tmpl
       dest: esbuild.config.js
-      condition: "{{ eq .frontend_type \"htmx\" }}"
+      condition: "[[ eq .frontend_type \"htmx\" ]]"
 
     - src: templates/frontend/htmx/package.json.tmpl
       dest: package.json
-      condition: "{{ eq .frontend_type \"htmx\" }}"
+      condition: "[[ eq .frontend_type \"htmx\" ]]"
 
     - src: templates/views/htmx/layout.html.tmpl
       dest: views/layout.html
-      condition: "{{ eq .frontend_type \"htmx\" }}"
+      condition: "[[ eq .frontend_type \"htmx\" ]]"
 
     - src: templates/.env.example.tmpl
       dest: .env.example
