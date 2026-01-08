@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Choice questions now accept quoted values (e.g., `"inertia-vue"`)
 - Invalid choice numbers now properly retry instead of failing
 - CLI adapter now handles conversion errors gracefully
+- Blog ritual question conditions now use proper structured format instead of template expressions
+- SSR question now appears correctly when Inertia.js frontend is selected
 
 ### Added (Previous)
 - **Cache Management System**

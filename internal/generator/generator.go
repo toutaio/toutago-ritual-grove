@@ -100,7 +100,7 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 		if tmpl.Condition != "" {
 			shouldGenerate, err := evaluateCondition(tmpl.Condition, g.variables.All())
 			if err != nil {
-				return fmt.Errorf("failed to evaluate condition for %s: %w", tmpl.Source, err)
+				return fmt.Errorf("failed C to evaluate condition for %s: %w", tmpl.Source, err)
 			}
 			if !shouldGenerate {
 				continue // Skip this file
@@ -144,7 +144,7 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 		if static.Condition != "" {
 			shouldGenerate, err := evaluateCondition(static.Condition, g.variables.All())
 			if err != nil {
-				return fmt.Errorf("failed to evaluate condition for %s: %w", static.Source, err)
+				return fmt.Errorf("failed B to evaluate condition for %s: %w", static.Source, err)
 			}
 			if !shouldGenerate {
 				continue // Skip this file

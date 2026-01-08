@@ -133,7 +133,8 @@ questions:
     prompt: "Enable Server-Side Rendering (SSR)?"
     default: false
     condition:
-      expression: "{{ eq .frontend_type \"inertia-vue\" }}"
+      field: frontend_type
+      equals: inertia-vue
 
 files:
   templates:
