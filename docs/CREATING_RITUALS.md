@@ -12,6 +12,40 @@ A ritual is a reusable project template that scaffolds a complete Toutā applica
 - Tests and documentation
 - Build configuration
 
+## Template Syntax
+
+**Important:** Ritual Grove uses `[[ ]]` delimiters for Go templates instead of the standard `{{ }}`. This prevents conflicts with frontend frameworks like Vue.js, React, and others that also use `{{ }}` syntax.
+
+Examples:
+```go
+// Variable interpolation
+[[ .app_name ]]
+[[ .module_path ]]
+
+// Functions
+[[ upper .name ]]
+[[ pascal .app_name ]]
+
+// Conditionals
+[[- if .enable_auth ]]
+import "auth"
+[[- end ]]
+
+// Loops
+[[- range .dependencies.packages ]]
+require [[ . ]]
+[[- end ]]
+```
+
+Available template functions:
+- `upper` - Convert to UPPERCASE
+- `lower` - Convert to lowercase  
+- `title` - Convert To Title Case
+- `pascal` - ConvertToPascalCase
+- `camel` - convertToCamelCase
+- `snake` - convert_to_snake_case
+- `kebab` - convert-to-kebab-case
+
 ## Ritual Structure
 
 ```
@@ -117,7 +151,7 @@ package main
 
 import (
     "log"
-    "{{ .module_path }}/internal/handlers"
+    "[[ .module_path ]]/internal/handlers"
     "github.com/toutaio/toutago-cosan-router"
 )
 
@@ -128,8 +162,8 @@ func main() {
     h := handlers.New()
     router.GET("/", h.Index)
     
-    log.Printf("Starting {{ .app_name }} on port {{ .port }}")
-    if err := router.Listen(":{{ .port }}"); err != nil {
+    log.Printf("Starting [[ .app_name ]] on port [[ .port ]]")
+    if err := router.Listen(":[[ .port ]]"); err != nil {
         log.Fatal(err)
     }
 }
@@ -138,14 +172,14 @@ func main() {
 Create `templates/go.mod.tmpl`:
 
 ```
-module {{ .module_path }}
+module [[ .module_path ]]
 
-go {{ .go_version | default "1.21" }}
+go [[ .go_version | default "1.21" ]]
 
 require (
-{{- range .dependencies.packages }}
-    {{ . }} latest
-{{- end }}
+[[- range .dependencies.packages ]]
+    [[ . ]] latest
+[[- end ]]
 )
 ```
 
@@ -274,7 +308,7 @@ Show questions based on previous answers:
   prompt: "Enable SSR?"
   default: false
   condition:
-    expression: "{{ eq .frontend_type \"inertia-vue\" }}"
+    expression: "[[ eq .frontend_type \"inertia-vue\" ]]"
 ```
 
 ## Template Syntax
@@ -284,41 +318,41 @@ Toutā uses Go's `text/template` with additional functions.
 ### Basic Variables
 
 ```go
-{{ .app_name }}
-{{ .module_path }}
-{{ .port }}
+[[ .app_name ]]
+[[ .module_path ]]
+[[ .port ]]
 ```
 
 ### Conditionals
 
 ```go
-{{- if .enable_auth }}
+{{- if .enable_auth ]]
 import "github.com/toutaio/toutago-breitheamh-auth"
-{{- end }}
+{{- end ]]
 
-{{- if eq .database_type "postgres" }}
+{{- if eq .database_type "postgres" ]]
 import "github.com/lib/pq"
-{{- else if eq .database_type "mysql" }}
+{{- else if eq .database_type "mysql" ]]
 import "github.com/go-sql-driver/mysql"
-{{- end }}
+{{- end ]]
 ```
 
 ### Loops
 
 ```go
-{{- range .features }}
-- {{ . }}
-{{- end }}
+{{- range .features ]]
+- [[ . ]]
+{{- end ]]
 ```
 
 ### Functions
 
 ```go
-{{ .app_name | lower }}
-{{ .app_name | upper }}
-{{ .app_name | title }}
-{{ .module_path | base }}
-{{ default "default value" .optional_field }}
+[[ .app_name | lower ]]
+[[ .app_name | upper ]]
+[[ .app_name | title ]]
+[[ .module_path | base ]]
+[[ default "default value" .optional_field ]]
 ```
 
 ## Frontend Integration
@@ -355,12 +389,12 @@ files:
     - src: templates/frontend/pages/Posts/Index.vue.tmpl
       dest: frontend/pages/Posts/Index.vue
       condition:
-        expression: "{{ eq .frontend_type \"inertia-vue\" }}"
+        expression: "[[ eq .frontend_type \"inertia-vue\" ]]"
     
     - src: templates/frontend/app.js.tmpl
       dest: frontend/app.js
       condition:
-        expression: "{{ eq .frontend_type \"inertia-vue\" }}"
+        expression: "[[ eq .frontend_type \"inertia-vue\" ]]"
 ```
 
 ### HTMX
@@ -371,12 +405,12 @@ files:
     - src: templates/views/posts/index.fith.tmpl
       dest: views/posts/index.fith
       condition:
-        expression: "{{ eq .frontend_type \"htmx\" }}"
+        expression: "[[ eq .frontend_type \"htmx\" ]]"
     
     - src: templates/views/posts/_list.fith.tmpl
       dest: views/posts/_list.fith
       condition:
-        expression: "{{ eq .frontend_type \"htmx\" }}"
+        expression: "[[ eq .frontend_type \"htmx\" ]]"
 ```
 
 ## Hooks
@@ -630,7 +664,7 @@ Generate files based on user input:
 ```yaml
 files:
   dynamic:
-    - pattern: "internal/models/{{.entity}}.go"
+    - pattern: "internal/models/[[.entity]].go"
       template: templates/model.go.tmpl
       foreach: entities
 ```

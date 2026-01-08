@@ -131,11 +131,11 @@ In your base layout:
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ .title }}</title>
+    <title>[[ .title ]]</title>
     <script src="/static/js/htmx.min.js"></script>
 </head>
 <body>
-    {{ template "content" . }}
+    [[ template "content" . ]]
 </body>
 </html>
 ```
@@ -145,7 +145,7 @@ In your base layout:
 **Load content on click:**
 
 ```html
-<button hx-get="/posts/{{ .id }}" 
+<button hx-get="/posts/[[ .id ]]" 
         hx-target="#post-detail" 
         hx-swap="innerHTML">
     View Post
@@ -171,7 +171,7 @@ In your base layout:
 **Delete with confirmation:**
 
 ```html
-<button hx-delete="/posts/{{ .id }}" 
+<button hx-delete="/posts/[[ .id ]]" 
         hx-confirm="Are you sure you want to delete this post?"
         hx-target="closest .post-card"
         hx-swap="outerHTML swap:1s">
@@ -185,19 +185,19 @@ In your base layout:
 
 ```html
 <div id="post-list">
-    {{ range .posts }}
-        {{ template "partials/post-card" . }}
-    {{ end }}
+    [[ range .posts ]]
+        [[ template "partials/post-card" . ]]
+    [[ end ]]
 </div>
 
-{{ if .hasMore }}
-<div hx-get="/posts?page={{ .nextPage }}" 
+[[ if .hasMore ]]
+<div hx-get="/posts?page=[[ .nextPage ]]" 
      hx-trigger="revealed" 
      hx-swap="afterend"
      hx-indicator="#spinner">
     <div id="spinner" class="htmx-indicator">Loading...</div>
 </div>
-{{ end }}
+[[ end ]]
 ```
 
 **Live search:**
@@ -228,10 +228,10 @@ In your base layout:
 **Optimistic UI:**
 
 ```html
-<button hx-post="/likes/{{ .id }}" 
+<button hx-post="/likes/[[ .id ]]" 
         hx-swap="outerHTML" 
         class="like-button">
-    ♡ Like ({{ .likeCount }})
+    ♡ Like ([[ .likeCount ]])
 </button>
 ```
 
@@ -241,16 +241,16 @@ Create reusable partials for HTMX responses:
 
 ```html
 {{/* partials/post-card.html */}}
-<div class="post-card" id="post-{{ .id }}">
-    <h2>{{ .title }}</h2>
-    <p>{{ .excerpt }}</p>
+<div class="post-card" id="post-[[ .id ]]">
+    <h2>[[ .title ]]</h2>
+    <p>[[ .excerpt ]]</p>
     <div class="actions">
-        <button hx-get="/posts/{{ .id }}" 
+        <button hx-get="/posts/[[ .id ]]" 
                 hx-target="#modal" 
                 hx-swap="innerHTML">
             Read More
         </button>
-        <button hx-delete="/posts/{{ .id }}" 
+        <button hx-delete="/posts/[[ .id ]]" 
                 hx-target="closest .post-card" 
                 hx-swap="outerHTML">
             Delete
@@ -279,19 +279,19 @@ Ensure forms work without JavaScript:
 
 ```html
 <!-- Good: Semantic and accessible -->
-<article class="post" id="post-{{ .id }}">
+<article class="post" id="post-[[ .id ]]">
     <header>
-        <h2>{{ .title }}</h2>
+        <h2>[[ .title ]]</h2>
     </header>
     <section class="content">
-        {{ .content }}
+        [[ .content ]]
     </section>
 </article>
 
 <!-- Avoid: Non-semantic divs -->
 <div class="post">
-    <div class="title">{{ .title }}</div>
-    <div>{{ .content }}</div>
+    <div class="title">[[ .title ]]</div>
+    <div>[[ .content ]]</div>
 </div>
 ```
 
@@ -362,7 +362,7 @@ func validateEmail(email string) error {
 
 ```html
 <!-- Trigger -->
-<button hx-get="/posts/{{ .id }}/edit" 
+<button hx-get="/posts/[[ .id ]]/edit" 
         hx-target="#modal" 
         hx-swap="innerHTML">
     Edit
@@ -393,10 +393,10 @@ func validateEmail(email string) error {
 ### Inline Editing
 
 ```html
-<div id="post-title-{{ .id }}">
-    <span>{{ .title }}</span>
-    <button hx-get="/posts/{{ .id }}/edit/title" 
-            hx-target="#post-title-{{ .id }}" 
+<div id="post-title-[[ .id ]]">
+    <span>[[ .title ]]</span>
+    <button hx-get="/posts/[[ .id ]]/edit/title" 
+            hx-target="#post-title-[[ .id ]]" 
             hx-swap="outerHTML">
         Edit
     </button>
@@ -406,13 +406,13 @@ func validateEmail(email string) error {
 When editing:
 
 ```html
-<form hx-put="/posts/{{ .id }}/title" 
-      hx-target="#post-title-{{ .id }}" 
+<form hx-put="/posts/[[ .id ]]/title" 
+      hx-target="#post-title-[[ .id ]]" 
       hx-swap="outerHTML">
-    <input type="text" name="title" value="{{ .title }}" />
+    <input type="text" name="title" value="[[ .title ]]" />
     <button type="submit">Save</button>
-    <button hx-get="/posts/{{ .id }}/title" 
-            hx-target="#post-title-{{ .id }}" 
+    <button hx-get="/posts/[[ .id ]]/title" 
+            hx-target="#post-title-[[ .id ]]" 
             hx-swap="outerHTML">
         Cancel
     </button>

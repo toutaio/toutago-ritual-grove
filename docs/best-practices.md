@@ -135,7 +135,7 @@ migrations:
 # Don't use string interpolation in SQL
 up:
   sql:
-    - "CREATE TABLE {{ .table_name }} ..."  # Dangerous!
+    - "CREATE TABLE [[ .table_name ]] ..."  # Dangerous!
 ```
 
 ### File Permission Security
@@ -187,7 +187,7 @@ files:
   templates:
     - src: admin/dashboard.go.tmpl
       dest: admin/dashboard.go
-      condition: "{{ .with_admin }}"
+      condition: "[[ .with_admin ]]"
 ```
 
 ### Efficient Hooks

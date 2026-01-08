@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0-dev] - 2026-01-08
 
+### Changed
+- **Template Delimiter Change**
+  - Changed template delimiters from `{{ }}` to `[[ ]]`
+  - Prevents conflicts with Vue.js, React, and other JavaScript frameworks
+  - All ritual templates updated
+  - All tests updated
+  - More readable templates when mixing Go templates with frontend frameworks
+
 ### Added
 - **Improved CLI Questionnaire UX**
   - Numbered menu selection for choice questions

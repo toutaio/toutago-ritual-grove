@@ -205,7 +205,7 @@ files:
     - src: templates/handlers/
       dest: handlers/
       optional: true
-      condition: "{{ enable_api }}"
+      condition: "[[ enable_api ]]"
   
   static:
     - src: static/README.md
@@ -305,21 +305,21 @@ parent:
 In Fíth templates (default):
 
 ```jinja2
-{{ app_name }}              {# Answer from questions #}
-{{ app_name|pascal }}       {# PascalCase #}
-{{ app_name|snake }}        {# snake_case #}
-{{ app_name|kebab }}        {# kebab-case #}
-{{ now() }}                 {# Current timestamp #}
-{{ ritual_version }}        {# Ritual version #}
+[[ app_name ]]              {# Answer from questions #}
+[[ app_name|pascal ]]       {# PascalCase #}
+[[ app_name|snake ]]        {# snake_case #}
+[[ app_name|kebab ]]        {# kebab-case #}
+[[ now() ]]                 {# Current timestamp #}
+[[ ritual_version ]]        {# Ritual version #}
 ```
 
 In Go templates:
 
 ```go
-{{ .AppName }}
-{{ pascal .AppName }}
-{{ snake .AppName }}
-{{ now }}
+[[ .AppName ]]
+[[ pascal .AppName ]]
+[[ snake .AppName ]]
+[[ now ]]
 ```
 
 ## Example: Complete Blog Ritual

@@ -168,9 +168,9 @@ npm run build:ssr
       <h1>All Posts</h1>
       <div v-for="post in posts" :key="post.id" class="post-card">
         <Link :href="`/posts/${post.id}`">
-          <h2>{{ post.title }}</h2>
+          <h2>[[ post.title ]]</h2>
         </Link>
-        <p>{{ post.excerpt }}</p>
+        <p>[[ post.excerpt ]]</p>
       </div>
     </div>
   </Layout>
@@ -225,7 +225,7 @@ function submit() {
     <button type="submit" :disabled="form.processing">
       Save
     </button>
-    <div v-if="form.errors.title">{{ form.errors.title }}</div>
+    <div v-if="form.errors.title">[[ form.errors.title ]]</div>
   </form>
 </template>
 ```

@@ -103,8 +103,8 @@ Create `frontend/pages/Posts/Index.vue`:
   <div>
     <h1>Posts</h1>
     <div v-for="post in posts" :key="post.id">
-      <h2>{{ post.title }}</h2>
-      <p>{{ post.content }}</p>
+      <h2>[[ post.title ]]</h2>
+      <p>[[ post.content ]]</p>
     </div>
   </div>
 </template>
@@ -164,11 +164,11 @@ Create or update `views/app.fith`:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .page.props.title || "My App" }}</title>
+    <title>[[ .page.props.title || "My App" ]]</title>
     <script src="/js/app.js" defer></script>
 </head>
 <body>
-    <div id="app" data-page="{{ .page }}"></div>
+    <div id="app" data-page="[[ .page ]]"></div>
 </body>
 </html>
 ```
@@ -199,9 +199,9 @@ Create partial templates that return HTML fragments:
 
 `views/posts/_post.fith`:
 ```html
-<div class="post" id="post-{{ .id }}">
-    <h2>{{ .title }}</h2>
-    <p>{{ .content }}</p>
+<div class="post" id="post-[[ .id ]]">
+    <h2>[[ .title ]]</h2>
+    <p>[[ .content ]]</p>
 </div>
 ```
 
@@ -286,8 +286,8 @@ Replace `ctx.Inertia()` calls with conditional `ctx.Render()` as shown in the Tr
 ```vue
 <template>
   <div>
-    <h1>{{ post.title }}</h1>
-    <p>{{ post.content }}</p>
+    <h1>[[ post.title ]]</h1>
+    <p>[[ post.content ]]</p>
   </div>
 </template>
 ```
@@ -295,8 +295,8 @@ Replace `ctx.Inertia()` calls with conditional `ctx.Render()` as shown in the Tr
 **Fíth Template:**
 ```html
 <div>
-    <h1>{{ .post.title }}</h1>
-    <p>{{ .post.content }}</p>
+    <h1>[[ .post.title ]]</h1>
+    <p>[[ .post.content ]]</p>
 </div>
 ```
 
