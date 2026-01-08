@@ -11,11 +11,11 @@ import (
 
 // PostHandler handles blog post operations
 type PostHandler struct {
-	container *nasc.Container
+	container *nasc.Nasc
 }
 
 // NewPostHandler creates a new post handler
-func NewPostHandler(container *nasc.Container) *PostHandler {
+func NewPostHandler(container *nasc.Nasc) *PostHandler {
 	return &PostHandler{container: container}
 }
 

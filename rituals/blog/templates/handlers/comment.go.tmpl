@@ -11,11 +11,11 @@ import (
 
 // CommentHandler handles comment operations
 type CommentHandler struct {
-	container *nasc.Container
+	container *nasc.Nasc
 }
 
 // NewCommentHandler creates a new comment handler
-func NewCommentHandler(container *nasc.Container) *CommentHandler {
+func NewCommentHandler(container *nasc.Nasc) *CommentHandler {
 	return &CommentHandler{container: container}
 }
 

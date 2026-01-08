@@ -10,11 +10,11 @@ import (
 
 // CategoryHandler handles category operations
 type CategoryHandler struct {
-	container *nasc.Container
+	container *nasc.Nasc
 }
 
 // NewCategoryHandler creates a new category handler
-func NewCategoryHandler(container *nasc.Container) *CategoryHandler {
+func NewCategoryHandler(container *nasc.Nasc) *CategoryHandler {
 	return &CategoryHandler{container: container}
 }
 
