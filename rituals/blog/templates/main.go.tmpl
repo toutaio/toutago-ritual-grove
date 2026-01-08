@@ -8,10 +8,11 @@ import (
 
 	"[[ .module_path ]]/internal/handlers"
 	cosan "github.com/toutaio/toutago-cosan-router"
-	fith "github.com/toutaio/toutago-fith-renderer"
 	nasc "github.com/toutaio/toutago-nasc-dependency-injector"
 [[- if eq .frontend_type "inertia-vue" ]]
 	"github.com/toutaio/toutago-inertia/pkg/inertia"
+[[- else ]]
+	fith "github.com/toutaio/toutago-fith-renderer"
 [[- end ]]
 )
 
@@ -21,14 +22,17 @@ func main() {
 
 [[- if eq .frontend_type "inertia-vue" ]]
 	// Initialize Inertia.js
-	inertiaInstance := inertia.New(inertia.Config{
+	inertiaInstance, err := inertia.New(inertia.Config{
 		RootView: "app",
 		Version:  "1.0",
 [[- if .enable_ssr ]]
-		SSREnabled: true,
-		SSRUrl:     "http://localhost:13714",
+		SSR:      true,
+		AssetURL: "http://localhost:13714",
 [[- end ]]
 	})
+	if err != nil {
+		log.Fatalf("Failed to initialize Inertia: %v", err)
+	}
 [[- else ]]
 	// Initialize Fíth renderer
 	renderer, err := fith.NewWithDir("views")
