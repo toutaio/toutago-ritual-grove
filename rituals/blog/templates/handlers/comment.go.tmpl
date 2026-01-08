@@ -1,59 +1,42 @@
 package handlers
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-
-	"[[ .module_path ]]/internal/models"
-	nasc "github.com/toutaio/toutago-nasc-dependency-injector"
+"[[ .module_path ]]/internal/models"
+"github.com/toutaio/toutago-cosan-router"
+nasc "github.com/toutaio/toutago-nasc-dependency-injector"
 )
+
+[[- if .enable_comments ]]
 
 // CommentHandler handles comment operations
 type CommentHandler struct {
-	container *nasc.Nasc
+container *nasc.Nasc
 }
 
 // NewCommentHandler creates a new comment handler
 func NewCommentHandler(container *nasc.Nasc) *CommentHandler {
-	return &CommentHandler{container: container}
+return &CommentHandler{container: container}
 }
 
-// Create adds a new comment to a post
-func (h *CommentHandler) Create(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	postID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
+// Create creates a new comment on a post
+func (h *CommentHandler) Create(c cosan.Context) error {
+postID := c.Param("id")
+var comment models.Comment
+if err := c.BindJSON(&comment); err != nil {
+return c.JSON(400, map[string]string{"error": "Invalid request"})
+}
 
-	var comment models.Comment
-	if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	comment.PostID = postID
-	comment.Status = models.CommentStatusPending
-
-	// TODO: Validate and save to database
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(comment)
+// TODO: Save comment to database
+_ = postID
+return c.JSON(201, comment)
 }
 
 // Delete removes a comment
-func (h *CommentHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
+func (h *CommentHandler) Delete(c cosan.Context) error {
+id := c.Param("id")
 
-	// TODO: Delete from database
-	_ = id
-
-	w.WriteHeader(http.StatusNoContent)
+// TODO: Delete from database
+_ = id
+return c.JSON(204, nil)
 }
+[[- end ]]

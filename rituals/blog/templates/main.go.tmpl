@@ -51,8 +51,9 @@ func main() {
 [[- end ]]
 
 	// Serve static files from /public
-	router.GET("/public/*", func(w http.ResponseWriter, r *http.Request) {
-		http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))).ServeHTTP(w, r)
+	router.GET("/public/*", func(c cosan.Context) error {
+		http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))).ServeHTTP(c.Response(), c.Request())
+		return nil
 	})
 
 	// Start server

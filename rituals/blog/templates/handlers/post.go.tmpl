@@ -1,104 +1,73 @@
 package handlers
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-
-	"[[ .module_path ]]/internal/models"
-	nasc "github.com/toutaio/toutago-nasc-dependency-injector"
+"[[ .module_path ]]/internal/models"
+"github.com/toutaio/toutago-cosan-router"
+nasc "github.com/toutaio/toutago-nasc-dependency-injector"
 )
 
 // PostHandler handles blog post operations
 type PostHandler struct {
-	container *nasc.Nasc
+container *nasc.Nasc
 }
 
 // NewPostHandler creates a new post handler
 func NewPostHandler(container *nasc.Nasc) *PostHandler {
-	return &PostHandler{container: container}
+return &PostHandler{container: container}
 }
 
 // List shows all posts
-func (h *PostHandler) List(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement pagination
-	posts := []models.Post{
-		// Mock data for now
-	}
+func (h *PostHandler) List(c cosan.Context) error {
+// TODO: Implement pagination
+posts := []models.Post{
+// Mock data for now
+}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(posts)
+return c.JSON(200, posts)
 }
 
 // Show displays a single post
-func (h *PostHandler) Show(w http.ResponseWriter, r *http.Request) {
-	// Get ID from URL parameter
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
+func (h *PostHandler) Show(c cosan.Context) error {
+// TODO: Fetch post from database
+id := c.Param("id")
 
-	// TODO: Fetch post from database
-	post := models.Post{
-		ID:     id,
-		Title:  "Sample Post",
-		Status: models.PostStatusPublished,
-	}
+post := models.Post{
+// Mock data for now
+}
+_ = id // Use id when implementing
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(post)
+return c.JSON(200, post)
 }
 
 // Create creates a new post
-func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var post models.Post
-	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+func (h *PostHandler) Create(c cosan.Context) error {
+var post models.Post
+if err := c.BindJSON(&post); err != nil {
+return c.JSON(400, map[string]string{"error": "Invalid request"})
+}
 
-	// TODO: Validate and save to database
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(post)
+// TODO: Save to database
+return c.JSON(201, post)
 }
 
 // Update updates an existing post
-func (h *PostHandler) Update(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
-
-	var post models.Post
-	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	post.ID = id
-
-	// TODO: Update in database
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(post)
+func (h *PostHandler) Update(c cosan.Context) error {
+id := c.Param("id")
+var post models.Post
+if err := c.BindJSON(&post); err != nil {
+return c.JSON(400, map[string]string{"error": "Invalid request"})
 }
 
-// Delete removes a post
-func (h *PostHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
+// TODO: Update in database
+_ = id // Use id when implementing
+return c.JSON(200, post)
+}
 
-	// TODO: Delete from database
-	_ = id
+// Delete deletes a post
+func (h *PostHandler) Delete(c cosan.Context) error {
+id := c.Param("id")
 
-	w.WriteHeader(http.StatusNoContent)
+// TODO: Delete from database
+_ = id // Use id when implementing
+return c.JSON(204, nil)
 }

@@ -1,36 +1,34 @@
 package handlers
 
 import (
-	"encoding/json"
-	"net/http"
-
-	"[[ .module_path ]]/internal/models"
-	nasc "github.com/toutaio/toutago-nasc-dependency-injector"
+"[[ .module_path ]]/internal/models"
+"github.com/toutaio/toutago-cosan-router"
+nasc "github.com/toutaio/toutago-nasc-dependency-injector"
 )
 
 // CategoryHandler handles category operations
 type CategoryHandler struct {
-	container *nasc.Nasc
+container *nasc.Nasc
 }
 
 // NewCategoryHandler creates a new category handler
 func NewCategoryHandler(container *nasc.Nasc) *CategoryHandler {
-	return &CategoryHandler{container: container}
+return &CategoryHandler{container: container}
 }
 
 // List shows all categories
-func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
-	categories := []models.Category{
-		// Mock data for now
-	}
+func (h *CategoryHandler) List(c cosan.Context) error {
+categories := []models.Category{
+// Mock data for now
+}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(categories)
+return c.JSON(200, categories)
 }
 
 // Show displays a single category with its posts
-func (h *CategoryHandler) Show(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement category detail view
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "not implemented"})
+func (h *CategoryHandler) Show(c cosan.Context) error {
+id := c.Param("id")
+// TODO: Implement category detail view
+_ = id
+return c.JSON(200, map[string]string{"status": "not implemented"})
 }
