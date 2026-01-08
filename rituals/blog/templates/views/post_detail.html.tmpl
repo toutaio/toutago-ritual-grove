@@ -1,26 +1,26 @@
-{{`{{ define "content" }}
+{{`[[ define "content" ]]
 <article class="post">
-    <h1>{{ .Post.Title }}</h1>
+    <h1>[[ .Post.Title ]]</h1>
     <div class="post-meta">
-        <span class="date">{{ .Post.PublishedAt }}</span>
-        <span class="author">{{ .Post.Author }}</span>
-        <span class="category">{{ .Post.Category }}</span>
+        <span class="date">[[ .Post.PublishedAt ]]</span>
+        <span class="author">[[ .Post.Author ]]</span>
+        <span class="category">[[ .Post.Category ]]</span>
     </div>
     <div class="post-content">
-        {{ .Post.Content }}
+        [[ .Post.Content ]]
     </div>
-{{- if `}}{{ .enable_comments }}{{` }}
+{{- if `}}[[ .enable_comments ]]{{` ]]
     <div class="comments">
         <h3>Comments</h3>
-        {{ range .Comments }}
+        [[ range .Comments ]]
         <div class="comment">
-            <p class="comment-author">{{ .Author }}</p>
-            <p class="comment-date">{{ .CreatedAt }}</p>
-            <div class="comment-content">{{ .Content }}</div>
+            <p class="comment-author">[[ .Author ]]</p>
+            <p class="comment-date">[[ .CreatedAt ]]</p>
+            <div class="comment-content">[[ .Content ]]</div>
         </div>
-        {{ end }}
+        [[ end ]]
 
-        <form method="POST" action="/posts/{{ .Post.ID }}/comments" class="comment-form">
+        <form method="POST" action="/posts/[[ .Post.ID ]]/comments" class="comment-form">
             <h4>Leave a Comment</h4>
             <input type="text" name="author" placeholder="Your name" required>
             <input type="email" name="email" placeholder="Your email" required>
@@ -28,5 +28,5 @@
             <button type="submit">Post Comment</button>
         </form>
     </div>
-{{- end }}
-{{ end }}`}}
+{{- end ]]
+[[ end ]]`}}

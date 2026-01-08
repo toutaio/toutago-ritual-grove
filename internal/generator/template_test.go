@@ -18,14 +18,14 @@ func TestGoTemplateEngineRender(t *testing.T) {
 	}{
 		{
 			name:     "simple variable",
-			template: "Hello {{ .name }}!",
+			template: "Hello [[ .name ]]!",
 			data:     map[string]interface{}{"name": "World"},
 			want:     "Hello World!",
 			wantErr:  false,
 		},
 		{
 			name:     "multiple variables",
-			template: "{{ .greeting }} {{ .name }}!",
+			template: "[[ .greeting ]] [[ .name ]]!",
 			data: map[string]interface{}{
 				"greeting": "Hello",
 				"name":     "World",
@@ -35,35 +35,35 @@ func TestGoTemplateEngineRender(t *testing.T) {
 		},
 		{
 			name:     "upper filter",
-			template: "{{ upper .text }}",
+			template: "[[ upper .text ]]",
 			data:     map[string]interface{}{"text": "hello"},
 			want:     "HELLO",
 			wantErr:  false,
 		},
 		{
 			name:     "pascal filter",
-			template: "{{ pascal .name }}",
+			template: "[[ pascal .name ]]",
 			data:     map[string]interface{}{"name": "my-app"},
 			want:     "MyApp",
 			wantErr:  false,
 		},
 		{
 			name:     "snake filter",
-			template: "{{ snake .name }}",
+			template: "[[ snake .name ]]",
 			data:     map[string]interface{}{"name": "MyApp"},
 			want:     "my_app",
 			wantErr:  false,
 		},
 		{
 			name:     "kebab filter",
-			template: "{{ kebab .name }}",
+			template: "[[ kebab .name ]]",
 			data:     map[string]interface{}{"name": "MyApp"},
 			want:     "my-app",
 			wantErr:  false,
 		},
 		{
 			name:     "invalid template",
-			template: "{{ .missing",
+			template: "[[ .missing",
 			data:     map[string]interface{}{},
 			want:     "",
 			wantErr:  true,
@@ -100,7 +100,7 @@ func TestGoTemplateEngineRenderFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	templatePath := filepath.Join(tmpDir, "test.tmpl")
 
-	templateContent := "Hello {{ .name }}!\nPort: {{ .port }}"
+	templateContent := "Hello [[ .name ]]!\nPort: [[ .port ]]"
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create test template: %v", err)
 	}
@@ -145,7 +145,7 @@ func TestNewTemplateEngine(t *testing.T) {
 func TestFithTemplateEngineFallback(t *testing.T) {
 	engine := NewFithTemplateEngine()
 
-	template := "Hello {{ .name }}!"
+	template := "Hello [[ .name ]]!"
 	data := map[string]interface{}{"name": "World"}
 
 	result, err := engine.Render(template, data)

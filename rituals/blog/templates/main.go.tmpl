@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"{{ .module_path }}/internal/handlers"
+	"[[ .module_path ]]/internal/handlers"
 	"github.com/toutaio/toutago-cosan-router"
 	"github.com/toutaio/toutago-fith-renderer"
 	"github.com/toutaio/toutago-nasc-dependency-injector"
@@ -26,9 +26,9 @@ func main() {
 	// Register handlers
 	postHandler := handlers.NewPostHandler(container)
 	categoryHandler := handlers.NewCategoryHandler(container)
-{{- if .enable_comments }}
+{{- if .enable_comments ]]
 	commentHandler := handlers.NewCommentHandler(container)
-{{- end }}
+{{- end ]]
 
 	// Routes
 	router.GET("/", postHandler.List)
@@ -41,10 +41,10 @@ func main() {
 	router.GET("/categories", categoryHandler.List)
 	router.GET("/categories/:id", categoryHandler.Show)
 
-{{- if .enable_comments }}
+{{- if .enable_comments ]]
 	router.POST("/posts/:id/comments", commentHandler.Create)
 	router.DELETE("/comments/:id", commentHandler.Delete)
-{{- end }}
+{{- end ]]
 
 	// Static files
 	router.Static("/public", "./public")
@@ -52,10 +52,10 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "{{ .port }}"
+		port = "[[ .port ]]"
 	}
 
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("{{ .app_name }} server starting on %s", addr)
+	log.Printf("[[ .app_name ]] server starting on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, router))
 }

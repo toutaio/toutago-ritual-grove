@@ -1,13 +1,13 @@
-{{`{{ define "content" }}
+{{`[[ define "content" ]]
 <div class="categories">
     <h2>Categories</h2>
     <ul class="category-list">
-        {{ range .Categories }}
+        [[ range .Categories ]]
         <li>
-            <a href="/categories/{{ .ID }}">{{ .Name }}</a>
-            <span class="post-count">({{ .PostCount }} posts)</span>
+            <a href="/categories/[[ .ID ]]">[[ .Name ]]</a>
+            <span class="post-count">([[ .PostCount ]] posts)</span>
         </li>
-        {{ end }}
+        [[ end ]]
     </ul>
 </div>
-{{ end }}`}}
+[[ end ]]`}}

@@ -1,20 +1,20 @@
-{{`{{ define "content" }}
+{{`[[ define "content" ]]
 <div class="posts">
     <h2>Recent Posts</h2>
-    {{ range .Posts }}
+    [[ range .Posts ]]
     <article class="post-summary">
-        <h3><a href="/posts/{{ .ID }}">{{ .Title }}</a></h3>
+        <h3><a href="/posts/[[ .ID ]]">[[ .Title ]]</a></h3>
         <div class="post-meta">
-            <span class="date">{{ .PublishedAt }}</span>
-            <span class="category">{{ .Category }}</span>
+            <span class="date">[[ .PublishedAt ]]</span>
+            <span class="category">[[ .Category ]]</span>
         </div>
-        <p>{{ .Excerpt }}</p>
-        <a href="/posts/{{ .ID }}" class="read-more">Read more &rarr;</a>
+        <p>[[ .Excerpt ]]</p>
+        <a href="/posts/[[ .ID ]]" class="read-more">Read more &rarr;</a>
     </article>
-    {{ end }}
+    [[ end ]]
 
     <div class="pagination">
         <!-- Pagination will go here -->
     </div>
 </div>
-{{ end }}`}}
+[[ end ]]`}}

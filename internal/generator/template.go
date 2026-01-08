@@ -19,11 +19,18 @@ type TemplateEngine interface {
 
 // GoTemplateEngine implements TemplateEngine using Go's text/template
 type GoTemplateEngine struct {
-	funcMap template.FuncMap
+	funcMap   template.FuncMap
+	leftDelim  string
+	rightDelim string
 }
 
-// NewGoTemplateEngine creates a new Go template engine
+// NewGoTemplateEngine creates a new Go template engine with default delimiters
 func NewGoTemplateEngine() *GoTemplateEngine {
+	return NewGoTemplateEngineWithDelimiters("[[", "]]")
+}
+
+// NewGoTemplateEngineWithDelimiters creates a new Go template engine with custom delimiters
+func NewGoTemplateEngineWithDelimiters(left, right string) *GoTemplateEngine {
 	caser := cases.Title(language.English)
 	funcMap := template.FuncMap{
 		"upper":  strings.ToUpper,
@@ -36,13 +43,18 @@ func NewGoTemplateEngine() *GoTemplateEngine {
 	}
 
 	return &GoTemplateEngine{
-		funcMap: funcMap,
+		funcMap:    funcMap,
+		leftDelim:  left,
+		rightDelim: right,
 	}
 }
 
 // Render renders a template string with data
 func (e *GoTemplateEngine) Render(templateContent string, data map[string]interface{}) (string, error) {
-	tmpl, err := template.New("template").Funcs(e.funcMap).Parse(templateContent)
+	tmpl, err := template.New("template").
+		Delims(e.leftDelim, e.rightDelim).
+		Funcs(e.funcMap).
+		Parse(templateContent)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse template: %w", err)
 	}
@@ -57,7 +69,10 @@ func (e *GoTemplateEngine) Render(templateContent string, data map[string]interf
 
 // RenderFile renders a template file with data
 func (e *GoTemplateEngine) RenderFile(templatePath string, data map[string]interface{}) (string, error) {
-	tmpl, err := template.New(filepath.Base(templatePath)).Funcs(e.funcMap).ParseFiles(templatePath)
+	tmpl, err := template.New(filepath.Base(templatePath)).
+		Delims(e.leftDelim, e.rightDelim).
+		Funcs(e.funcMap).
+		ParseFiles(templatePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse template file: %w", err)
 	}

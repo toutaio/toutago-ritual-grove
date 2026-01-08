@@ -1,8 +1,8 @@
 {
-  "name": "{{ .AppName | toLower | replaceAll \" \" \"-\" }}",
+  "name": "[[ .AppName | toLower | replaceAll \" \" \"-\" ]]",
   "version": "1.0.0",
   "private": true,
-  "description": "HTMX-powered frontend for {{ .AppName }}",
+  "description": "HTMX-powered frontend for [[ .AppName ]]",
   "scripts": {
     "dev": "esbuild frontend/app.js --bundle --outfile=public/js/app.js --watch",
     "build": "esbuild frontend/app.js --bundle --minify --outfile=public/js/app.js"

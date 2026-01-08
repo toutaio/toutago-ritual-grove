@@ -22,8 +22,8 @@ func main() {
 		RootView:    "app",
 		RootViewDir: "public",
 		Version:     "1.0.0",
-		{{if .use_ssr}}SSREnabled:  true,
-		SSRURL:      "http://localhost:13714",{{end}}
+		[[if .use_ssr]]SSREnabled:  true,
+		SSRURL:      "http://localhost:13714",[[end]]
 	}
 
 	inertiaMiddleware := inertia.New(inertiaConfig)
@@ -38,12 +38,12 @@ func main() {
 	// Routes
 	router.Get("/", func(ctx *cosan.Context) error {
 		return inertiaMiddleware.Render(ctx, "Home", map[string]interface{}{
-			"appName": "{{.project_name}}",
+			"appName": "[[.project_name]]",
 			"message": "Welcome to your new Toutago application!",
 		})
 	})
 
-	{{if .use_auth}}// Auth routes
+	[[if .use_auth]]// Auth routes
 	router.Get("/login", func(ctx *cosan.Context) error {
 		return inertiaMiddleware.Render(ctx, "Auth/Login", nil)
 	})
@@ -60,7 +60,7 @@ func main() {
 				"email": "john@example.com",
 			},
 		})
-	}){{end}}
+	})[[end]]
 
 	// API routes
 	api := router.Group("/api")
@@ -75,7 +75,7 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "{{.port}}"
+		port = "[[.port]]"
 	}
 
 	log.Printf("Starting server on :%s", port)

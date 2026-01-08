@@ -54,9 +54,9 @@ import (
 	"database/sql"
 	"log"
 
-	"{{ .module_name }}/internal/handlers"
-	"{{ .module_name }}/internal/repositories"
-	"{{ .module_name }}/internal/services"
+	"[[ .module_name ]]/internal/handlers"
+	"[[ .module_name ]]/internal/repositories"
+	"[[ .module_name ]]/internal/services"
 )
 
 // Container holds all application dependencies
@@ -64,16 +64,16 @@ type Container struct {
 	DB *sql.DB
 	
 	// Repositories
-	{{ range .repositories }}{{ .Name }}Repository repositories.{{ .Type }}Repository
-	{{ end }}
+	[[ range .repositories ]][[ .Name ]]Repository repositories.[[ .Type ]]Repository
+	[[ end ]]
 	
 	// Services
-	{{ range .services }}{{ .Name }}Service services.{{ .Type }}Service
-	{{ end }}
+	[[ range .services ]][[ .Name ]]Service services.[[ .Type ]]Service
+	[[ end ]]
 	
 	// Handlers
-	{{ range .handlers }}{{ .Name }}Handler *handlers.{{ .Type }}Handler
-	{{ end }}
+	[[ range .handlers ]][[ .Name ]]Handler *handlers.[[ .Type ]]Handler
+	[[ end ]]
 }
 
 // NewContainer creates and wires up all dependencies
@@ -83,16 +83,16 @@ func NewContainer(db *sql.DB) *Container {
 	}
 	
 	// Initialize repositories
-	{{ range .repositories }}c.{{ .Name }}Repository = repositories.New{{ .Type }}Repository(db)
-	{{ end }}
+	[[ range .repositories ]]c.[[ .Name ]]Repository = repositories.New[[ .Type ]]Repository(db)
+	[[ end ]]
 	
 	// Initialize services
-	{{ range .services }}c.{{ .Name }}Service = services.New{{ .Type }}Service(c.{{ .DependsOn }}Repository)
-	{{ end }}
+	[[ range .services ]]c.[[ .Name ]]Service = services.New[[ .Type ]]Service(c.[[ .DependsOn ]]Repository)
+	[[ end ]]
 	
 	// Initialize handlers
-	{{ range .handlers }}c.{{ .Name }}Handler = handlers.New{{ .Type }}Handler(c.{{ .DependsOn }}Service)
-	{{ end }}
+	[[ range .handlers ]]c.[[ .Name ]]Handler = handlers.New[[ .Type ]]Handler(c.[[ .DependsOn ]]Service)
+	[[ end ]]
 	
 	log.Println("Dependency container initialized")
 	return c
@@ -142,8 +142,8 @@ func (w *ComponentWiring) generateRouterSetup(projectPath string, manifest *ritu
 import (
 	"net/http"
 
-	"{{ .module_name }}/internal/container"
-	"{{ .module_name }}/internal/middleware"
+	"[[ .module_name ]]/internal/container"
+	"[[ .module_name ]]/internal/middleware"
 )
 
 // Setup configures all application routes
@@ -158,12 +158,12 @@ func Setup(c *container.Container) *http.ServeMux {
 	})
 	
 	// API routes
-	{{ range .routes }}mux.HandleFunc("{{ .Path }}", middleware.Chain(
-		c.{{ .Handler }}Handler.{{ .Method }},
+	[[ range .routes ]]mux.HandleFunc("[[ .Path ]]", middleware.Chain(
+		c.[[ .Handler ]]Handler.[[ .Method ]],
 		middleware.Logger,
 		middleware.Recovery,
 	))
-	{{ end }}
+	[[ end ]]
 	
 	return mux
 }
@@ -291,8 +291,8 @@ import (
 	"net/http"
 	"os"
 
-	"{{ .module_name }}/internal/container"
-	"{{ .module_name }}/internal/router"
+	"[[ .module_name ]]/internal/container"
+	"[[ .module_name ]]/internal/router"
 	
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
@@ -301,7 +301,7 @@ func main() {
 	// Get configuration from environment
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "{{ .port }}"
+		port = "[[ .port ]]"
 	}
 	
 	dbHost := os.Getenv("DB_HOST")
@@ -332,7 +332,7 @@ func main() {
 	
 	// Start server
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Starting {{ .app_name }} on %s", addr)
+	log.Printf("Starting [[ .app_name ]] on %s", addr)
 	
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)

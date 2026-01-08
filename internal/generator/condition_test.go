@@ -14,7 +14,7 @@ func TestEvaluateCondition(t *testing.T) {
 	}{
 		{
 			name:      "simple equality true",
-			condition: "{{ eq .frontend_type \"inertia-vue\" }}",
+			condition: "[[ eq .frontend_type \"inertia-vue\" ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "inertia-vue",
 			},
@@ -22,7 +22,7 @@ func TestEvaluateCondition(t *testing.T) {
 		},
 		{
 			name:      "simple equality false",
-			condition: "{{ eq .frontend_type \"inertia-vue\" }}",
+			condition: "[[ eq .frontend_type \"inertia-vue\" ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "htmx",
 			},
@@ -36,7 +36,7 @@ func TestEvaluateCondition(t *testing.T) {
 		},
 		{
 			name:      "boolean field true",
-			condition: "{{ .enable_ssr }}",
+			condition: "[[ .enable_ssr ]]",
 			variables: map[string]interface{}{
 				"enable_ssr": true,
 			},
@@ -44,7 +44,7 @@ func TestEvaluateCondition(t *testing.T) {
 		},
 		{
 			name:      "boolean field false",
-			condition: "{{ .enable_ssr }}",
+			condition: "[[ .enable_ssr ]]",
 			variables: map[string]interface{}{
 				"enable_ssr": false,
 			},
@@ -52,7 +52,7 @@ func TestEvaluateCondition(t *testing.T) {
 		},
 		{
 			name:      "not equals",
-			condition: "{{ ne .frontend_type \"traditional\" }}",
+			condition: "[[ ne .frontend_type \"traditional\" ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "htmx",
 			},
@@ -60,7 +60,7 @@ func TestEvaluateCondition(t *testing.T) {
 		},
 		{
 			name:      "complex condition with and",
-			condition: "{{ and (eq .frontend_type \"inertia-vue\") .enable_ssr }}",
+			condition: "[[ and (eq .frontend_type \"inertia-vue\") .enable_ssr ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "inertia-vue",
 				"enable_ssr":    true,
@@ -69,7 +69,7 @@ func TestEvaluateCondition(t *testing.T) {
 		},
 		{
 			name:      "complex condition with or",
-			condition: "{{ or (eq .frontend_type \"inertia-vue\") (eq .frontend_type \"htmx\") }}",
+			condition: "[[ or (eq .frontend_type \"inertia-vue\") (eq .frontend_type \"htmx\") ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "htmx",
 			},
@@ -106,7 +106,7 @@ func TestShouldGenerateFile(t *testing.T) {
 		},
 		{
 			name:      "inertia-vue frontend generates inertia files",
-			condition: "{{ eq .frontend_type \"inertia-vue\" }}",
+			condition: "[[ eq .frontend_type \"inertia-vue\" ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "inertia-vue",
 			},
@@ -114,7 +114,7 @@ func TestShouldGenerateFile(t *testing.T) {
 		},
 		{
 			name:      "traditional frontend skips inertia files",
-			condition: "{{ eq .frontend_type \"inertia-vue\" }}",
+			condition: "[[ eq .frontend_type \"inertia-vue\" ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "traditional",
 			},
@@ -122,7 +122,7 @@ func TestShouldGenerateFile(t *testing.T) {
 		},
 		{
 			name:      "htmx frontend generates htmx files",
-			condition: "{{ eq .frontend_type \"htmx\" }}",
+			condition: "[[ eq .frontend_type \"htmx\" ]]",
 			variables: map[string]interface{}{
 				"frontend_type": "htmx",
 			},

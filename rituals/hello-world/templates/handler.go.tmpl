@@ -13,7 +13,7 @@ type HelloResponse struct {
 func HelloHandler(w http.ResponseWriter, r *http.Request) {
 	response := HelloResponse{
 		Message: "Welcome to your Toutā application!",
-		App:     "{{ .app_name }}",
+		App:     "[[ .app_name ]]",
 	}
 	
 	w.Header().Set("Content-Type", "application/json")

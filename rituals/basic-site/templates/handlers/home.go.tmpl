@@ -18,7 +18,7 @@ func NewHomeHandler(renderer *fith.Engine) *HomeHandler {
 // Index renders the homepage
 func (h *HomeHandler) Index(ctx cosan.Context) error {
 	data := map[string]interface{}{
-		"site_name": "{{ .site_name }}",
+		"site_name": "[[ .site_name ]]",
 		"message":   "Welcome to your new Toutā site!",
 	}
 

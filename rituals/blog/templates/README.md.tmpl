@@ -1,4 +1,4 @@
-# {{ .app_name }}
+# [[ .app_name ]]
 
 A blog application built with the Toutā framework.
 
@@ -6,12 +6,12 @@ A blog application built with the Toutā framework.
 
 - ✅ Post management (CRUD operations)
 - ✅ Category organization
-{{- if .enable_comments }}
+{{- if .enable_comments ]]
 - ✅ Comment system
-{{- end }}
-{{- if .enable_markdown }}
+{{- end ]]
+{{- if .enable_markdown ]]
 - ✅ Markdown support
-{{- end }}
+{{- end ]]
 - ✅ RESTful API
 - ✅ Responsive design
 
@@ -19,8 +19,8 @@ A blog application built with the Toutā framework.
 
 ### Prerequisites
 
-- Go {{ .compatibility.go_version }} or higher
-- {{ .database_type | title }} database
+- Go [[ .compatibility.go_version ]] or higher
+- [[ .database_type | title ]] database
 
 ### Installation
 
@@ -45,7 +45,7 @@ cp .env.example .env
 go run main.go
 ```
 
-The blog will be available at `http://localhost:{{ .port }}`
+The blog will be available at `http://localhost:[[ .port ]]`
 
 ## API Endpoints
 
@@ -60,11 +60,11 @@ The blog will be available at `http://localhost:{{ .port }}`
 - `GET /categories` - List all categories
 - `GET /categories/:id` - Get a specific category
 
-{{- if .enable_comments }}
+{{- if .enable_comments ]]
 ### Comments
 - `POST /posts/:id/comments` - Add a comment to a post
 - `DELETE /comments/:id` - Delete a comment
-{{- end }}
+{{- end ]]
 
 ## Configuration
 
@@ -85,9 +85,9 @@ See `.env.example` for all configuration options.
 
 ## License
 
-{{ .license }}
+[[ .license ]]
 
 ## Generated with Toutā Ritual Grove
 
 This project was generated using the blog ritual.
-Ritual version: {{ .version }}
+Ritual version: [[ .version ]]

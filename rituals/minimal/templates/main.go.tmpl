@@ -20,11 +20,11 @@ func main() {
 	// Root endpoint
 	app.GET("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"message":"Welcome to {{ .project_name }}!"}`)
+		fmt.Fprintf(w, `{"message":"Welcome to [[ .project_name ]]!"}`)
 	})
 
-	port := "{{ .port }}"
-	log.Printf("Starting {{ .project_name }} on port %s...\n", port)
+	port := "[[ .port ]]"
+	log.Printf("Starting [[ .project_name ]] on port %s...\n", port)
 	
 	if err := app.Listen(":" + port); err != nil {
 		log.Fatalf("Server failed: %v", err)

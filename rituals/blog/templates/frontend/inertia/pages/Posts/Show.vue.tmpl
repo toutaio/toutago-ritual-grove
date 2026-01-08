@@ -12,11 +12,11 @@ defineProps({
   <Layout>
     <article class="post-show">
       <header class="post-header">
-        <h1>{{ '{{ post.title }}' }}</h1>
+        <h1>{{"{{"}} post.title {{"}}"}}</h1>
         <div class="post-meta">
-          <span class="post-author">By {{ '{{ post.author }}' }}</span>
-          <span class="post-date">{{ '{{ new Date(post.created_at).toLocaleDateString() }}' }}</span>
-          <span v-if="post.category" class="post-category">{{ '{{ post.category }}' }}</span>
+          <span class="post-author">By {{"{{"}} post.author {{"}}"}}</span>
+          <span class="post-date">{{"{{"}} new Date(post.created_at).toLocaleDateString() {{"}}"}}</span>
+          <span v-if="post.category" class="post-category">{{"{{"}} post.category {{"}}"}}</span>
         </div>
       </header>
 
@@ -27,15 +27,15 @@ defineProps({
         <Link :href="`/posts/${post.id}/edit`" class="btn btn-secondary">Edit</Link>
       </footer>
 
-{{- if .enable_comments }}
+{{- if .enable_comments ]]
       <section class="comments">
-        <h2>Comments ({{ '{{ comments ? comments.length : 0 }}' }})</h2>
+        <h2>Comments ({{"{{"}} comments ? comments.length : 0 {{"}}"}})</h2>
         
         <div v-if="comments && comments.length > 0" class="comments-list">
           <div v-for="comment in comments" :key="comment.id" class="comment">
-            <div class="comment-author">{{ '{{ comment.author }}' }}</div>
-            <div class="comment-date">{{ '{{ new Date(comment.created_at).toLocaleDateString() }}' }}</div>
-            <div class="comment-content">{{ '{{ comment.content }}' }}</div>
+            <div class="comment-author">{{"{{"}} comment.author {{"}}"}}</div>
+            <div class="comment-date">{{"{{"}} new Date(comment.created_at).toLocaleDateString() {{"}}"}}</div>
+            <div class="comment-content">{{"{{"}} comment.content {{"}}"}}</div>
           </div>
         </div>
         <p v-else>No comments yet. Be the first to comment!</p>
@@ -53,7 +53,7 @@ defineProps({
           <button type="submit" class="btn btn-primary">Submit Comment</button>
         </form>
       </section>
-{{- end }}
+{{- end ]]
     </article>
   </Layout>
 </template>

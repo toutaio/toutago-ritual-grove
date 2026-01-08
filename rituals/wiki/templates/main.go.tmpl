@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"{{.module_path}}/handlers"
+	"[[.module_path]]/handlers"
 	"github.com/toutaio/toutago"
 	"github.com/toutaio/toutago-cosan-router"
 	"github.com/toutaio/toutago-fith-renderer"
@@ -21,10 +21,10 @@ func main() {
 
 	// Set up database
 	dbConfig := &datamapper.Config{
-		Driver:   "{{.database}}",
+		Driver:   "[[.database]]",
 		Host:     getEnv("DB_HOST", "localhost"),
 		Port:     getEnv("DB_PORT", "5432"),
-		Database: getEnv("DB_NAME", "{{.wiki_name}}"),
+		Database: getEnv("DB_NAME", "[[.wiki_name]]"),
 		User:     getEnv("DB_USER", "postgres"),
 		Password: getEnv("DB_PASSWORD", ""),
 	}
@@ -47,17 +47,17 @@ func main() {
 	router.GET("/wiki/:slug/history", pageHandler.History)
 	router.GET("/new", pageHandler.New)
 	router.POST("/create", pageHandler.Create)
-{{if .enable_search}}
+[[if .enable_search]]
 	// Search routes
 	searchHandler := handlers.NewSearchHandler(db, renderer)
 	router.GET("/search", searchHandler.Search)
-{{end}}
+[[end]]
 
 	app.SetRouter(router)
 
 	// Start server
-	port := "{{.port}}"
-	log.Printf("{{.wiki_name}} starting on port %s\n", port)
+	port := "[[.port]]"
+	log.Printf("[[.wiki_name]] starting on port %s\n", port)
 	if err := app.Start(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

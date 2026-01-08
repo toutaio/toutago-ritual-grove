@@ -58,14 +58,14 @@ import (
 	"net/http"
 	"os"
 
-	"{{ .module_name }}/internal/handlers"
+	"[[ .module_name ]]/internal/handlers"
 )
 
 func main() {
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "{{ .port }}"
+		port = "[[ .port ]]"
 	}
 
 	// Initialize router
@@ -76,7 +76,7 @@ func main() {
 
 	// Start server
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Starting {{ .app_name }} on %s", addr)
+	log.Printf("Starting [[ .app_name ]] on %s", addr)
 	
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
@@ -154,14 +154,14 @@ func (s *ProjectScaffolder) GenerateGoMod(projectPath string, manifest *ritual.M
 // GenerateConfig generates configuration files (.env.example, config files)
 func (s *ProjectScaffolder) GenerateConfig(projectPath string, vars *Variables) error {
 	template := `# Application Configuration
-APP_NAME={{ .app_name }}
-PORT={{ .port }}
+APP_NAME=[[ .app_name ]]
+PORT=[[ .port ]]
 ENV=development
 
 # Database (if applicable)
 # DB_HOST=localhost
 # DB_PORT=5432
-# DB_NAME={{ .app_name }}
+# DB_NAME=[[ .app_name ]]
 # DB_USER=postgres
 # DB_PASSWORD=
 

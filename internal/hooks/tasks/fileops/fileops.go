@@ -264,8 +264,10 @@ func (t *TemplateRenderTask) Execute(ctx context.Context, taskCtx *tasks.TaskCon
 		return fmt.Errorf("read template: %w", err)
 	}
 
-	// Parse template.
-	tmpl, err := template.New(filepath.Base(templatePath)).Parse(string(content))
+	// Parse template with custom delimiters.
+	tmpl, err := template.New(filepath.Base(templatePath)).
+		Delims("[[", "]]").
+		Parse(string(content))
 	if err != nil {
 		return fmt.Errorf("parse template: %w", err)
 	}

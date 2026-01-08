@@ -6,7 +6,7 @@ import (
 
 	"github.com/toutaio/toutago-cosan-router/pkg/cosan"
 	"github.com/toutaio/toutago-fith-renderer"
-	"{{ .module_path }}/handlers"
+	"[[ .module_path ]]/handlers"
 )
 
 func main() {
@@ -33,6 +33,6 @@ func main() {
 	})
 
 	// Start server
-	log.Printf("{{ .site_name }} starting on :%d", {{ .port }})
-	log.Fatal(router.Listen(":{{ .port }}"))
+	log.Printf("[[ .site_name ]] starting on :%d", [[ .port ]])
+	log.Fatal(router.Listen(":[[ .port ]]"))
 }

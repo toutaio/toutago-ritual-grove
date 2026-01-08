@@ -20,7 +20,7 @@ func TestGenerateFile(t *testing.T) {
 
 	// Create a template file
 	templatePath := filepath.Join(tmpDir, "src.tmpl")
-	templateContent := "App: {{ .app_name }}\nPort: {{ .port }}"
+	templateContent := "App: [[ .app_name ]]\nPort: [[ .port ]]"
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestProtectedFiles(t *testing.T) {
 
 	// Create template
 	templatePath := filepath.Join(tmpDir, "config.tmpl")
-	templateContent := "app: {{ .app_name }}"
+	templateContent := "app: [[ .app_name ]]"
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestGenerateFiles(t *testing.T) {
 
 	// Create template file
 	templatePath := filepath.Join(ritualDir, "templates", "main.go.tmpl")
-	templateContent := "package main\n\nconst AppName = \"{{ .app_name }}\""
+	templateContent := "package main\n\nconst AppName = \"[[ .app_name ]]\""
 	os.WriteFile(templatePath, []byte(templateContent), 0600)
 
 	// Create static file
@@ -225,7 +225,7 @@ func TestGenerateFile_InvalidTemplate(t *testing.T) {
 
 	// Create invalid template
 	templatePath := filepath.Join(tmpDir, "bad.tmpl")
-	templateContent := "{{ .app_name" // Missing closing }}
+	templateContent := "[[ .app_name" // Missing closing ]]
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0600); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}

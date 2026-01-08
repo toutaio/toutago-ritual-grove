@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>History: {{.Page.Title}} - {{.wiki_name}}</title>
+    <title>History: [[.Page.Title]] - [[.wiki_name]]</title>
     <link rel="stylesheet" href="/static/wiki.css">
 </head>
 <body>
     <header>
-        <h1><a href="/">{{.wiki_name}}</a></h1>
+        <h1><a href="/">[[.wiki_name]]</a></h1>
         <nav>
-            <a href="/wiki/{{.Page.Slug}}">View Page</a>
-            <a href="/wiki/{{.Page.Slug}}/edit">Edit</a>
+            <a href="/wiki/[[.Page.Slug]]">View Page</a>
+            <a href="/wiki/[[.Page.Slug]]/edit">Edit</a>
         </nav>
     </header>
 
     <main>
-        <h2>Revision History: {{.Page.Title}}</h2>
+        <h2>Revision History: [[.Page.Title]]</h2>
 
-        {{if .Revisions}}
+        [[if .Revisions]]
         <table class="revisions">
             <thead>
                 <tr>
@@ -30,26 +30,26 @@
                 </tr>
             </thead>
             <tbody>
-                {{range .Revisions}}
+                [[range .Revisions]]
                 <tr>
-                    <td>{{.Version}}</td>
-                    <td>{{.Author}}</td>
-                    <td>{{.CreatedAt}}</td>
-                    <td>{{.Comment}}</td>
+                    <td>[[.Version]]</td>
+                    <td>[[.Author]]</td>
+                    <td>[[.CreatedAt]]</td>
+                    <td>[[.Comment]]</td>
                     <td>
-                        <a href="/wiki/{{$.Page.Slug}}/revision/{{.ID}}">View</a>
+                        <a href="/wiki/{{$.Page.Slug]]/revision/[[.ID]]">View</a>
                     </td>
                 </tr>
-                {{end}}
+                [[end]]
             </tbody>
         </table>
-        {{else}}
+        [[else]]
         <p>No revision history available.</p>
-        {{end}}
+        [[end]]
     </main>
 
     <footer>
-        <p>Powered by {{.wiki_name}}</p>
+        <p>Powered by [[.wiki_name]]</p>
     </footer>
     <script src="/static/wiki.js"></script>
 </body>

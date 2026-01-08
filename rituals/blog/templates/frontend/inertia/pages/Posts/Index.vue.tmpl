@@ -19,13 +19,13 @@ defineProps({
       <div v-if="posts && posts.length > 0" class="posts-list">
         <article v-for="post in posts" :key="post.id" class="post-item">
           <h2>
-            <Link :href="`/posts/${post.id}`">{{ '{{ post.title }}' }}</Link>
+            <Link :href="`/posts/${post.id}`">{{"{{"}} post.title {{"}}"}}</Link>
           </h2>
-          <p class="post-excerpt">{{ '{{ post.excerpt }}' }}</p>
+          <p class="post-excerpt">{{"{{"}} post.excerpt {{"}}"}}</p>
           <div class="post-meta">
-            <span class="post-author">By {{ '{{ post.author }}' }}</span>
-            <span class="post-date">{{ '{{ new Date(post.created_at).toLocaleDateString() }}' }}</span>
-            <span v-if="post.category" class="post-category">{{ '{{ post.category }}' }}</span>
+            <span class="post-author">By {{"{{"}} post.author {{"}}"}}</span>
+            <span class="post-date">{{"{{"}} new Date(post.created_at).toLocaleDateString() {{"}}"}}</span>
+            <span v-if="post.category" class="post-category">{{"{{"}} post.category {{"}}"}}</span>
           </div>
           <div class="post-actions">
             <Link :href="`/posts/${post.id}`" class="btn btn-sm">View</Link>
@@ -43,7 +43,7 @@ defineProps({
         >
           Previous
         </Link>
-        <span class="page-info">Page {{ '{{ pagination.current_page }}' }} of {{ '{{ pagination.total_pages }}' }}</span>
+        <span class="page-info">Page {{"{{"}} pagination.current_page {{"}}"}} of {{"{{"}} pagination.total_pages {{"}}"}}</span>
         <Link 
           v-if="pagination.next_page" 
           :href="`/posts?page=${pagination.next_page}`"

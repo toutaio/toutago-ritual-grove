@@ -197,7 +197,7 @@ files:
 	}
 
 	// Create template file
-	template := `Hello {{ .app_name }}!`
+	template := `Hello [[ .app_name ]]!`
 	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "test.txt.tmpl"), []byte(template), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -341,7 +341,7 @@ func TestProjectScaffolder_ApplyTemplateFiles(t *testing.T) {
 
 	// Create template files
 	template1 := `package main
-// {{ .app_name }}`
+// [[ .app_name ]]`
 	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "file1.go.tmpl"), []byte(template1), 0600); err != nil {
 		t.Fatal(err)
 	}

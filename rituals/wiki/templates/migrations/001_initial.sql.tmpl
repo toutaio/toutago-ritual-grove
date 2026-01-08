@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS revisions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-{{if .enable_tags}}
+[[if .enable_tags]]
 CREATE TABLE IF NOT EXISTS tags (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
@@ -34,11 +34,11 @@ CREATE TABLE IF NOT EXISTS page_tags (
 
 CREATE INDEX idx_page_tags_page ON page_tags(page_id);
 CREATE INDEX idx_page_tags_tag ON page_tags(tag_id);
-{{end}}
+[[end]]
 
 CREATE INDEX idx_pages_slug ON pages(slug);
 CREATE INDEX idx_revisions_page ON revisions(page_id);
-{{if .enable_search}}
+[[if .enable_search]]
 CREATE INDEX idx_pages_title_search ON pages USING gin(to_tsvector('english', title));
 CREATE INDEX idx_pages_content_search ON pages USING gin(to_tsvector('english', content));
-{{end}}
+[[end]]

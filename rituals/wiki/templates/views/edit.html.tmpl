@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{if .Page.ID}}Edit{{else}}New{{end}} Page - {{.wiki_name}}</title>
+    <title>[[if .Page.ID]]Edit[[else]]New[[end]] Page - [[.wiki_name]]</title>
     <link rel="stylesheet" href="/static/wiki.css">
 </head>
 <body>
     <header>
-        <h1><a href="/">{{.wiki_name}}</a></h1>
+        <h1><a href="/">[[.wiki_name]]</a></h1>
     </header>
 
     <main>
-        <h2>{{if .Page.ID}}Edit{{else}}New{{end}} Page</h2>
-        <form action="{{if .Page.ID}}/wiki/{{.Page.Slug}}{{else}}/create{{end}}" method="post">
+        <h2>[[if .Page.ID]]Edit[[else]]New[[end]] Page</h2>
+        <form action="[[if .Page.ID]]/wiki/[[.Page.Slug]][[else]]/create[[end]]" method="post">
             <div class="form-group">
                 <label for="title">Title:</label>
-                <input type="text" id="title" name="title" value="{{.Page.Title}}" required />
+                <input type="text" id="title" name="title" value="[[.Page.Title]]" required />
             </div>
 
             <div class="form-group">
                 <label for="content">Content (Markdown):</label>
-                <textarea id="content" name="content" rows="20" required>{{.Page.Content}}</textarea>
+                <textarea id="content" name="content" rows="20" required>[[.Page.Content]]</textarea>
             </div>
 
             <div class="form-group">
@@ -35,14 +35,14 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit">{{if .Page.ID}}Update{{else}}Create{{end}} Page</button>
-                <a href="{{if .Page.ID}}/wiki/{{.Page.Slug}}{{else}}/{{end}}" class="btn-cancel">Cancel</a>
+                <button type="submit">[[if .Page.ID]]Update[[else]]Create[[end]] Page</button>
+                <a href="[[if .Page.ID]]/wiki/[[.Page.Slug]][[else]]/[[end]]" class="btn-cancel">Cancel</a>
             </div>
         </form>
     </main>
 
     <footer>
-        <p>Powered by {{.wiki_name}}</p>
+        <p>Powered by [[.wiki_name]]</p>
     </footer>
     <script src="/static/wiki.js"></script>
 </body>

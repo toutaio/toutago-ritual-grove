@@ -11,19 +11,19 @@ defineProps({
 <template>
   <Layout>
     <div class="home">
-      <h1>Welcome to {{ '{{ .app_name }}' }}</h1>
+      <h1>Welcome to [[ .app_name ]]</h1>
       
       <section class="recent-posts">
         <h2>Recent Posts</h2>
         <div v-if="posts && posts.length > 0" class="posts-grid">
           <article v-for="post in posts" :key="post.id" class="post-card">
             <h3>
-              <Link :href="`/posts/${post.id}`">{{ '{{ post.title }}' }}</Link>
+              <Link :href="`/posts/${post.id}`">{{"{{"}} post.title {{"}}"}}</Link>
             </h3>
-            <p class="post-excerpt">{{ '{{ post.excerpt }}' }}</p>
+            <p class="post-excerpt">{{"{{"}} post.excerpt {{"}}"}}</p>
             <div class="post-meta">
-              <span class="post-author">By {{ '{{ post.author }}' }}</span>
-              <span class="post-date">{{ '{{ new Date(post.created_at).toLocaleDateString() }}' }}</span>
+              <span class="post-author">By {{"{{"}} post.author {{"}}"}}</span>
+              <span class="post-date">{{"{{"}} new Date(post.created_at).toLocaleDateString() {{"}}"}}</span>
             </div>
           </article>
         </div>
@@ -34,7 +34,7 @@ defineProps({
         <h3>Categories</h3>
         <ul v-if="categories && categories.length > 0">
           <li v-for="category in categories" :key="category.id">
-            <Link :href="`/categories/${category.id}`">{{ '{{ category.name }}' }}</Link>
+            <Link :href="`/categories/${category.id}`">{{"{{"}} category.name {{"}}"}}</Link>
           </li>
         </ul>
       </aside>

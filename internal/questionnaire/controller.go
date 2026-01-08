@@ -136,12 +136,9 @@ func (c *Controller) GetNextQuestion() (*ritual.Question, error) {
 
 		// Check if condition is met
 		if q.Condition != nil {
-			// print for debug
-			fmt.Printf("Evaluating condition for question %s with answers: %+v\n", q.Name, c.flow.AllAnswers())
-			fmt.Printf("Condition: %+v\n", q.Condition)
 			shouldShow, err := c.condEvaluator.Evaluate(q.Condition, c.flow.AllAnswers())
 			if err != nil {
-				return nil, fmt.Errorf("failed A to evaluate condition for %s: %w", q.Name, err)
+				return nil, fmt.Errorf("failed to evaluate condition for %s: %w", q.Name, err)
 			}
 			if !shouldShow {
 				c.flow.SetState(q.Name, StateSkipped)

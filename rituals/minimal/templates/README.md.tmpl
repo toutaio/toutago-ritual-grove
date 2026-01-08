@@ -1,4 +1,4 @@
-# {{ .project_name | title }}
+# [[ .project_name | title ]]
 
 A minimal Toutā application.
 
@@ -6,16 +6,16 @@ A minimal Toutā application.
 
 ### Prerequisites
 
-- Go {{ .go_version }} or later
+- Go [[ .go_version ]] or later
 - The Toutā framework
 
 ### Running the Application
 
 ```bash
-go run cmd/{{ .project_name }}/main.go
+go run cmd/[[ .project_name ]]/main.go
 ```
 
-The server will start on port {{ .port }}.
+The server will start on port [[ .port ]].
 
 ### Available Endpoints
 
@@ -25,9 +25,9 @@ The server will start on port {{ .port }}.
 ## Project Structure
 
 ```
-{{ .project_name }}/
+[[ .project_name ]]/
 ├── cmd/
-│   └── {{ .project_name }}/
+│   └── [[ .project_name ]]/
 │       └── main.go          # Application entry point
 ├── go.mod                    # Go module definition
 └── README.md                 # This file
@@ -38,7 +38,7 @@ The server will start on port {{ .port }}.
 ### Building
 
 ```bash
-go build -o {{ .project_name }} cmd/{{ .project_name }}/main.go
+go build -o [[ .project_name ]] cmd/[[ .project_name ]]/main.go
 ```
 
 ### Testing

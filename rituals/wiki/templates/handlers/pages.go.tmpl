@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"{{.module_path}}/models"
+	"[[.module_path]]/models"
 	"github.com/toutaio/toutago-cosan-router"
 	"github.com/toutaio/toutago-fith-renderer"
 	"github.com/toutaio/toutago-datamapper"
@@ -40,7 +40,7 @@ func (h *PageHandler) Home(c *cosan.Context) error {
 	}
 
 	return c.Render("base.html", map[string]interface{}{
-		"Title": "{{.wiki_name}}",
+		"Title": "[[.wiki_name]]",
 		"Pages": pages,
 	})
 }
@@ -146,7 +146,7 @@ func (h *PageHandler) History(c *cosan.Context) error {
 	}
 
 	var revisions []models.Revision
-	revQuery := "SELECT * FROM revisions WHERE page_id = $1 ORDER BY created_at DESC LIMIT {{.max_revisions}}"
+	revQuery := "SELECT * FROM revisions WHERE page_id = $1 ORDER BY created_at DESC LIMIT [[.max_revisions]]"
 	if err := h.db.Select(&revisions, revQuery, page.ID); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to load revisions",

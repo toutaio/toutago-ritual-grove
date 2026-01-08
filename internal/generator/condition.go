@@ -8,7 +8,7 @@ import (
 
 // evaluateCondition evaluates a template condition expression and returns true/false.
 // Empty conditions return true (always generate).
-// Conditions use Go template syntax: {{ eq .field "value" }}
+// Conditions use Go template syntax with [[ ]] delimiters: [[ eq .field "value" ]]
 func evaluateCondition(condition string, variables map[string]interface{}) (bool, error) {
 	// Empty condition means always generate
 	if condition == "" {
@@ -18,8 +18,10 @@ func evaluateCondition(condition string, variables map[string]interface{}) (bool
 	// Trim whitespace
 	condition = strings.TrimSpace(condition)
 
-	// Create a template to evaluate the condition
-	tmpl, err := template.New("condition").Parse(condition)
+	// Create a template to evaluate the condition with custom delimiters
+	tmpl, err := template.New("condition").
+		Delims("[[", "]]").
+		Parse(condition)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse condition template: %w", err)
 	}

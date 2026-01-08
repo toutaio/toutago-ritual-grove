@@ -1,4 +1,4 @@
-module {{ .module_path }}
+module [[ .module_path ]]
 
 go 1.24
 // This is a test
@@ -8,11 +8,11 @@ require (
 	github.com/toutaio/toutago-fith-renderer v1.0.6
 	github.com/toutaio/toutago-datamapper v1.0.8
 	github.com/toutaio/toutago-nasc-dependency-injector v1.0.9
-{{- if eq .database_type "postgres" }}
+{{- if eq .database_type "postgres" ]]
 	github.com/lib/pq v1.10.9
 	github.com/toutaio/toutago-datamapper-postgres v1.0.7
-{{- else if eq .database_type "mysql" }}
+{{- else if eq .database_type "mysql" ]]
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/toutaio/toutago-datamapper-mysql v1.0.8
-{{- end }}
+{{- end ]]
 )
