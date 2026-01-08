@@ -7,11 +7,11 @@ import (
 	"os"
 
 	"[[ .module_path ]]/internal/handlers"
-	"github.com/toutaio/toutago-cosan-router"
-	"github.com/toutaio/toutago-fith-renderer"
-	"github.com/toutaio/toutago-nasc-dependency-injector"
+	"github.com/toutaio/toutago-cosan-router/pkg/cosan"
+	"github.com/toutaio/toutago-fith-renderer/pkg/fith"
+	"github.com/toutaio/toutago-nasc-dependency-injector/pkg/nasc"
 [[- if eq .frontend_type "inertia-vue" ]]
-	"github.com/toutaio/toutago-inertia"
+	"github.com/toutaio/toutago-inertia/pkg/inertia"
 [[- end ]]
 )
 

@@ -1,13 +1,15 @@
 module [[ .module_path ]]
 
 go 1.24
-// This is a test
 
 require (
 	github.com/toutaio/toutago-cosan-router v1.0.5
 	github.com/toutaio/toutago-fith-renderer v1.0.6
 	github.com/toutaio/toutago-datamapper v1.0.8
 	github.com/toutaio/toutago-nasc-dependency-injector v1.0.9
+[[- if eq .frontend_type "inertia-vue" ]]
+	github.com/toutaio/toutago-inertia v0.9.1
+[[- end ]]
 [[- if eq .database_type "postgres" ]]
 	github.com/lib/pq v1.10.9
 	github.com/toutaio/toutago-datamapper-postgres v1.0.7
