@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0-dev] - 2026-01-08
 
+### Added
+- **Inertia.js Integration in Blog Ritual**
+  - Handlers now properly use Inertia.js when `frontend_type` is `inertia-vue`
+  - Added Category Vue components (Index.vue and Show.vue)
+  - Handlers render Inertia pages instead of JSON for Inertia frontend
+  - Main.go template initializes Inertia instance and passes to handlers
+  - Supports SSR configuration when enabled
+
 ### Fixed
 - **Blog Ritual File Conditions**
   - Fixed file conditions to use `[[ ]]` delimiters instead of `{{ }}`
@@ -17,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed go.mod template conditional syntax
   - Fixed Vue template syntax to avoid Go template conflicts
   - Removed Makefile templates (not used in Toutā projects)
+  - Updated handlers to conditionally use Inertia or JSON based on frontend type
 
 ### Changed
 - **Template Delimiter Change**
