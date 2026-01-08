@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CLI to set rituals base path for shared template access
 - Updated registry to extract `_shared` directory alongside rituals
 - Fixed template and static file path consistency across all rituals
+- Upgraded Docker base image to Go 1.23 for compatibility
+- Removed obsolete version field from docker-compose.yml
+- Updated Air installation to use air-verse/air (latest fork)
 
 ## [0.6.1-dev] - 2026-01-08
 
