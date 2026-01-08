@@ -24,24 +24,55 @@ A blog application built with the Toutā framework.
 
 ### Installation
 
-1. Install dependencies:
+1. Install Go dependencies:
 ```bash
 go mod tidy
 ```
 
+[[- if or (eq .frontend_type "inertia-vue") (eq .frontend_type "htmx") ]]
+2. Install frontend dependencies:
+```bash
+npm install
+```
+
+3. Build frontend assets:
+```bash
+npm run build
+```
+
+For development with hot reload:
+```bash
+npm run dev
+```
+[[- end ]]
+
+[[- if or (eq .frontend_type "inertia-vue") (eq .frontend_type "htmx") ]]
+4. Set up your environment:
+[[- else ]]
 2. Set up your environment:
+[[- end ]]
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
+[[- if or (eq .frontend_type "inertia-vue") (eq .frontend_type "htmx") ]]
+5. Run database migrations:
+[[- else ]]
 3. Run database migrations:
+[[- end ]]
 ```bash
 # Run migration scripts in migrations/
 ```
 
+[[- if or (eq .frontend_type "inertia-vue") (eq .frontend_type "htmx") ]]
+6. Start the server:
+[[- else ]]
 4. Start the server:
+[[- end ]]
 ```bash
+touta serve
+# or
 go run main.go
 ```
 
@@ -78,8 +109,21 @@ See `.env.example` for all configuration options.
 ├── internal/
 │   ├── models/          # Data models
 │   └── handlers/        # HTTP handlers
+[[- if eq .frontend_type "inertia-vue" ]]
+├── frontend/            # Vue.js components and pages
+│   ├── pages/           # Inertia pages
+│   └── components/      # Vue components
+├── esbuild.config.js    # Frontend build configuration
+├── package.json         # Node.js dependencies
+[[- else if eq .frontend_type "htmx" ]]
+├── frontend/            # HTMX JavaScript
+├── esbuild.config.js    # Frontend build configuration
+├── package.json         # Node.js dependencies
+├── views/               # HTML templates with HTMX
+[[- else ]]
 ├── views/               # HTML templates
-├── public/              # Static assets
+[[- end ]]
+├── public/              # Static assets (CSS, built JS)
 └── migrations/          # Database migrations
 ```
 

@@ -308,6 +308,15 @@ func initRitual(ritualName, outputPath string, skipQuestions bool, initGit bool,
 	fmt.Printf("Next steps:\n")
 	fmt.Printf("  cd %s\n", outputPath)
 	fmt.Printf("  go mod tidy\n")
+	
+	// Check if frontend build is needed (inertia-vue or htmx)
+	if frontendType, ok := variables["frontend_type"].(string); ok {
+		if frontendType == "inertia-vue" || frontendType == "htmx" {
+			fmt.Printf("  npm install\n")
+			fmt.Printf("  npm run build  # or 'npm run dev' for development\n")
+		}
+	}
+	
 	fmt.Printf("  touta serve\n\n")
 
 	return nil
