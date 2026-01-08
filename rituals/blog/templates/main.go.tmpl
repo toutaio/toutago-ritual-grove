@@ -26,9 +26,9 @@ func main() {
 	// Register handlers
 	postHandler := handlers.NewPostHandler(container)
 	categoryHandler := handlers.NewCategoryHandler(container)
-{{- if .enable_comments ]]
+[[- if .enable_comments ]]
 	commentHandler := handlers.NewCommentHandler(container)
-{{- end ]]
+[[- end ]]
 
 	// Routes
 	router.GET("/", postHandler.List)
@@ -41,10 +41,10 @@ func main() {
 	router.GET("/categories", categoryHandler.List)
 	router.GET("/categories/:id", categoryHandler.Show)
 
-{{- if .enable_comments ]]
+[[- if .enable_comments ]]
 	router.POST("/posts/:id/comments", commentHandler.Create)
 	router.DELETE("/comments/:id", commentHandler.Delete)
-{{- end ]]
+[[- end ]]
 
 	// Static files
 	router.Static("/public", "./public")

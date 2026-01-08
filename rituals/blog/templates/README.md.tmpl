@@ -6,12 +6,12 @@ A blog application built with the Toutā framework.
 
 - ✅ Post management (CRUD operations)
 - ✅ Category organization
-{{- if .enable_comments ]]
+[[- if .enable_comments ]]
 - ✅ Comment system
-{{- end ]]
-{{- if .enable_markdown ]]
+[[- end ]]
+[[- if .enable_markdown ]]
 - ✅ Markdown support
-{{- end ]]
+[[- end ]]
 - ✅ RESTful API
 - ✅ Responsive design
 
@@ -60,11 +60,11 @@ The blog will be available at `http://localhost:[[ .port ]]`
 - `GET /categories` - List all categories
 - `GET /categories/:id` - Get a specific category
 
-{{- if .enable_comments ]]
+[[- if .enable_comments ]]
 ### Comments
 - `POST /posts/:id/comments` - Add a comment to a post
 - `DELETE /comments/:id` - Delete a comment
-{{- end ]]
+[[- end ]]
 
 ## Configuration
 

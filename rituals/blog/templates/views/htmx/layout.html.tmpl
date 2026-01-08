@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{[[ if .title ]]}}{{[[ .title ]]}} - {{[[ end ]]}}[[ .AppName ]]</title>
+    <title>{{`{{ if .title }}{{ .title }} - {{ end }}`}}[[ .app_name ]]</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="/js/app.js" defer></script>
     <style>
@@ -52,19 +52,19 @@
             <ul>
                 <li><a href="/posts" hx-get="/posts" hx-target="#content" hx-push-url="true">Posts</a></li>
                 <li><a href="/categories" hx-get="/categories" hx-target="#content" hx-push-url="true">Categories</a></li>
-                {{[[ if .EnableComments ]]}}
+[[- if .enable_comments ]]
                 <li><a href="/admin" hx-get="/admin" hx-target="#content" hx-push-url="true">Admin</a></li>
-                {{[[ end ]]}}
+[[- end ]]
             </ul>
         </nav>
     </header>
     
     <main id="content">
-        {{[[ template "content" . ]]}}
+        {{`{{ .Content }}`}}
     </main>
     
     <footer>
-        <p>&copy; {{[[ .Year ]]}} [[ .AppName ]]. Built with Toutā + HTMX.</p>
+        <p>&copy; {{`{{ .Year }}`}} [[ .app_name ]]. Built with Toutā + HTMX.</p>
     </footer>
 </body>
 </html>
