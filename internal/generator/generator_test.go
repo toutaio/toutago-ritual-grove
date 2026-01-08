@@ -168,10 +168,10 @@ func TestGenerateFiles(t *testing.T) {
 	manifest := &ritual.Manifest{
 		Files: ritual.FilesSection{
 			Templates: []ritual.FileMapping{
-				{Source: "templates/main.go.tmpl", Destination: "main.go"},
+				{Source: "main.go.tmpl", Destination: "main.go"},
 			},
 			Static: []ritual.FileMapping{
-				{Source: "static/README.md", Destination: "README.md"},
+				{Source: "README.md", Destination: "README.md"},
 			},
 			Protected: []string{"README.md"},
 		},

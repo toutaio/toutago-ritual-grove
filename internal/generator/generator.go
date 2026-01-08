@@ -114,8 +114,8 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 			}
 		}
 
-		// Resolve source path (handle _shared: prefix)
-		srcPath := g.resolveSourcePath(tmpl.Source, ritualPath)
+		// Resolve source path (handle _shared: prefix) - templates go in templates/
+		srcPath := g.resolveTemplateSourcePath(tmpl.Source, ritualPath)
 
 		// Render destination path (it may contain template variables)
 		destPathRendered, err := g.engine.Render(tmpl.Destination, g.variables.All())
@@ -159,8 +159,8 @@ func (g *FileGenerator) GenerateFiles(manifest *ritual.Manifest, ritualPath, out
 			}
 		}
 
-		// Resolve source path (handle _shared: prefix)
-		srcPath := g.resolveSourcePath(static.Source, ritualPath)
+		// Resolve source path (handle _shared: prefix) - static files go in static/
+		srcPath := g.resolveStaticSourcePath(static.Source, ritualPath)
 
 		// Render destination path (it may contain template variables)
 		destPathRendered, err := g.engine.Render(static.Destination, g.variables.All())
@@ -223,6 +223,7 @@ func (g *FileGenerator) generateDirectory(srcDir, destDir string, isTemplate boo
 }
 
 // resolveSourcePath resolves a source path, handling _shared: prefix
+// Deprecated: Use resolveTemplateSourcePath or resolveStaticSourcePath instead
 func (g *FileGenerator) resolveSourcePath(source, ritualPath string) string {
 	// Check if source uses _shared: prefix
 	if strings.HasPrefix(source, "_shared:") {
@@ -241,8 +242,50 @@ func (g *FileGenerator) resolveSourcePath(source, ritualPath string) string {
 		return filepath.Join(ritualsDir, "_shared", sharedPath)
 	}
 	
-	// Regular path - source already includes subdirectory (templates/ or static/)
+	// Regular path - assume it's in the ritual root
 	return filepath.Join(ritualPath, source)
+}
+
+// resolveTemplateSourcePath resolves a template source path, handling _shared: prefix
+func (g *FileGenerator) resolveTemplateSourcePath(source, ritualPath string) string {
+	// Check if source uses _shared: prefix
+	if strings.HasPrefix(source, "_shared:") {
+		// Extract the path after _shared:
+		sharedPath := strings.TrimPrefix(source, "_shared:")
+		
+		// If ritualsBasePath is set, use it; otherwise try to find it from ritualPath
+		if g.ritualsBasePath != "" {
+			return filepath.Join(g.ritualsBasePath, "_shared", sharedPath)
+		}
+		
+		// Fallback: try to find rituals directory from ritualPath
+		ritualsDir := filepath.Dir(ritualPath)
+		return filepath.Join(ritualsDir, "_shared", sharedPath)
+	}
+	
+	// Regular template - prepend templates/ subdirectory
+	return filepath.Join(ritualPath, "templates", source)
+}
+
+// resolveStaticSourcePath resolves a static file source path, handling _shared: prefix
+func (g *FileGenerator) resolveStaticSourcePath(source, ritualPath string) string {
+	// Check if source uses _shared: prefix
+	if strings.HasPrefix(source, "_shared:") {
+		// Extract the path after _shared:
+		sharedPath := strings.TrimPrefix(source, "_shared:")
+		
+		// If ritualsBasePath is set, use it; otherwise try to find it from ritualPath
+		if g.ritualsBasePath != "" {
+			return filepath.Join(g.ritualsBasePath, "_shared", sharedPath)
+		}
+		
+		// Fallback: try to find rituals directory from ritualPath
+		ritualsDir := filepath.Dir(ritualPath)
+		return filepath.Join(ritualsDir, "_shared", sharedPath)
+	}
+	
+	// Regular static file - prepend static/ subdirectory
+	return filepath.Join(ritualPath, "static", source)
 }
 
 // CreateDirectoryStructure creates the directory structure for a project
