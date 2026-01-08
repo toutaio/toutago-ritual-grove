@@ -1,0 +1,43 @@
+package handlers
+
+import (
+[[ if eq .frontend_type "inertia-vue" -]]
+"[[ .module_path ]]/internal"
+[[ end -]]
+"github.com/toutaio/toutago-cosan-router"
+nasc "github.com/toutaio/toutago-nasc-dependency-injector"
+[[ if eq .frontend_type "inertia-vue" -]]
+"github.com/toutaio/toutago-inertia/pkg/inertia"
+[[ end -]]
+)
+
+// HomeHandler handles home page operations
+type HomeHandler struct {
+	container *nasc.Nasc
+[[ if eq .frontend_type "inertia-vue" -]]
+	inertia *inertia.Inertia
+[[ end -]]
+}
+
+// NewHomeHandler creates a new home handler
+func NewHomeHandler(container *nasc.Nasc[[ if eq .frontend_type "inertia-vue" ]], inertiaInstance *inertia.Inertia[[ end ]]) *HomeHandler {
+	return &HomeHandler{
+		container: container,
+[[ if eq .frontend_type "inertia-vue" -]]
+		inertia: inertiaInstance,
+[[ end -]]
+	}
+}
+
+// Index shows the home page
+func (h *HomeHandler) Index(c cosan.Context) error {
+[[ if eq .frontend_type "inertia-vue" -]]
+	ic := internal.GetInertiaContext(c, h.inertia)
+	return ic.Render("Home", map[string]interface{}{
+		"appName": "[[ .app_name ]]",
+	})
+[[ else -]]
+	// TODO: Render home template with Fíth
+	return c.String(200, "Welcome to [[ .app_name ]]")
+[[ end -]]
+}

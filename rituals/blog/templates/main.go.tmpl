@@ -48,9 +48,11 @@ func main() {
 
 	// Register handlers
 [[- if eq .frontend_type "inertia-vue" ]]
+	homeHandler := handlers.NewHomeHandler(container, inertiaInstance)
 	postHandler := handlers.NewPostHandler(container, inertiaInstance)
 	categoryHandler := handlers.NewCategoryHandler(container, inertiaInstance)
 [[- else ]]
+	homeHandler := handlers.NewHomeHandler(container)
 	postHandler := handlers.NewPostHandler(container)
 	categoryHandler := handlers.NewCategoryHandler(container)
 [[- end ]]
@@ -59,7 +61,7 @@ func main() {
 [[- end ]]
 
 	// Routes
-	router.GET("/", postHandler.List)
+	router.GET("/", homeHandler.Index)
 	router.GET("/posts", postHandler.List)
 	router.GET("/posts/:id", postHandler.Show)
 	router.POST("/posts", postHandler.Create)

@@ -154,6 +154,9 @@ files:
       dest: internal/models/comment.go
       condition: "enable_comments == true"
 
+    - src: handlers/home.go.tmpl
+      dest: internal/handlers/home.go
+
     - src: handlers/post.go.tmpl
       dest: internal/handlers/post.go
 
