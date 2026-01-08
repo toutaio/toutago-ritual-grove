@@ -14,14 +14,18 @@ import (
 
 func main() {
 	// Initialize DI container
-	container := nasc.NewContainer()
+	container := nasc.New()
 
 	// Initialize Fíth renderer
-	renderer := fith.NewRenderer("views")
-	container.Register("renderer", renderer)
+	renderer, err := fith.NewWithDir("views")
+	if err != nil {
+		log.Fatalf("Failed to initialize renderer: %v", err)
+	}
+	// TODO: Register renderer in container if needed
+	_ = renderer
 
 	// Initialize router
-	router := cosan.NewRouter()
+	router := cosan.New()
 
 	// Register handlers
 	postHandler := handlers.NewPostHandler(container)
@@ -46,8 +50,10 @@ func main() {
 	router.DELETE("/comments/:id", commentHandler.Delete)
 [[- end ]]
 
-	// Static files
-	router.Static("/public", "./public")
+	// Serve static files from /public
+	router.GET("/public/*", func(w http.ResponseWriter, r *http.Request) {
+		http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))).ServeHTTP(w, r)
+	})
 
 	// Start server
 	port := os.Getenv("PORT")
