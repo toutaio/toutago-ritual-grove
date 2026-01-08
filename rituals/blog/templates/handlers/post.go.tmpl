@@ -4,16 +4,27 @@ import (
 "[[ .module_path ]]/internal/models"
 "github.com/toutaio/toutago-cosan-router"
 nasc "github.com/toutaio/toutago-nasc-dependency-injector"
+[[ if eq .frontend_type "inertia-vue" -]]
+"github.com/toutaio/toutago-inertia"
+[[ end -]]
 )
 
 // PostHandler handles blog post operations
 type PostHandler struct {
 container *nasc.Nasc
+[[ if eq .frontend_type "inertia-vue" -]]
+inertia *inertia.Inertia
+[[ end -]]
 }
 
 // NewPostHandler creates a new post handler
-func NewPostHandler(container *nasc.Nasc) *PostHandler {
-return &PostHandler{container: container}
+func NewPostHandler(container *nasc.Nasc[[ if eq .frontend_type "inertia-vue" ]], inertiaInstance *inertia.Inertia[[ end ]]) *PostHandler {
+return &PostHandler{
+container: container,
+[[ if eq .frontend_type "inertia-vue" -]]
+inertia: inertiaInstance,
+[[ end -]]
+}
 }
 
 // List shows all posts
@@ -23,7 +34,13 @@ posts := []models.Post{
 // Mock data for now
 }
 
+[[ if eq .frontend_type "inertia-vue" -]]
+return h.inertia.Render(c.Response(), c.Request(), "Posts/Index", map[string]interface{}{
+"posts": posts,
+})
+[[ else -]]
 return c.JSON(200, posts)
+[[ end -]]
 }
 
 // Show displays a single post
@@ -36,7 +53,13 @@ post := models.Post{
 }
 _ = id // Use id when implementing
 
+[[ if eq .frontend_type "inertia-vue" -]]
+return h.inertia.Render(c.Response(), c.Request(), "Posts/Show", map[string]interface{}{
+"post": post,
+})
+[[ else -]]
 return c.JSON(200, post)
+[[ end -]]
 }
 
 // Create creates a new post
@@ -47,7 +70,12 @@ return c.JSON(400, map[string]string{"error": "Invalid request"})
 }
 
 // TODO: Save to database
+[[ if eq .frontend_type "inertia-vue" -]]
+// Redirect back to posts list after creation
+return h.inertia.Location(c.Response(), "/posts")
+[[ else -]]
 return c.JSON(201, post)
+[[ end -]]
 }
 
 // Update updates an existing post
@@ -60,7 +88,12 @@ return c.JSON(400, map[string]string{"error": "Invalid request"})
 
 // TODO: Update in database
 _ = id // Use id when implementing
+[[ if eq .frontend_type "inertia-vue" -]]
+// Redirect back to post detail after update
+return h.inertia.Location(c.Response(), "/posts/" + id)
+[[ else -]]
 return c.JSON(200, post)
+[[ end -]]
 }
 
 // Delete deletes a post
@@ -69,5 +102,10 @@ id := c.Param("id")
 
 // TODO: Delete from database
 _ = id // Use id when implementing
+[[ if eq .frontend_type "inertia-vue" -]]
+// Redirect back to posts list after deletion
+return h.inertia.Location(c.Response(), "/posts")
+[[ else -]]
 return c.JSON(204, nil)
+[[ end -]]
 }

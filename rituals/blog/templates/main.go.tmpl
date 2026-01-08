@@ -10,12 +10,26 @@ import (
 	"github.com/toutaio/toutago-cosan-router"
 	"github.com/toutaio/toutago-fith-renderer"
 	"github.com/toutaio/toutago-nasc-dependency-injector"
+[[- if eq .frontend_type "inertia-vue" ]]
+	"github.com/toutaio/toutago-inertia"
+[[- end ]]
 )
 
 func main() {
 	// Initialize DI container
 	container := nasc.New()
 
+[[- if eq .frontend_type "inertia-vue" ]]
+	// Initialize Inertia.js
+	inertiaInstance := inertia.New(inertia.Config{
+		RootView: "app",
+		Version:  "1.0",
+[[- if .enable_ssr ]]
+		SSREnabled: true,
+		SSRUrl:     "http://localhost:13714",
+[[- end ]]
+	})
+[[- else ]]
 	// Initialize Fíth renderer
 	renderer, err := fith.NewWithDir("views")
 	if err != nil {
@@ -23,13 +37,19 @@ func main() {
 	}
 	// TODO: Register renderer in container if needed
 	_ = renderer
+[[- end ]]
 
 	// Initialize router
 	router := cosan.New()
 
 	// Register handlers
+[[- if eq .frontend_type "inertia-vue" ]]
+	postHandler := handlers.NewPostHandler(container, inertiaInstance)
+	categoryHandler := handlers.NewCategoryHandler(container, inertiaInstance)
+[[- else ]]
 	postHandler := handlers.NewPostHandler(container)
 	categoryHandler := handlers.NewCategoryHandler(container)
+[[- end ]]
 [[- if .enable_comments ]]
 	commentHandler := handlers.NewCommentHandler(container)
 [[- end ]]
