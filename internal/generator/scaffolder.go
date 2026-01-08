@@ -329,16 +329,28 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 		destPath := filepath.Join(projectPath, destPathRendered)
 
 		// Check if source exists
-		if _, err := os.Stat(srcPath); os.IsNotExist(err) {
+		info, err := os.Stat(srcPath)
+		if os.IsNotExist(err) {
 			if fileMapping.Optional {
 				continue
 			}
 			return fmt.Errorf("template file not found: %s", srcPath)
 		}
+		if err != nil {
+			return fmt.Errorf("failed to stat %s: %w", srcPath, err)
+		}
 
-		// Generate file (templates are always rendered)
-		if err := s.generator.GenerateFile(srcPath, destPath, true); err != nil {
-			return fmt.Errorf("failed to generate %s: %w", destPathRendered, err)
+		// Handle directories vs files
+		if info.IsDir() {
+			// Generate all files in directory
+			if err := s.generator.generateDirectory(srcPath, destPath, true); err != nil {
+				return fmt.Errorf("failed to generate directory %s: %w", destPathRendered, err)
+			}
+		} else {
+			// Generate single file (templates are always rendered)
+			if err := s.generator.GenerateFile(srcPath, destPath, true); err != nil {
+				return fmt.Errorf("failed to generate %s: %w", destPathRendered, err)
+			}
 		}
 	}
 
@@ -375,16 +387,28 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 		destPath := filepath.Join(projectPath, destPathRendered)
 
 		// Check if source exists
-		if _, err := os.Stat(srcPath); os.IsNotExist(err) {
+		info, err := os.Stat(srcPath)
+		if os.IsNotExist(err) {
 			if fileMapping.Optional {
 				continue
 			}
 			return fmt.Errorf("static file not found: %s", srcPath)
 		}
+		if err != nil {
+			return fmt.Errorf("failed to stat %s: %w", srcPath, err)
+		}
 
-		// Copy static file (no template rendering)
-		if err := s.generator.GenerateFile(srcPath, destPath, false); err != nil {
-			return fmt.Errorf("failed to copy %s: %w", destPathRendered, err)
+		// Handle directories vs files
+		if info.IsDir() {
+			// Copy all files in directory
+			if err := s.generator.generateDirectory(srcPath, destPath, false); err != nil {
+				return fmt.Errorf("failed to copy directory %s: %w", destPathRendered, err)
+			}
+		} else {
+			// Copy single static file (no template rendering)
+			if err := s.generator.GenerateFile(srcPath, destPath, false); err != nil {
+				return fmt.Errorf("failed to copy %s: %w", destPathRendered, err)
+			}
 		}
 	}
 
