@@ -1,19 +1,25 @@
 import { createApp, h } from 'vue'
 import { createInertiaApp } from '@toutaio/inertia-vue'
 
+// Import pages and layouts manually
+import Home from './pages/Home.vue'
+import DefaultLayout from './layouts/Default.vue'
+
+const pages = {
+  'Home': Home,
+}
+
 createInertiaApp({
   resolve: name => {
-    const pages = import.meta.glob('./pages/**/*.vue', { eager: true })
-    const page = pages[`./pages/${name}.vue`]
+    const page = pages[name]
     
     if (!page) {
       throw new Error(`Page not found: ${name}`)
     }
     
-    // Set default layout
-    if (!page.default.layout) {
-      const layouts = import.meta.glob('./layouts/**/*.vue', { eager: true })
-      page.default.layout = layouts['./layouts/Default.vue']?.default
+    // Set default layout if not specified
+    if (!page.layout) {
+      page.layout = DefaultLayout
     }
     
     return page

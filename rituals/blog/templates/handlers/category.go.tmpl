@@ -37,8 +37,7 @@ categories := []models.Category{
 }
 
 [[ if eq .frontend_type "inertia-vue" -]]
-ic := internal.GetInertiaContext(c, h.inertia)
-return ic.Render("Categories/Index", map[string]interface{}{
+return internal.RenderInertiaPage(c, h.inertia, "Categories/Index", map[string]interface{}{
 "categories": categories,
 })
 [[ else -]]
@@ -52,8 +51,7 @@ id := c.Param("id")
 // TODO: Implement category detail view
 _ = id
 [[ if eq .frontend_type "inertia-vue" -]]
-ic := internal.GetInertiaContext(c, h.inertia)
-return ic.Render("Categories/Show", map[string]interface{}{
+return internal.RenderInertiaPage(c, h.inertia, "Categories/Show", map[string]interface{}{
 "category": map[string]interface{}{
 "id": id,
 "name": "Sample Category",

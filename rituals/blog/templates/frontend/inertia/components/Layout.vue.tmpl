@@ -5,7 +5,7 @@ import { usePage } from '@toutaio/inertia-vue'
 import { computed } from 'vue'
 
 const page = usePage()
-const flash = computed(() => page.props.flash || {})
+const flash = computed(() => page.value.props.flash || {})
 </script>
 
 <template>

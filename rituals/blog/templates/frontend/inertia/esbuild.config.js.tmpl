@@ -12,9 +12,6 @@ const clientConfig = {
   outdir: 'public/build',
   publicPath: '/build',
   plugins: [vue()],
-  loader: {
-    '.vue': 'js',
-  },
   define: {
     'process.env.NODE_ENV': JSON.stringify(isProd ? 'production' : 'development'),
   },

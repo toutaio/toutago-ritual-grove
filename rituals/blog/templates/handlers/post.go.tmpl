@@ -38,8 +38,7 @@ posts := []models.Post{
 }
 
 [[ if eq .frontend_type "inertia-vue" -]]
-ic := internal.GetInertiaContext(c, h.inertia)
-return ic.Render("Posts/Index", map[string]interface{}{
+return internal.RenderInertiaPage(c, h.inertia, "Posts/Index", map[string]interface{}{
 "posts": posts,
 })
 [[ else -]]
@@ -58,8 +57,7 @@ post := models.Post{
 _ = id // Use id when implementing
 
 [[ if eq .frontend_type "inertia-vue" -]]
-ic := internal.GetInertiaContext(c, h.inertia)
-return ic.Render("Posts/Show", map[string]interface{}{
+return internal.RenderInertiaPage(c, h.inertia, "Posts/Show", map[string]interface{}{
 "post": post,
 })
 [[ else -]]

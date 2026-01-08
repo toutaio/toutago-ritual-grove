@@ -2,7 +2,11 @@
 package internal
 
 import (
+	"bytes"
+	"html/template"
 	"net/http"
+	"os"
+	
 	"github.com/toutaio/toutago-cosan-router"
 	"github.com/toutaio/toutago-inertia/pkg/inertia"
 )
@@ -10,11 +14,17 @@ import (
 // CosanAdapter adapts cosan.Context to inertia.ContextInterface
 type CosanAdapter struct {
 	ctx cosan.Context
+	interceptResponse bool
+	responseBuffer *bytes.Buffer
 }
 
 // NewCosanAdapter creates a new adapter
 func NewCosanAdapter(ctx cosan.Context) *CosanAdapter {
-	return &CosanAdapter{ctx: ctx}
+	return &CosanAdapter{
+		ctx: ctx,
+		interceptResponse: !inertia.IsInertiaRequest(ctx.Request()),
+		responseBuffer: &bytes.Buffer{},
+	}
 }
 
 // Request returns the HTTP request
@@ -24,6 +34,12 @@ func (a *CosanAdapter) Request() *http.Request {
 
 // Response returns the HTTP response writer
 func (a *CosanAdapter) Response() http.ResponseWriter {
+	if a.interceptResponse {
+		return &bufferedResponseWriter{
+			buffer: a.responseBuffer,
+			header: a.ctx.Response().Header(),
+		}
+	}
 	return a.ctx.Response()
 }
 
@@ -37,9 +53,67 @@ func (a *CosanAdapter) Get(key string) interface{} {
 	return a.ctx.Get(key)
 }
 
+// bufferedResponseWriter buffers the response
+type bufferedResponseWriter struct {
+	buffer *bytes.Buffer
+	header http.Header
+}
+
+func (b *bufferedResponseWriter) Header() http.Header {
+	return b.header
+}
+
+func (b *bufferedResponseWriter) Write(data []byte) (int, error) {
+	return b.buffer.Write(data)
+}
+
+func (b *bufferedResponseWriter) WriteHeader(statusCode int) {
+	// ignore for now
+}
+
 // GetInertiaContext creates an Inertia context from a cosan context
 func GetInertiaContext(c cosan.Context, mgr *inertia.Inertia) *inertia.InertiaContext {
 	adapter := NewCosanAdapter(c)
 	return inertia.NewContext(adapter, mgr)
+}
+
+// RenderInertiaPage renders an Inertia page with HTML wrapping for initial loads
+func RenderInertiaPage(c cosan.Context, mgr *inertia.Inertia, component string, props map[string]interface{}) error {
+	adapter := NewCosanAdapter(c)
+	ic := inertia.NewContext(adapter, mgr)
+	
+	// Render the Inertia response
+	err := ic.Render(component, props)
+	if err != nil {
+		return err
+	}
+	
+	// If this is an Inertia request, response is already sent as JSON
+	if inertia.IsInertiaRequest(c.Request()) {
+		return nil
+	}
+	
+	// For initial page loads, wrap in HTML
+	pageJSON := adapter.responseBuffer.String()
+	
+	tmplPath := "templates/app.html"
+	tmplContent, err := os.ReadFile(tmplPath)
+	if err != nil {
+		return err
+	}
+	
+	tmpl, err := template.New("app").Parse(string(tmplContent))
+	if err != nil {
+		return err
+	}
+	
+	c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
+	
+	data := map[string]template.HTML{
+		"INERTIA": template.HTML(pageJSON),
+		"INERTIA_HEAD": "",
+	}
+	
+	return tmpl.Execute(c.Response(), data)
 }
 [[ end -]]

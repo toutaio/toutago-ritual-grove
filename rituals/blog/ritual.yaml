@@ -187,6 +187,10 @@ files:
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     # Inertia.js frontend files
+    - src: templates/app.html.tmpl
+      dest: templates/app.html
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
+
     - src: frontend/inertia/app.js.tmpl
       dest: frontend/app.js
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
@@ -213,6 +217,14 @@ files:
 
     - src: frontend/inertia/pages/Posts/Edit.vue.tmpl
       dest: frontend/pages/Posts/Edit.vue
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
+
+    - src: frontend/inertia/pages/Categories/Index.vue.tmpl
+      dest: frontend/pages/Categories/Index.vue
+      condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
+
+    - src: frontend/inertia/pages/Categories/Show.vue.tmpl
+      dest: frontend/pages/Categories/Show.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     - src: frontend/inertia/components/Layout.vue.tmpl

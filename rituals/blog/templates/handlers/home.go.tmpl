@@ -32,8 +32,7 @@ func NewHomeHandler(container *nasc.Nasc[[ if eq .frontend_type "inertia-vue" ]]
 // Index shows the home page
 func (h *HomeHandler) Index(c cosan.Context) error {
 [[ if eq .frontend_type "inertia-vue" -]]
-	ic := internal.GetInertiaContext(c, h.inertia)
-	return ic.Render("Home", map[string]interface{}{
+	return internal.RenderInertiaPage(c, h.inertia, "Home", map[string]interface{}{
 		"appName": "[[ .app_name ]]",
 	})
 [[ else -]]

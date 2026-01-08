@@ -1,10 +1,31 @@
 import { createInertiaApp } from '@toutaio/inertia-vue'
 import { createSSRApp, h } from 'vue'
 
+// Import all pages manually
+import Home from './pages/Home.vue'
+import PostsIndex from './pages/Posts/Index.vue'
+import PostsShow from './pages/Posts/Show.vue'
+import PostsEdit from './pages/Posts/Edit.vue'
+import CategoriesIndex from './pages/Categories/Index.vue'
+import CategoriesShow from './pages/Categories/Show.vue'
+
+const pages = {
+  'Home': Home,
+  'Posts/Index': PostsIndex,
+  'Posts/Show': PostsShow,
+  'Posts/Edit': PostsEdit,
+  'Categories/Index': CategoriesIndex,
+  'Categories/Show': CategoriesShow,
+}
+
 createInertiaApp({
   resolve: name => {
-    const pages = import.meta.glob('./pages/**/*.vue', { eager: true })
-    return pages[`./pages/${name}.vue`]
+    const component = pages[name]
+    if (!component) {
+      console.error(`Page component "${name}" not found. Available pages:`, Object.keys(pages))
+      throw new Error(`Page not found: ${name}`)
+    }
+    return component
   },
   setup({ el, App, props, plugin }) {
     createSSRApp({ render: () => h(App, props) })
