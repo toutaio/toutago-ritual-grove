@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0-dev] - 2026-01-08
 
+### Fixed
+- **Blog Ritual File Conditions**
+  - Fixed file conditions to use `[[ ]]` delimiters instead of `{{ }}`
+  - Correctly generates frontend files based on selected framework (inertia-vue, htmx, traditional)
+  - Vue/Inertia.js files now properly generated when selected
+
 ### Changed
 - **Template Delimiter Change**
   - Changed template delimiters from `{{ }}` to `%% %%` for Vue/JS template files
