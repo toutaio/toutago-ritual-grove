@@ -23,6 +23,7 @@ Ritual Grove is a powerful system for building production-ready applications usi
 ## Features
 
 - 🎯 **Create Complete Applications** - Generate production-ready apps from rituals (blog, CRM, wiki, API server, etc.)
+- 🐳 **Docker Support** - All rituals include optional Docker configuration with hot reload for development
 - 📦 **Package Management** - Automatic dependency resolution and package installation
 - 🔄 **Lifecycle Management** - Deploy, update, and rollback applications
 - 📊 **Deployment History** - Track all deployments with timestamps, status, and error logs
@@ -70,6 +71,46 @@ touta ritual update
 # Clean ritual cache (useful after upgrading touta)
 touta ritual clean --force
 ```
+
+## Docker Support
+
+All rituals include optional Docker support for development environments. When creating a project, you'll be asked if you want to enable Docker support (enabled by default).
+
+### Generated Docker Files
+
+Projects with Docker support include:
+- `Dockerfile` - Multi-stage build with Go 1.21+ and Air for hot reload
+- `docker-compose.yml` - Complete stack with app, database (if needed), and frontend (if needed)
+- `.dockerignore` - Optimized for fast builds
+- `.air.toml` - Hot reload configuration
+- `.env.example` - Environment variables template
+- `DOCKER.md` - Comprehensive usage documentation
+- `wait-for-it.sh` - Database readiness helper
+
+### Quick Start with Docker
+
+```bash
+# Create a new project with Docker support
+touta ritual init my-blog --ritual blog
+
+cd my-blog
+
+# Start the entire stack (app + database + frontend)
+docker-compose up
+
+# Application runs at http://localhost:8080
+# Hot reload is enabled - edit files and see changes instantly
+```
+
+### Features
+
+- **Hot Reload**: Changes to Go files automatically rebuild and restart
+- **Database Integration**: PostgreSQL or MySQL automatically configured
+- **Frontend Support**: Node.js service for Vue/Inertia.js projects
+- **Health Checks**: Services wait for dependencies before starting
+- **Volume Persistence**: Database data and Go module cache persist across restarts
+
+See `DOCKER.md` in generated projects for detailed documentation.
 
 ## Troubleshooting
 
