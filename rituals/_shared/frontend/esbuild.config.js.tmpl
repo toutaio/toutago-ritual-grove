@@ -1,0 +1,47 @@
+import esbuild from 'esbuild'
+import vue from 'esbuild-plugin-vue3'
+
+const isDev = process.argv.includes('--watch')
+
+const config = {
+  entryPoints: ['./app.js'],
+  bundle: true,
+  outfile: '../public/build/app.js',
+  format: 'esm',
+  target: 'es2020',
+  sourcemap: isDev,
+  minify: !isDev,
+  plugins: [
+    vue({
+      sourceMap: isDev,
+    }),
+  ],
+  loader: {
+    '.vue': 'js',
+    '.png': 'file',
+    '.jpg': 'file',
+    '.svg': 'file',
+  },
+  define: {
+    'process.env.NODE_ENV': isDev ? '"development"' : '"production"',
+  },
+}
+
+async function build() {
+  try {
+    if (isDev) {
+      console.log('👀 Watching for changes...')
+      const ctx = await esbuild.context(config)
+      await ctx.watch()
+    } else {
+      console.log('🔨 Building for production...')
+      await esbuild.build(config)
+      console.log('✅ Build complete!')
+    }
+  } catch (error) {
+    console.error('❌ Build failed:', error)
+    process.exit(1)
+  }
+}
+
+build()

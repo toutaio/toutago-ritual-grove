@@ -1,0 +1,306 @@
+# Docker Setup for [[.app_name]]
+
+This project includes Docker and Docker Compose configurations for easy development setup.
+
+## Prerequisites
+
+- Docker Engine 20.10+
+- Docker Compose v2.0+
+
+## Quick Start
+
+1. **Copy environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Start all services**:
+   ```bash
+   docker-compose up
+   ```
+
+3. **Access the application**:
+   - App: http://localhost:[[.port]]
+   [[- if .has_frontend]]
+   - Frontend dev server: http://localhost:3000
+   [[- end]]
+   [[- if .database_type]]
+   - Database: localhost:[[if eq .database_type "postgres"]]5432[[else]]3306[[end]]
+   [[- end]]
+
+## Services
+
+### App (Go Application)
+- **Image**: golang:1.21-alpine
+- **Hot Reload**: Using Air for automatic rebuilds
+- **Port**: [[.port]] (configurable via `APP_PORT` in .env)
+
+[[- if .database_type]]
+
+### Database ([[if eq .database_type "postgres"]]PostgreSQL[[else]]MySQL[[end]])
+- **Image**: [[if eq .database_type "postgres"]]postgres:16-alpine[[else]]mysql:8-alpine[[end]]
+- **Port**: [[if eq .database_type "postgres"]]5432[[else]]3306[[end]] (configurable via `DB_PORT` in .env)
+- **Data Volume**: `db-data` (persists across restarts)
+- **Credentials**: Set in .env file
+
+#### Database Access
+```bash
+# PostgreSQL
+[[- if eq .database_type "postgres"]]
+docker-compose exec db psql -U ${DB_USER} -d ${DB_NAME}
+[[- else]]
+# MySQL
+docker-compose exec db mysql -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME}
+[[- end]]
+```
+[[- end]]
+
+[[- if .has_frontend]]
+
+### Frontend (Node.js)
+- **Image**: node:20-alpine
+- **Build Tool**: esbuild with watch mode
+- **Port**: 3000 (configurable via `FRONTEND_PORT` in .env)
+- **Hot Reload**: Automatic rebuild on file changes
+[[- end]]
+
+## Development Workflow
+
+### Daily Development
+
+```bash
+# Start services in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f app
+
+# Stop services (keeps data)
+docker-compose down
+```
+
+### Hot Reload
+
+The application automatically reloads when you modify:
+- `.go` files (Air watches and rebuilds)
+- `.html`, `.tmpl` template files
+[[- if .has_frontend]]
+- Frontend `.js`, `.vue` files (esbuild watches and rebuilds)
+[[- end]]
+
+### Database Operations
+
+```bash
+# Run migrations
+docker-compose exec app go run cmd/migrate/main.go
+
+[[- if eq .database_type "postgres"]]
+# Backup database
+docker-compose exec db pg_dump -U ${DB_USER} ${DB_NAME} > backup.sql
+
+# Restore database
+docker-compose exec -T db psql -U ${DB_USER} ${DB_NAME} < backup.sql
+[[- else]]
+# Backup database
+docker-compose exec db mysqldump -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME} > backup.sql
+
+# Restore database
+docker-compose exec -T db mysql -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME} < backup.sql
+[[- end]]
+
+# Reset database (CAUTION: deletes all data)
+docker-compose down -v
+docker-compose up
+```
+
+### Debugging
+
+```bash
+# Shell into app container
+docker-compose exec app sh
+
+[[- if .database_type]]
+# Shell into database container
+docker-compose exec db sh
+[[- end]]
+
+# View container processes
+docker-compose top
+
+# View resource usage
+docker stats
+```
+
+## Environment Variables
+
+All environment variables are configured in the `.env` file:
+
+```bash
+# Application
+APP_PORT=[[.port]]              # HTTP port for the application
+LOG_LEVEL=debug        # Logging level (debug, info, warn, error)
+
+[[- if .database_type]]
+# Database
+DB_PORT=[[if eq .database_type "postgres"]]5432[[else]]3306[[end]]
+DB_USER=[[.db_user]]
+DB_PASSWORD=[[.db_password]]
+DB_NAME=[[.db_name]]
+[[- if eq .database_type "mysql"]]
+DB_ROOT_PASSWORD=rootpass
+[[- end]]
+[[- end]]
+
+[[- if .has_frontend]]
+# Frontend
+FRONTEND_PORT=3000
+[[- end]]
+
+# Project
+COMPOSE_PROJECT_NAME=[[.app_name]]
+```
+
+## Volumes
+
+Docker uses named volumes for data persistence:
+
+[[- if .database_type]]
+- **db-data**: Database files (persists across restarts)
+[[- end]]
+- **go-cache**: Go module cache (faster rebuilds)
+[[- if .has_frontend]]
+- **node-modules**: Node.js dependencies (better performance)
+[[- end]]
+
+### Volume Management
+
+```bash
+# List volumes
+docker volume ls
+
+# Inspect volume
+docker volume inspect [[.app_name]]_db-data
+
+# Remove all volumes (CAUTION: deletes data)
+docker-compose down -v
+```
+
+## Troubleshooting
+
+### Port Already in Use
+
+If you see "port is already allocated":
+
+```bash
+# Change port in .env
+echo "APP_PORT=8081" >> .env
+
+# Restart
+docker-compose up
+```
+
+### Database Connection Failed
+
+If app can't connect to database:
+
+1. Check database is healthy:
+   ```bash
+   docker-compose ps
+   ```
+
+2. Check database logs:
+   ```bash
+   docker-compose logs db
+   ```
+
+3. Verify environment variables:
+   ```bash
+   docker-compose config
+   ```
+
+### Hot Reload Not Working
+
+If changes aren't reflected:
+
+1. Check Air logs:
+   ```bash
+   docker-compose logs app
+   ```
+
+2. Restart Air:
+   ```bash
+   docker-compose restart app
+   ```
+
+3. Verify volume mounts:
+   ```bash
+   docker-compose config
+   ```
+
+### Build Failures
+
+If containers fail to build:
+
+```bash
+# Clear cache and rebuild
+docker-compose build --no-cache
+
+# Clean everything and start fresh
+docker-compose down -v
+docker system prune -a
+docker-compose up --build
+```
+
+### Slow Performance (macOS/Windows)
+
+Docker Desktop on non-Linux systems can be slow with bind mounts. Solutions:
+
+1. Use named volumes for dependencies (already configured)
+2. Allocate more resources in Docker Desktop settings
+3. Consider using Docker Sync for large projects
+
+## Production Deployment
+
+**Note**: These Docker files are optimized for development. For production:
+
+1. Use multi-stage builds to minimize image size
+2. Run as non-root user
+3. Don't include development dependencies
+4. Use secrets management (not .env files)
+5. Set up health checks
+6. Use a reverse proxy (nginx, Traefik)
+7. Enable logging and monitoring
+
+## Clean Up
+
+```bash
+# Stop and remove containers (keeps volumes)
+docker-compose down
+
+# Stop and remove everything including volumes
+docker-compose down -v
+
+# Remove all unused Docker resources
+docker system prune -a --volumes
+```
+
+## Additional Resources
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Reference](https://docs.docker.com/compose/compose-file/)
+- [Air - Go Hot Reload](https://github.com/cosmtrek/air)
+[[- if .has_frontend]]
+- [esbuild Documentation](https://esbuild.github.io/)
+[[- end]]
+
+## Support
+
+For issues specific to this project, please check:
+1. Application logs: `docker-compose logs app`
+[[- if .database_type]]
+2. Database logs: `docker-compose logs db`
+[[- end]]
+[[- if .has_frontend]]
+3. Frontend logs: `docker-compose logs frontend`
+[[- end]]
+4. All services: `docker-compose ps`
