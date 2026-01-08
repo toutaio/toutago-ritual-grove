@@ -136,6 +136,11 @@ questions:
       field: frontend_type
       equals: inertia-vue
 
+  - name: enable_docker
+    type: boolean
+    prompt: "Enable Docker support?"
+    default: true
+
 files:
   templates:
     - src: main.go.tmpl
@@ -262,9 +267,38 @@ files:
     - src: README.md.tmpl
       dest: README.md
 
+    # Docker support files (conditional)
+    - src: _shared:docker/Dockerfile.go.tmpl
+      dest: Dockerfile
+      condition: "enable_docker"
+    
+    - src: _shared:docker/docker-compose.yml.tmpl
+      dest: docker-compose.yml
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.dockerignore.tmpl
+      dest: .dockerignore
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.air.toml.tmpl
+      dest: .air.toml
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.env.example.tmpl
+      dest: .env.docker.example
+      condition: "enable_docker"
+    
+    - src: _shared:docs/DOCKER.md.tmpl
+      dest: DOCKER.md
+      condition: "enable_docker"
+
   static:
-    - src: static/style.css
+    - src: style.css
       dest: public/css/style.css
+    
+    - src: _shared:docker/wait-for-it.sh
+      dest: wait-for-it.sh
+      condition: "enable_docker"
 
 migrations:
   - from_version: "0.0.0"

@@ -39,6 +39,11 @@ prompts:
     type: boolean
     default: false
 
+  - name: enable_docker
+    description: Enable Docker support
+    type: boolean
+    default: true
+
 hooks:
   pre_generation:
     - task: validate-go
@@ -134,6 +139,42 @@ hooks:
       config:
         source: ".env.tmpl"
         destination: ".env"
+
+    - task: template-render
+      config:
+        source: "_shared:docker/Dockerfile.go.tmpl"
+        destination: "Dockerfile"
+      condition: "{{.enable_docker}}"
+
+    - task: template-render
+      config:
+        source: "_shared:docker/docker-compose.yml.tmpl"
+        destination: "docker-compose.yml"
+      condition: "{{.enable_docker}}"
+
+    - task: template-render
+      config:
+        source: "_shared:docker/.dockerignore.tmpl"
+        destination: ".dockerignore"
+      condition: "{{.enable_docker}}"
+
+    - task: template-render
+      config:
+        source: "_shared:docker/.air.toml.tmpl"
+        destination: ".air.toml"
+      condition: "{{.enable_docker}}"
+
+    - task: template-render
+      config:
+        source: "_shared:docs/DOCKER.md.tmpl"
+        destination: "DOCKER.md"
+      condition: "{{.enable_docker}}"
+
+    - task: file-copy
+      config:
+        source: "_shared:docker/wait-for-it.sh"
+        destination: "wait-for-it.sh"
+      condition: "{{.enable_docker}}"
 
     - task: env-set
       config:

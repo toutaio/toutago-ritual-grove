@@ -80,51 +80,85 @@ questions:
       min: 0
       max: 1000
 
+  - name: enable_docker
+    prompt: "Enable Docker support?"
+    type: boolean
+    default: true
+
 files:
   templates:
-    - src: templates/main.go.tmpl
+    - src: main.go.tmpl
       dest: main.go
       
-    - src: templates/go.mod.tmpl
+    - src: go.mod.tmpl
       dest: go.mod
       
-    - src: templates/models/page.go.tmpl
+    - src: models/page.go.tmpl
       dest: models/page.go
       
-    - src: templates/models/revision.go.tmpl
+    - src: models/revision.go.tmpl
       dest: models/revision.go
       
-    - src: templates/models/tag.go.tmpl
+    - src: models/tag.go.tmpl
       dest: models/tag.go
       condition: "{{.enable_tags}}"
       
-    - src: templates/handlers/pages.go.tmpl
+    - src: handlers/pages.go.tmpl
       dest: handlers/pages.go
       
-    - src: templates/handlers/search.go.tmpl
+    - src: handlers/search.go.tmpl
       dest: handlers/search.go
       condition: "{{.enable_search}}"
       
-    - src: templates/views/base.html.tmpl
+    - src: views/base.html.tmpl
       dest: views/base.html
       
-    - src: templates/views/page.html.tmpl
+    - src: views/page.html.tmpl
       dest: views/page.html
       
-    - src: templates/views/edit.html.tmpl
+    - src: views/edit.html.tmpl
       dest: views/edit.html
       
-    - src: templates/views/history.html.tmpl
+    - src: views/history.html.tmpl
       dest: views/history.html
       
-    - src: templates/migrations/001_initial.sql.tmpl
+    - src: migrations/001_initial.sql.tmpl
       dest: migrations/001_initial.sql
+    
+    # Docker support files (conditional)
+    - src: _shared:docker/Dockerfile.go.tmpl
+      dest: Dockerfile
+      condition: "enable_docker"
+    
+    - src: _shared:docker/docker-compose.yml.tmpl
+      dest: docker-compose.yml
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.dockerignore.tmpl
+      dest: .dockerignore
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.air.toml.tmpl
+      dest: .air.toml
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.env.example.tmpl
+      dest: .env.example
+      condition: "enable_docker"
+    
+    - src: _shared:docs/DOCKER.md.tmpl
+      dest: DOCKER.md
+      condition: "enable_docker"
       
   static:
-    - src: static/wiki.css
+    - src: wiki.css
       dest: static/wiki.css
-    - src: static/wiki.js
+    - src: wiki.js
       dest: static/wiki.js
+    
+    - src: _shared:docker/wait-for-it.sh
+      dest: wait-for-it.sh
+      condition: "enable_docker"
       
   directories:
     - models

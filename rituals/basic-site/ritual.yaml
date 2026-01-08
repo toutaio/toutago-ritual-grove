@@ -35,23 +35,57 @@ questions:
     type: text
     default: "1.22"
 
+  - name: enable_docker
+    prompt: "Enable Docker support?"
+    type: boolean
+    default: true
+
 files:
   templates:
-    - src: templates/main.go.tmpl
+    - src: main.go.tmpl
       dest: main.go
       
-    - src: templates/go.mod.tmpl
+    - src: go.mod.tmpl
       dest: go.mod
       
-    - src: templates/handlers/
+    - src: handlers/
       dest: handlers/
       
-    - src: templates/views/base.html.tmpl
+    - src: views/base.html.tmpl
       dest: views/home.html
+    
+    # Docker support files (conditional)
+    - src: _shared:docker/Dockerfile.go.tmpl
+      dest: Dockerfile
+      condition: "enable_docker"
+    
+    - src: _shared:docker/docker-compose.yml.tmpl
+      dest: docker-compose.yml
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.dockerignore.tmpl
+      dest: .dockerignore
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.air.toml.tmpl
+      dest: .air.toml
+      condition: "enable_docker"
+    
+    - src: _shared:docker/.env.example.tmpl
+      dest: .env.example
+      condition: "enable_docker"
+    
+    - src: _shared:docs/DOCKER.md.tmpl
+      dest: DOCKER.md
+      condition: "enable_docker"
       
   static:
-    - src: static/style.css
+    - src: style.css
       dest: static/style.css
+    
+    - src: _shared:docker/wait-for-it.sh
+      dest: wait-for-it.sh
+      condition: "enable_docker"
       
   directories:
     - handlers
