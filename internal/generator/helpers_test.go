@@ -142,13 +142,10 @@ func TestHasFrontendHelper(t *testing.T) {
 
 // TestTemplateHelpersIntegration tests using helpers in templates
 func TestTemplateHelpersIntegration(t *testing.T) {
-	engine := generator.NewTemplateEngine("fith")
+	engine := generator.NewGoTemplateEngine()
 	
-	// Register template helpers
-	engine.RegisterFunc("dockerImage", generator.DockerImage)
-	engine.RegisterFunc("dockerPort", generator.DockerPort)
-	engine.RegisterFunc("healthCheck", generator.HealthCheck)
-	engine.RegisterFunc("hasFrontend", generator.HasFrontend)
+	// Helpers are already registered in NewGoTemplateEngine
+	// No need to register them again
 
 	t.Run("use dockerImage in template", func(t *testing.T) {
 		template := `image: [[dockerImage .database_type]]`

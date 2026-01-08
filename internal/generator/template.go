@@ -40,6 +40,14 @@ func NewGoTemplateEngineWithDelimiters(left, right string) *GoTemplateEngine {
 		"camel":  toCamelCase,
 		"snake":  toSnakeCase,
 		"kebab":  toKebabCase,
+		
+		// Docker helpers
+		"dockerImage":  DockerImage,
+		"dockerPort":   DockerPort,
+		"healthCheck":  HealthCheck,
+		"hasFrontend":  HasFrontend,
+		"dbUser":       DBUser,
+		"dbName":       DBName,
 	}
 
 	return &GoTemplateEngine{
@@ -47,6 +55,11 @@ func NewGoTemplateEngineWithDelimiters(left, right string) *GoTemplateEngine {
 		leftDelim:  left,
 		rightDelim: right,
 	}
+}
+
+// RegisterFunc adds a custom function to the template engine
+func (e *GoTemplateEngine) RegisterFunc(name string, fn interface{}) {
+	e.funcMap[name] = fn
 }
 
 // Render renders a template string with data

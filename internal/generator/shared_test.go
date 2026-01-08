@@ -99,7 +99,7 @@ services:
 					{
 						Source:      "_shared:docker/docker-compose.yml.tmpl",
 						Destination: "docker-compose.yml",
-						Condition:   "use_docker == true",
+						Condition:   "[[ if .use_docker ]]true[[ else ]]false[[ end ]]",
 					},
 				},
 			},
@@ -127,7 +127,7 @@ services:
 					{
 						Source:      "_shared:docker/docker-compose.yml.tmpl",
 						Destination: "docker-compose.yml",
-						Condition:   "use_docker == true",
+						Condition:   "[[ if .use_docker ]]true[[ else ]]false[[ end ]]",
 					},
 				},
 			},
