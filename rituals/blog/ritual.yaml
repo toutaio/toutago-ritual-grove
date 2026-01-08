@@ -138,114 +138,114 @@ questions:
 
 files:
   templates:
-    - src: templates/main.go.tmpl
+    - src: main.go.tmpl
       dest: main.go
 
-    - src: templates/go.mod.tmpl
+    - src: go.mod.tmpl
       dest: go.mod
 
-    - src: templates/models/post.go.tmpl
+    - src: models/post.go.tmpl
       dest: internal/models/post.go
 
-    - src: templates/models/category.go.tmpl
+    - src: models/category.go.tmpl
       dest: internal/models/category.go
 
-    - src: templates/models/comment.go.tmpl
+    - src: models/comment.go.tmpl
       dest: internal/models/comment.go
       condition: "enable_comments == true"
 
-    - src: templates/handlers/post.go.tmpl
+    - src: handlers/post.go.tmpl
       dest: internal/handlers/post.go
 
-    - src: templates/handlers/category.go.tmpl
+    - src: handlers/category.go.tmpl
       dest: internal/handlers/category.go
 
-    - src: templates/handlers/comment.go.tmpl
+    - src: handlers/comment.go.tmpl
       dest: internal/handlers/comment.go
       condition: "enable_comments == true"
 
-    - src: templates/views/layout.html.tmpl
+    - src: views/layout.html.tmpl
       dest: views/layout.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/views/post_list.html.tmpl
+    - src: views/post_list.html.tmpl
       dest: views/post_list.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/views/post_detail.html.tmpl
+    - src: views/post_detail.html.tmpl
       dest: views/post_detail.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/views/category_list.html.tmpl
+    - src: views/category_list.html.tmpl
       dest: views/category_list.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     # Inertia.js frontend files
-    - src: templates/frontend/inertia/app.js.tmpl
+    - src: frontend/inertia/app.js.tmpl
       dest: frontend/app.js
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/esbuild.config.js.tmpl
+    - src: frontend/inertia/esbuild.config.js.tmpl
       dest: esbuild.config.js
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/package.json.tmpl
+    - src: frontend/inertia/package.json.tmpl
       dest: package.json
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/pages/Home.vue.tmpl
+    - src: frontend/inertia/pages/Home.vue.tmpl
       dest: frontend/pages/Home.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/pages/Posts/Index.vue.tmpl
+    - src: frontend/inertia/pages/Posts/Index.vue.tmpl
       dest: frontend/pages/Posts/Index.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/pages/Posts/Show.vue.tmpl
+    - src: frontend/inertia/pages/Posts/Show.vue.tmpl
       dest: frontend/pages/Posts/Show.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/pages/Posts/Edit.vue.tmpl
+    - src: frontend/inertia/pages/Posts/Edit.vue.tmpl
       dest: frontend/pages/Posts/Edit.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/components/Layout.vue.tmpl
+    - src: frontend/inertia/components/Layout.vue.tmpl
       dest: frontend/components/Layout.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/components/Header.vue.tmpl
+    - src: frontend/inertia/components/Header.vue.tmpl
       dest: frontend/components/Header.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
-    - src: templates/frontend/inertia/components/Footer.vue.tmpl
+    - src: frontend/inertia/components/Footer.vue.tmpl
       dest: frontend/components/Footer.vue
       condition: "[[ eq .frontend_type \"inertia-vue\" ]]"
 
     # HTMX frontend files
-    - src: templates/frontend/htmx/app.js.tmpl
+    - src: frontend/htmx/app.js.tmpl
       dest: frontend/app.js
       condition: "[[ eq .frontend_type \"htmx\" ]]"
 
-    - src: templates/frontend/htmx/esbuild.config.js.tmpl
+    - src: frontend/htmx/esbuild.config.js.tmpl
       dest: esbuild.config.js
       condition: "[[ eq .frontend_type \"htmx\" ]]"
 
-    - src: templates/frontend/htmx/package.json.tmpl
+    - src: frontend/htmx/package.json.tmpl
       dest: package.json
       condition: "[[ eq .frontend_type \"htmx\" ]]"
 
-    - src: templates/views/htmx/layout.html.tmpl
+    - src: views/htmx/layout.html.tmpl
       dest: views/layout.html
       condition: "[[ eq .frontend_type \"htmx\" ]]"
 
-    - src: templates/.env.example.tmpl
+    - src: .env.example.tmpl
       dest: .env.example
 
-    - src: templates/README.md.tmpl
+    - src: README.md.tmpl
       dest: README.md
 
   static:
-    - src: static/style.css
+    - src: style.css
       dest: public/css/style.css
 
 migrations:

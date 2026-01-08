@@ -317,8 +317,9 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 	}
 
 	// Process static files
+	staticDir := filepath.Join(ritualPath, "static")
 	for _, fileMapping := range manifest.Files.Static {
-		srcPath := filepath.Join(templatesDir, fileMapping.Source)
+		srcPath := filepath.Join(staticDir, fileMapping.Source)
 
 		// Render destination path (may contain template variables)
 		destPathRendered, err := s.generator.engine.Render(fileMapping.Destination, vars.All())
