@@ -1,5 +1,5 @@
 {
-  "name": "[[ .AppName | toLower | replaceAll \" \" \"-\" ]]",
+  "name": "[[ .app_name | lower | kebab ]]",
   "version": "1.0.0",
   "private": true,
   "description": "HTMX-powered frontend for [[ .AppName ]]",
