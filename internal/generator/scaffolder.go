@@ -288,12 +288,38 @@ logs/
 // ApplyTemplateFiles applies template files from the ritual
 func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, manifest *ritual.Manifest, vars *Variables) error {
 	s.generator.SetVariables(vars)
+	
+	// Set rituals base path for _shared template support
+	// ritualPath is /path/to/rituals/ritual-name
+	// We need /path/to/rituals
+	ritualsBasePath := filepath.Dir(ritualPath)
+	s.generator.SetRitualsBasePath(ritualsBasePath)
 
 	templatesDir := filepath.Join(ritualPath, "templates")
 
 	// Process template files
 	for _, fileMapping := range manifest.Files.Templates {
-		srcPath := filepath.Join(templatesDir, fileMapping.Source)
+		// Evaluate condition if present
+		if fileMapping.Condition != "" {
+			shouldGenerate, err := evaluateCondition(fileMapping.Condition, vars.All())
+			if err != nil {
+				return fmt.Errorf("failed to evaluate condition for %s: %w", fileMapping.Source, err)
+			}
+			if !shouldGenerate {
+				continue // Skip this file
+			}
+		}
+		
+		// Check for _shared: prefix
+		var srcPath string
+		if strings.HasPrefix(fileMapping.Source, "_shared:") {
+			// Use _shared template
+			sharedPath := strings.TrimPrefix(fileMapping.Source, "_shared:")
+			srcPath = filepath.Join(ritualsBasePath, "_shared", sharedPath)
+		} else {
+			// Regular ritual template
+			srcPath = filepath.Join(templatesDir, fileMapping.Source)
+		}
 
 		// Render destination path (may contain template variables)
 		destPathRendered, err := s.generator.engine.Render(fileMapping.Destination, vars.All())
@@ -319,7 +345,27 @@ func (s *ProjectScaffolder) ApplyTemplateFiles(projectPath, ritualPath string, m
 	// Process static files
 	staticDir := filepath.Join(ritualPath, "static")
 	for _, fileMapping := range manifest.Files.Static {
-		srcPath := filepath.Join(staticDir, fileMapping.Source)
+		// Evaluate condition if present
+		if fileMapping.Condition != "" {
+			shouldGenerate, err := evaluateCondition(fileMapping.Condition, vars.All())
+			if err != nil {
+				return fmt.Errorf("failed to evaluate condition for %s: %w", fileMapping.Source, err)
+			}
+			if !shouldGenerate {
+				continue // Skip this file
+			}
+		}
+		
+		// Check for _shared: prefix
+		var srcPath string
+		if strings.HasPrefix(fileMapping.Source, "_shared:") {
+			// Use _shared static file
+			sharedPath := strings.TrimPrefix(fileMapping.Source, "_shared:")
+			srcPath = filepath.Join(ritualsBasePath, "_shared", sharedPath)
+		} else {
+			// Regular ritual static file
+			srcPath = filepath.Join(staticDir, fileMapping.Source)
+		}
 
 		// Render destination path (may contain template variables)
 		destPathRendered, err := s.generator.engine.Render(fileMapping.Destination, vars.All())

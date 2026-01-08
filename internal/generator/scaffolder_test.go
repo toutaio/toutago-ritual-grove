@@ -348,7 +348,11 @@ func TestProjectScaffolder_ApplyTemplateFiles(t *testing.T) {
 
 	// Create static file
 	static := `# Static content`
-	if err := os.WriteFile(filepath.Join(ritualPath, "templates", "static.txt"), []byte(static), 0600); err != nil {
+	staticDir := filepath.Join(ritualPath, "static")
+	if err := os.MkdirAll(staticDir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(staticDir, "static.txt"), []byte(static), 0600); err != nil {
 		t.Fatal(err)
 	}
 

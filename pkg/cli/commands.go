@@ -281,6 +281,10 @@ func initRitual(ritualName, outputPath string, skipQuestions bool, initGit bool,
 	variables["module_path"] = modulePath
 	variables["ritual_name"] = ritualName
 	variables["ritual_version"] = manifest.Ritual.Version
+	// Set app_name for Docker templates (defaults to project_name)
+	if _, exists := variables["app_name"]; !exists {
+		variables["app_name"] = projectName
+	}
 
 	// Generate files
 	gen := generator.NewFileGenerator("go")
@@ -289,6 +293,12 @@ func initRitual(ritualName, outputPath string, skipQuestions bool, initGit bool,
 		vars.Set(k, v)
 	}
 	gen.SetVariables(vars)
+	
+	// Set rituals base path for _shared template support
+	// ritualMeta.Path is /path/to/rituals/ritual-name
+	// We need /path/to/rituals
+	ritualsBasePath := filepath.Dir(ritualMeta.Path)
+	gen.SetRitualsBasePath(ritualsBasePath)
 
 	fmt.Printf("📝 Generating project files...\n")
 	if err := gen.GenerateFiles(manifest, ritualMeta.Path, outputPath); err != nil {

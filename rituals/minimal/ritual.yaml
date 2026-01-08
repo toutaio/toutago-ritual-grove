@@ -39,6 +39,11 @@ questions:
       min: 1024
       max: 65535
 
+  - name: enable_docker
+    type: boolean
+    prompt: "Enable Docker support?"
+    default: true
+
 files:
   templates:
     - src: main.go.tmpl
@@ -52,6 +57,36 @@ files:
 
     - src: gitignore.tmpl
       dest: .gitignore
+
+    # Docker support files (conditional)
+    - src: _shared:docker/Dockerfile.go.tmpl
+      dest: Dockerfile
+      condition: "enable_docker"
+
+    - src: _shared:docker/docker-compose.yml.tmpl
+      dest: docker-compose.yml
+      condition: "enable_docker"
+
+    - src: _shared:docker/.dockerignore.tmpl
+      dest: .dockerignore
+      condition: "enable_docker"
+
+    - src: _shared:docker/.air.toml.tmpl
+      dest: .air.toml
+      condition: "enable_docker"
+
+    - src: _shared:docker/.env.example.tmpl
+      dest: .env.example
+      condition: "enable_docker"
+
+    - src: _shared:docs/DOCKER.md.tmpl
+      dest: DOCKER.md
+      condition: "enable_docker"
+
+  static:
+    - src: _shared:docker/wait-for-it.sh
+      dest: wait-for-it.sh
+      condition: "enable_docker"
 
 hooks:
   post_install:

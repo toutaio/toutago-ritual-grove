@@ -120,6 +120,16 @@ func (r *Registry) scanEmbedded() error {
 
 	// Extract embedded rituals to cache if not already present or outdated
 	embeddedDir := filepath.Join(r.cacheDir, "embedded")
+	
+	// Extract _shared directory if it exists in embedded files
+	sharedPath := filepath.Join(embeddedDir, "_shared")
+	if _, err := os.Stat(filepath.Join(sharedPath, "docker")); os.IsNotExist(err) {
+		// Extract _shared directory
+		if err := r.extractEmbeddedShared(embeddedDir); err != nil {
+			// Log but don't fail if _shared can't be extracted
+			_ = err
+		}
+	}
 
 	for _, name := range ritualNames {
 		ritualPath := filepath.Join(embeddedDir, name)
@@ -206,6 +216,67 @@ func (r *Registry) extractEmbeddedRitual(name, destDir string) error {
 			}
 		}()
 
+		_, err = io.Copy(destFile, srcFile)
+		return err
+	})
+}
+
+// extractEmbeddedShared extracts the _shared directory from embedded files
+func (r *Registry) extractEmbeddedShared(destDir string) error {
+	ritualFS := embedded.GetFS()
+	sharedPath := filepath.Join(destDir, "_shared")
+	
+	// Check if _shared exists in embedded FS
+	_, err := fs.Stat(ritualFS, "_shared")
+	if err != nil {
+		// _shared doesn't exist in embedded files
+		return nil
+	}
+	
+	// Ensure destination exists
+	if err := os.MkdirAll(sharedPath, 0750); err != nil {
+		return fmt.Errorf("failed to create _shared directory: %w", err)
+	}
+	
+	// Walk the _shared directory
+	return fs.WalkDir(ritualFS, "_shared", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		
+		destPath := filepath.Join(destDir, path)
+		
+		if d.IsDir() {
+			return os.MkdirAll(destPath, 0750)
+		}
+		
+		// Create parent directory
+		if err := os.MkdirAll(filepath.Dir(destPath), 0750); err != nil {
+			return err
+		}
+		
+		// Copy file
+		srcFile, err := ritualFS.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if cerr := srcFile.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
+		
+		// #nosec G304 - destPath is validated above
+		destFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if cerr := destFile.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
+		
 		_, err = io.Copy(destFile, srcFile)
 		return err
 	})

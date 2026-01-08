@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Docker Support (In Progress)**
+- **Docker Support**
   - Added shared Docker templates in `rituals/_shared/docker/`
   - Dockerfile.go.tmpl with Air for hot reload
   - docker-compose.yml.tmpl with conditional database services (PostgreSQL/MySQL)
@@ -19,7 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Shared frontend templates (package.json.tmpl, esbuild.config.js.tmpl)
   - DOCKER.md.tmpl comprehensive user documentation
   - Comprehensive test suite (45+ test cases) for Docker functionality
-  - OpenSpec documentation for Docker architecture and best practices
+  - Generator support for `_shared:` template prefix
+  - Conditional file generation based on ritual answers
+  - Minimal ritual now includes Docker support
+  - Automatic extraction of `_shared` directory from embedded rituals
+
+### Changed
+- Updated generator to support shared templates via `_shared:` prefix
+- Updated scaffolder to evaluate file conditions
+- Updated CLI to set rituals base path for shared template access
+- Updated registry to extract `_shared` directory alongside rituals
 
 ## [0.6.1-dev] - 2026-01-08
 
