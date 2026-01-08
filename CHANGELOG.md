@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed file conditions to use `[[ ]]` delimiters instead of `{{ }}`
   - Correctly generates frontend files based on selected framework (inertia-vue, htmx, traditional)
   - Vue/Inertia.js files now properly generated when selected
+- **Blog Ritual Templates**
+  - Fixed handler templates to properly import nasc package
+  - Fixed go.mod template conditional syntax
+  - Fixed Vue template syntax to avoid Go template conflicts
+  - Removed Makefile templates (not used in Toutā projects)
 
 ### Changed
 - **Template Delimiter Change**
@@ -28,6 +33,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatic quote stripping from user input
   - Support for both number (1-based) and name selection
   - Retry on invalid input with clear error messages
+- **Frontend Build Instructions**
+  - Post-initialization message shows npm install/build steps for inertia-vue and htmx
+  - README includes frontend-specific setup instructions
+  - Project structure documentation adapted for each frontend type
+- **Ritual Cache Management**
+  - Added `ritual clean` command to clear cached rituals
+  - Added `--force` flag to skip confirmation prompt
+  - Helps resolve issues when rituals appear outdated after upgrades
   - Comprehensive tests for quote handling and numbered choices
 - **Blog Ritual Handlers**
   - Updated handlers to use Cosán Context API
