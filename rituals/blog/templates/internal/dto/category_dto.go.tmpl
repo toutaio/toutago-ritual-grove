@@ -1,0 +1,45 @@
+package dto
+
+import "errors"
+
+// CreateCategoryDTO represents data for creating a category
+type CreateCategoryDTO struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// Validate validates the CreateCategoryDTO
+func (dto *CreateCategoryDTO) Validate() error {
+	if dto.Name == "" {
+		return errors.New("category name is required")
+	}
+	if len(dto.Name) > 100 {
+		return errors.New("category name must be 100 characters or less")
+	}
+	if len(dto.Description) > 500 {
+		return errors.New("description must be 500 characters or less")
+	}
+	return nil
+}
+
+// UpdateCategoryDTO represents data for updating a category
+type UpdateCategoryDTO struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+// Validate validates the UpdateCategoryDTO
+func (dto *UpdateCategoryDTO) Validate() error {
+	if dto.Name != nil {
+		if *dto.Name == "" {
+			return errors.New("category name cannot be empty")
+		}
+		if len(*dto.Name) > 100 {
+			return errors.New("category name must be 100 characters or less")
+		}
+	}
+	if dto.Description != nil && len(*dto.Description) > 500 {
+		return errors.New("description must be 500 characters or less")
+	}
+	return nil
+}

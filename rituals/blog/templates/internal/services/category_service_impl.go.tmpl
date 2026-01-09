@@ -1,0 +1,150 @@
+package services
+
+import (
+	"strings"
+	"time"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/dto"
+	"[[.module_path]]/internal/repositories"
+)
+
+// CategoryServiceImpl implements CategoryService
+type CategoryServiceImpl struct {
+	categoryRepo repositories.CategoryRepository
+}
+
+// NewCategoryServiceImpl creates a new CategoryServiceImpl
+func NewCategoryServiceImpl(categoryRepo repositories.CategoryRepository) *CategoryServiceImpl {
+	return &CategoryServiceImpl{
+		categoryRepo: categoryRepo,
+	}
+}
+
+// Create creates a new category
+func (s *CategoryServiceImpl) Create(dto dto.CreateCategoryDTO) (*domain.Category, error) {
+	// Validate
+	if err := dto.Validate(); err != nil {
+		return nil, ErrInvalidInput
+	}
+
+	// Generate slug
+	slug := generateSlug(dto.Name)
+
+	// Create category
+	category := &domain.Category{
+		Name:        dto.Name,
+		Slug:        slug,
+		Description: dto.Description,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	if err := s.categoryRepo.Create(category); err != nil {
+		return nil, err
+	}
+
+	return category, nil
+}
+
+// GetByID retrieves a category by ID
+func (s *CategoryServiceImpl) GetByID(id int64) (*domain.Category, error) {
+	category, err := s.categoryRepo.GetByID(id)
+	if err != nil {
+		return nil, ErrCategoryNotFound
+	}
+	return category, nil
+}
+
+// GetBySlug retrieves a category by slug
+func (s *CategoryServiceImpl) GetBySlug(slug string) (*domain.Category, error) {
+	category, err := s.categoryRepo.GetBySlug(slug)
+	if err != nil {
+		return nil, ErrCategoryNotFound
+	}
+	return category, nil
+}
+
+// List returns all categories with pagination
+func (s *CategoryServiceImpl) List(page, limit int) ([]*domain.Category, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	offset := (page - 1) * limit
+
+	categories, err := s.categoryRepo.List(limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total, err := s.categoryRepo.Count()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return categories, total, nil
+}
+
+// Update updates an existing category
+func (s *CategoryServiceImpl) Update(id int64, dto dto.UpdateCategoryDTO) (*domain.Category, error) {
+	// Get existing category
+	category, err := s.categoryRepo.GetByID(id)
+	if err != nil {
+		return nil, ErrCategoryNotFound
+	}
+
+	// Apply updates
+	if dto.Name != nil {
+		category.Name = *dto.Name
+		category.Slug = generateSlug(*dto.Name)
+	}
+
+	if dto.Description != nil {
+		category.Description = *dto.Description
+	}
+
+	category.UpdatedAt = time.Now()
+
+	// Save
+	if err := s.categoryRepo.Update(category); err != nil {
+		return nil, err
+	}
+
+	return category, nil
+}
+
+// Delete deletes a category
+func (s *CategoryServiceImpl) Delete(id int64) error {
+	if err := s.categoryRepo.Delete(id); err != nil {
+		return ErrCategoryNotFound
+	}
+	return nil
+}
+
+// generateSlug creates a URL-friendly slug from a string
+func generateSlug(s string) string {
+	// Convert to lowercase
+	s = strings.ToLower(s)
+	
+	// Replace spaces and special characters with hyphens
+	s = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		return '-'
+	}, s)
+	
+	// Remove multiple consecutive hyphens
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	
+	// Trim hyphens from start and end
+	s = strings.Trim(s, "-")
+	
+	return s
+}

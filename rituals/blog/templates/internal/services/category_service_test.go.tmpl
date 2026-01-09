@@ -1,0 +1,393 @@
+package services
+
+import (
+	"testing"
+	"time"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/dto"
+)
+
+// MockCategoryRepository for testing
+type MockCategoryRepository struct {
+	CreateFunc     func(category *domain.Category) error
+	GetByIDFunc    func(id int64) (*domain.Category, error)
+	GetBySlugFunc  func(slug string) (*domain.Category, error)
+	ListFunc       func(limit, offset int) ([]*domain.Category, error)
+	UpdateFunc     func(category *domain.Category) error
+	DeleteFunc     func(id int64) error
+	ExistsByIDFunc func(id int64) (bool, error)
+	CountFunc      func() (int, error)
+}
+
+func (m *MockCategoryRepository) Create(category *domain.Category) error {
+	if m.CreateFunc != nil {
+		return m.CreateFunc(category)
+	}
+	return nil
+}
+
+func (m *MockCategoryRepository) GetByID(id int64) (*domain.Category, error) {
+	if m.GetByIDFunc != nil {
+		return m.GetByIDFunc(id)
+	}
+	return nil, nil
+}
+
+func (m *MockCategoryRepository) GetBySlug(slug string) (*domain.Category, error) {
+	if m.GetBySlugFunc != nil {
+		return m.GetBySlugFunc(slug)
+	}
+	return nil, nil
+}
+
+func (m *MockCategoryRepository) List(limit, offset int) ([]*domain.Category, error) {
+	if m.ListFunc != nil {
+		return m.ListFunc(limit, offset)
+	}
+	return []*domain.Category{}, nil
+}
+
+func (m *MockCategoryRepository) Update(category *domain.Category) error {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(category)
+	}
+	return nil
+}
+
+func (m *MockCategoryRepository) Delete(id int64) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(id)
+	}
+	return nil
+}
+
+func (m *MockCategoryRepository) ExistsByID(id int64) (bool, error) {
+	if m.ExistsByIDFunc != nil {
+		return m.ExistsByIDFunc(id)
+	}
+	return true, nil
+}
+
+func (m *MockCategoryRepository) Count() (int, error) {
+	if m.CountFunc != nil {
+		return m.CountFunc()
+	}
+	return 0, nil
+}
+
+func TestCategoryService_Create(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     dto.CreateCategoryDTO
+		wantErr   bool
+		errType   error
+		mockError error
+	}{
+		{
+			name: "valid category creation",
+			input: dto.CreateCategoryDTO{
+				Name:        "Technology",
+				Description: "Tech posts",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty name fails validation",
+			input: dto.CreateCategoryDTO{
+				Name: "",
+			},
+			wantErr: true,
+			errType: ErrInvalidInput,
+		},
+		{
+			name: "name too long fails validation",
+			input: dto.CreateCategoryDTO{
+				Name: string(make([]byte, 101)), // 101 characters
+			},
+			wantErr: true,
+			errType: ErrInvalidInput,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &MockCategoryRepository{
+				CreateFunc: func(category *domain.Category) error {
+					return tt.mockError
+				},
+			}
+
+			service := NewCategoryServiceImpl(repo)
+			category, err := service.Create(tt.input)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				}
+				if tt.errType != nil && err != tt.errType {
+					t.Errorf("Expected error %v, got %v", tt.errType, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if category == nil {
+					t.Error("Expected category, got nil")
+				}
+				if category != nil && category.Slug == "" {
+					t.Error("Expected slug to be generated")
+				}
+			}
+		})
+	}
+}
+
+func TestCategoryService_List(t *testing.T) {
+	mockCategories := []*domain.Category{
+		{ID: 1, Name: "Tech", Slug: "tech"},
+		{ID: 2, Name: "Design", Slug: "design"},
+	}
+
+	tests := []struct {
+		name       string
+		page       int
+		limit      int
+		mockCats   []*domain.Category
+		mockCount  int
+		wantErr    bool
+		expectCats int
+	}{
+		{
+			name:       "list categories successfully",
+			page:       1,
+			limit:      10,
+			mockCats:   mockCategories,
+			mockCount:  2,
+			expectCats: 2,
+			wantErr:    false,
+		},
+		{
+			name:       "empty list",
+			page:       1,
+			limit:      10,
+			mockCats:   []*domain.Category{},
+			mockCount:  0,
+			expectCats: 0,
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &MockCategoryRepository{
+				ListFunc: func(limit, offset int) ([]*domain.Category, error) {
+					return tt.mockCats, nil
+				},
+				CountFunc: func() (int, error) {
+					return tt.mockCount, nil
+				},
+			}
+
+			service := NewCategoryServiceImpl(repo)
+			cats, total, err := service.List(tt.page, tt.limit)
+
+			if tt.wantErr && err == nil {
+				t.Error("Expected error, got nil")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if len(cats) != tt.expectCats {
+				t.Errorf("Expected %d categories, got %d", tt.expectCats, len(cats))
+			}
+			if total != tt.mockCount {
+				t.Errorf("Expected total %d, got %d", tt.mockCount, total)
+			}
+		})
+	}
+}
+
+func TestCategoryService_GetByID(t *testing.T) {
+	mockCategory := &domain.Category{
+		ID:   1,
+		Name: "Technology",
+		Slug: "technology",
+	}
+
+	tests := []struct {
+		name       string
+		id         int64
+		mockCat    *domain.Category
+		mockError  error
+		wantErr    bool
+		errType    error
+	}{
+		{
+			name:      "get existing category",
+			id:        1,
+			mockCat:   mockCategory,
+			wantErr:   false,
+		},
+		{
+			name:      "category not found",
+			id:        999,
+			mockError: ErrCategoryNotFound,
+			wantErr:   true,
+			errType:   ErrCategoryNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &MockCategoryRepository{
+				GetByIDFunc: func(id int64) (*domain.Category, error) {
+					return tt.mockCat, tt.mockError
+				},
+			}
+
+			service := NewCategoryServiceImpl(repo)
+			cat, err := service.GetByID(tt.id)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				}
+				if tt.errType != nil && err != tt.errType {
+					t.Errorf("Expected error %v, got %v", tt.errType, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if cat == nil {
+					t.Error("Expected category, got nil")
+				}
+			}
+		})
+	}
+}
+
+func TestCategoryService_Update(t *testing.T) {
+	existingCategory := &domain.Category{
+		ID:   1,
+		Name: "Old Name",
+		Slug: "old-name",
+		CreatedAt: time.Now(),
+	}
+
+	tests := []struct {
+		name      string
+		id        int64
+		input     dto.UpdateCategoryDTO
+		mockCat   *domain.Category
+		wantErr   bool
+		errType   error
+	}{
+		{
+			name: "update category successfully",
+			id:   1,
+			input: dto.UpdateCategoryDTO{
+				Name: stringPtr("New Name"),
+			},
+			mockCat: existingCategory,
+			wantErr: false,
+		},
+		{
+			name:    "category not found",
+			id:      999,
+			input:   dto.UpdateCategoryDTO{},
+			wantErr: true,
+			errType: ErrCategoryNotFound,
+		},
+		{
+			name: "empty update",
+			id:   1,
+			input: dto.UpdateCategoryDTO{},
+			mockCat: existingCategory,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &MockCategoryRepository{
+				GetByIDFunc: func(id int64) (*domain.Category, error) {
+					if tt.mockCat == nil {
+						return nil, ErrCategoryNotFound
+					}
+					return tt.mockCat, nil
+				},
+				UpdateFunc: func(category *domain.Category) error {
+					return nil
+				},
+			}
+
+			service := NewCategoryServiceImpl(repo)
+			cat, err := service.Update(tt.id, tt.input)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if cat == nil {
+					t.Error("Expected category, got nil")
+				}
+			}
+		})
+	}
+}
+
+func TestCategoryService_Delete(t *testing.T) {
+	tests := []struct {
+		name      string
+		id        int64
+		mockError error
+		wantErr   bool
+		errType   error
+	}{
+		{
+			name:    "delete category successfully",
+			id:      1,
+			wantErr: false,
+		},
+		{
+			name:      "category not found",
+			id:        999,
+			mockError: ErrCategoryNotFound,
+			wantErr:   true,
+			errType:   ErrCategoryNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &MockCategoryRepository{
+				DeleteFunc: func(id int64) error {
+					return tt.mockError
+				},
+			}
+
+			service := NewCategoryServiceImpl(repo)
+			err := service.Delete(tt.id)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func stringPtr(s string) *string {
+	return &s
+}

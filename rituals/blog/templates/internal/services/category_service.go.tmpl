@@ -1,0 +1,25 @@
+package services
+
+import "[[.module_path]]/internal/domain"
+import "[[.module_path]]/internal/dto"
+
+// CategoryService defines category management operations
+type CategoryService interface {
+	// Create creates a new category
+	Create(dto dto.CreateCategoryDTO) (*domain.Category, error)
+
+	// GetByID retrieves a category by ID
+	GetByID(id int64) (*domain.Category, error)
+
+	// GetBySlug retrieves a category by slug
+	GetBySlug(slug string) (*domain.Category, error)
+
+	// List returns all categories with pagination
+	List(page, limit int) ([]*domain.Category, int, error)
+
+	// Update updates an existing category
+	Update(id int64, dto dto.UpdateCategoryDTO) (*domain.Category, error)
+
+	// Delete deletes a category
+	Delete(id int64) error
+}

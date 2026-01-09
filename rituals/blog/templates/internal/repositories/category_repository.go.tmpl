@@ -1,0 +1,30 @@
+package repositories
+
+import "[[.module_path]]/internal/domain"
+
+// CategoryRepository defines category data access operations
+type CategoryRepository interface {
+	// Create creates a new category
+	Create(category *domain.Category) error
+
+	// GetByID retrieves a category by ID
+	GetByID(id int64) (*domain.Category, error)
+
+	// GetBySlug retrieves a category by slug
+	GetBySlug(slug string) (*domain.Category, error)
+
+	// List returns categories with pagination
+	List(limit, offset int) ([]*domain.Category, error)
+
+	// Update updates a category
+	Update(category *domain.Category) error
+
+	// Delete deletes a category
+	Delete(id int64) error
+
+	// ExistsByID checks if a category exists
+	ExistsByID(id int64) (bool, error)
+
+	// Count returns total number of categories
+	Count() (int, error)
+}
