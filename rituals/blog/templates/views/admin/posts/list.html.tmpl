@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Posts - [[.app_name]]</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-nav {
+            background: #343a40;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .admin-nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin-right: 1rem;
+            border-radius: 4px;
+        }
+        .admin-nav a:hover {
+            background: #495057;
+        }
+        .admin-nav a.active {
+            background: #007bff;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .filters {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+        }
+        .form-group {
+            flex: 1;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .posts-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        .posts-table th,
+        .posts-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .posts-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .posts-table tr:hover {
+            background: #f8f9fa;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-draft { background: #ffc107; color: #000; }
+        .status-published { background: #28a745; color: white; }
+        .status-archived { background: #6c757d; color: white; }
+        .action-btn {
+            padding: 0.375rem 0.75rem;
+            margin-right: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: none;
+        }
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+        .btn-publish {
+            background: #28a745;
+            color: white;
+        }
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-edit:hover { background: #0056b3; }
+        .btn-publish:hover { background: #218838; }
+        .btn-delete:hover { background: #c82333; }
+        .pagination {
+            margin: 2rem 0;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .pagination a,
+        .pagination span {
+            padding: 0.5rem 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
+        }
+        .pagination span.current {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .pagination a:hover {
+            background: #e9ecef;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="admin-nav">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/posts" class="active">Posts</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/categories">Categories</a>
+        <a href="/">View Site</a>
+        <a href="/auth/logout" style="float: right;">Logout</a>
+    </nav>
+
+    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
+        <div class="page-header">
+            <h1>Manage Posts</h1>
+            {{if can .current_user "create" "posts"}}
+            <a href="/admin/posts/new" class="btn btn-primary">Create New Post</a>
+            {{end}}
+        </div>
+
+        <div class="filters">
+            <form method="get" style="display: flex; gap: 1rem; flex: 1;">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status">
+                        <option value="">All Statuses</option>
+                        <option value="draft" {{if eq .status "draft"}}selected{{end}}>Draft</option>
+                        <option value="published" {{if eq .status "published"}}selected{{end}}>Published</option>
+                        <option value="archived" {{if eq .status "archived"}}selected{{end}}>Archived</option>
+                    </select>
+                </div>
+                
+                {{if .categories}}
+                <div class="form-group">
+                    <label for="category_id">Category</label>
+                    <select name="category_id" id="category_id">
+                        <option value="">All Categories</option>
+                        {{range .categories}}
+                        <option value="{{.ID}}" {{if eq $.category_id .ID}}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                {{end}}
+
+                <div class="form-group">
+                    <label for="search">Search</label>
+                    <input type="text" name="search" id="search" placeholder="Search posts..." value="{{.search}}">
+                </div>
+
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+        </div>
+
+        {{if .posts}}
+        <table class="posts-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .posts}}
+                <tr>
+                    <td>
+                        <strong>{{.Title}}</strong>
+                        {{if .Excerpt}}
+                        <br><small style="color: #6c757d;">{{.Excerpt}}</small>
+                        {{end}}
+                    </td>
+                    <td>{{.Author.Name}}</td>
+                    <td>
+                        {{if .Category}}
+                        {{.Category.Name}}
+                        {{else}}
+                        <span style="color: #6c757d;">Uncategorized</span>
+                        {{end}}
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{.Status}}">{{.Status}}</span>
+                    </td>
+                    <td>{{.CreatedAt.Format "Jan 2, 2006"}}</td>
+                    <td>
+                        <a href="/posts/{{.Slug}}" class="action-btn btn-edit" target="_blank" title="View">👁️</a>
+                        {{if canEdit $.current_user "posts" .AuthorID}}
+                        <a href="/admin/posts/{{.ID}}/edit" class="action-btn btn-edit">Edit</a>
+                        {{end}}
+                        {{if and (eq .Status "draft") (can $.current_user "publish" "posts")}}
+                        <button onclick="publishPost({{.ID}})" class="action-btn btn-publish">Publish</button>
+                        {{end}}
+                        {{if canDelete $.current_user "posts" .AuthorID}}
+                        <button onclick="deletePost({{.ID}}, '{{.Title}}')" class="action-btn btn-delete">Delete</button>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+
+        {{if gt .total_pages 1}}
+        <div class="pagination">
+            {{if gt .page 1}}
+            <a href="?page={{sub .page 1}}{{if .status}}&status={{.status}}{{end}}{{if .category_id}}&category_id={{.category_id}}{{end}}">&laquo; Previous</a>
+            {{end}}
+
+            <span>Page {{.page}} of {{.total_pages}}</span>
+
+            {{if lt .page .total_pages}}
+            <a href="?page={{add .page 1}}{{if .status}}&status={{.status}}{{end}}{{if .category_id}}&category_id={{.category_id}}{{end}}">Next &raquo;</a>
+            {{end}}
+        </div>
+        {{end}}
+        {{else}}
+        <div class="empty-state">
+            <h3>No posts found</h3>
+            <p>{{if can .current_user "create" "posts"}}Get started by creating your first post!{{else}}There are no posts to display.{{end}}</p>
+            {{if can .current_user "create" "posts"}}
+            <a href="/admin/posts/new" class="btn btn-primary" style="margin-top: 1rem;">Create Post</a>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+
+    <script>
+        function publishPost(id) {
+            if (!confirm('Are you sure you want to publish this post?')) {
+                return;
+            }
+
+            fetch(`/api/admin/posts/${id}/publish`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.json().then(data => {
+                        alert('Error: ' + (data.error || 'Failed to publish post'));
+                    });
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+
+        function deletePost(id, title) {
+            if (!confirm(`Are you sure you want to delete "${title}"?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+
+            fetch(`/api/admin/posts/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.json().then(data => {
+                        alert('Error: ' + (data.error || 'Failed to delete post'));
+                    });
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

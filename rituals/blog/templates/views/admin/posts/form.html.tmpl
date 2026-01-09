@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .post}}Edit Post{{else}}Create Post{{end}} - [[.app_name]]</title>
+    <link rel="stylesheet" href="/css/style.css">
+    [[- if .enable_markdown ]]
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    [[- end ]]
+    <style>
+        .admin-nav {
+            background: #343a40;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .admin-nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin-right: 1rem;
+            border-radius: 4px;
+        }
+        .admin-nav a:hover {
+            background: #495057;
+        }
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        .form-group .help-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        .form-group .error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-left: 1rem;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="admin-nav">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/posts">Posts</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/categories">Categories</a>
+        <a href="/">View Site</a>
+        <a href="/auth/logout" style="float: right;">Logout</a>
+    </nav>
+
+    <div class="form-container">
+        <h1>{{if .post}}Edit Post{{else}}Create New Post{{end}}</h1>
+        
+        {{if .error}}
+        <div class="alert alert-error">
+            {{.error}}
+        </div>
+        {{end}}
+
+        <form id="postForm" method="POST" action="{{if .post}}/admin/posts/{{.post.ID}}{{else}}/admin/posts{{end}}">
+            {{if .post}}
+            <input type="hidden" name="_method" value="PUT">
+            {{end}}
+
+            <div class="form-group">
+                <label for="title">Title *</label>
+                <input 
+                    type="text" 
+                    id="title" 
+                    name="title" 
+                    value="{{if .post}}{{.post.Title}}{{end}}" 
+                    required
+                    placeholder="Enter post title"
+                >
+                {{if .errors.title}}
+                <div class="error">{{.errors.title}}</div>
+                {{end}}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="category_id">Category</label>
+                    <select id="category_id" name="category_id">
+                        <option value="">Uncategorized</option>
+                        {{range .categories}}
+                        <option value="{{.ID}}" {{if and $.post (eq $.post.CategoryID .ID)}}selected{{end}}>
+                            {{.Name}}
+                        </option>
+                        {{end}}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status *</label>
+                    <select id="status" name="status" required>
+                        <option value="draft" {{if and .post (eq .post.Status "draft")}}selected{{end}}>Draft</option>
+                        <option value="published" {{if and .post (eq .post.Status "published")}}selected{{end}}>Published</option>
+                        <option value="archived" {{if and .post (eq .post.Status "archived")}}selected{{end}}>Archived</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="excerpt">Excerpt</label>
+                <textarea 
+                    id="excerpt" 
+                    name="excerpt" 
+                    rows="3"
+                    placeholder="Brief summary of the post (optional)"
+                >{{if .post}}{{.post.Excerpt}}{{end}}</textarea>
+                <div class="help-text">A short summary that appears in post listings</div>
+            </div>
+
+            <div class="form-group">
+                <label for="content">Content *</label>
+                <textarea 
+                    id="content" 
+                    name="content" 
+                    required
+                    placeholder="Write your post content here..."
+                >{{if .post}}{{.post.Content}}{{end}}</textarea>
+                [[- if .enable_markdown ]]
+                <div class="help-text">Supports Markdown formatting</div>
+                [[- end ]]
+                {{if .errors.content}}
+                <div class="error">{{.errors.content}}</div>
+                {{end}}
+            </div>
+
+            <div class="form-group">
+                <label for="featured_image_url">Featured Image URL</label>
+                <input 
+                    type="url" 
+                    id="featured_image_url" 
+                    name="featured_image_url" 
+                    value="{{if .post}}{{.post.FeaturedImageURL}}{{end}}"
+                    placeholder="https://example.com/image.jpg"
+                >
+                <div class="help-text">Optional: Direct URL to an image</div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">
+                    {{if .post}}Update Post{{else}}Create Post{{end}}
+                </button>
+                {{if and .post (eq .post.Status "draft")}}
+                <button type="button" class="btn btn-success" onclick="publishPost()">
+                    Save & Publish
+                </button>
+                {{end}}
+                <a href="/admin/posts" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        [[- if .enable_markdown ]]
+        // Initialize EasyMDE markdown editor
+        const easyMDE = new EasyMDE({
+            element: document.getElementById('content'),
+            spellChecker: false,
+            placeholder: 'Write your post content here...',
+            toolbar: [
+                'bold', 'italic', 'heading', '|',
+                'quote', 'unordered-list', 'ordered-list', '|',
+                'link', 'image', '|',
+                'preview', 'side-by-side', 'fullscreen', '|',
+                'guide'
+            ],
+            status: ['lines', 'words', 'cursor'],
+        });
+        [[- end ]]
+
+        // Handle form submission
+        document.getElementById('postForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {};
+            
+            // Convert FormData to JSON
+            for (let [key, value] of formData.entries()) {
+                if (key === '_method') continue;
+                
+                // Handle empty strings for optional fields
+                if (value === '' && (key === 'category_id' || key === 'excerpt' || key === 'featured_image_url')) {
+                    continue;
+                }
+                
+                // Convert category_id to number
+                if (key === 'category_id' && value !== '') {
+                    data[key] = parseInt(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            [[- if .enable_markdown ]]
+            // Get content from EasyMDE
+            data.content = easyMDE.value();
+            [[- end ]]
+
+            const method = formData.get('_method') || 'POST';
+            const url = this.action.replace(/^\/admin/, '/api/admin');
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to save post');
+                    });
+                }
+            })
+            .then(post => {
+                // Redirect to post or admin list
+                window.location.href = '/admin/posts';
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        });
+
+        function publishPost() {
+            // Set status to published and submit
+            document.getElementById('status').value = 'published';
+            document.getElementById('postForm').dispatchEvent(new Event('submit'));
+        }
+    </script>
+</body>
+</html>

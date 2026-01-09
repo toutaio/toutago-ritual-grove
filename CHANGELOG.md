@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Admin Post Management UI (Phase 3.1)** (TDD)
+  - **Admin Post Handler**:
+    - `List()` - Paginated post listing with status/category filters
+    - `ShowCreateForm()` - Display post creation form
+    - `ShowEditForm()` - Display post edit form with data
+    - `Store()` - Create new post with validation
+    - `Update()` - Update existing post
+    - `Destroy()` - Delete post with permission checks
+    - `Publish()` - Publish draft posts
+  - **Admin Post Templates**:
+    - Post list page with filters, search, and bulk actions
+    - Post form (create/edit) with markdown editor support
+    - Status badges and conditional actions
+    - Role-based visibility (authors see only own posts)
+  - **Features**:
+    - EasyMDE markdown editor integration (optional)
+    - Draft/Published/Archived workflow
+    - Category assignment
+    - Featured image URL support
+    - Excerpt for post summaries
+  - **Comprehensive Testing**:
+    - Post admin handler tests (15+ test cases)
+    - Permission scenarios (admin/editor/author/reader)
+    - Filter and pagination tests
+    - CRUD operation coverage
+
 - **Blog Ritual: Role-Based UI Hiding (Phase 2.4)** (TDD)
   - **Template Helper Functions**:
     - `Can()` - Permission checking for actions on resources

@@ -1,0 +1,394 @@
+package admin
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/dto"
+	"[[.module_path]]/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// MockPostService for testing
+type MockPostService struct {
+	ListFunc      func(filters dto.PostFilters) ([]*domain.Post, int, error)
+	GetByIDFunc   func(id int64) (*domain.Post, error)
+	CreateFunc    func(userID int64, dto dto.CreatePostDTO) (*domain.Post, error)
+	UpdateFunc    func(postID, userID int64, dto dto.UpdatePostDTO) (*domain.Post, error)
+	DeleteFunc    func(postID, userID int64) error
+	PublishFunc   func(postID, userID int64) (*domain.Post, error)
+}
+
+func (m *MockPostService) List(filters dto.PostFilters) ([]*domain.Post, int, error) {
+	if m.ListFunc != nil {
+		return m.ListFunc(filters)
+	}
+	return []*domain.Post{}, 0, nil
+}
+
+func (m *MockPostService) GetByID(id int64) (*domain.Post, error) {
+	if m.GetByIDFunc != nil {
+		return m.GetByIDFunc(id)
+	}
+	return nil, nil
+}
+
+func (m *MockPostService) GetBySlug(slug string) (*domain.Post, error) {
+	return nil, nil
+}
+
+func (m *MockPostService) Create(userID int64, dto dto.CreatePostDTO) (*domain.Post, error) {
+	if m.CreateFunc != nil {
+		return m.CreateFunc(userID, dto)
+	}
+	return nil, nil
+}
+
+func (m *MockPostService) Update(postID, userID int64, dto dto.UpdatePostDTO) (*domain.Post, error) {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(postID, userID, dto)
+	}
+	return nil, nil
+}
+
+func (m *MockPostService) Delete(postID, userID int64) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(postID, userID)
+	}
+	return nil
+}
+
+func (m *MockPostService) Publish(postID, userID int64) (*domain.Post, error) {
+	if m.PublishFunc != nil {
+		return m.PublishFunc(postID, userID)
+	}
+	return nil, nil
+}
+
+type MockPermService struct {
+	CanFunc func(user *domain.User, action, resource string, resourceID ...int64) bool
+}
+
+func (m *MockPermService) Can(user *domain.User, action, resource string, resourceID ...int64) bool {
+	if m.CanFunc != nil {
+		return m.CanFunc(user, action, resource, resourceID...)
+	}
+	return true
+}
+
+func TestPostAdminHandler_ListForAdmin(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		userID         int64
+		queryParams    string
+		mockPosts      []*domain.Post
+		mockTotal      int
+		expectedStatus int
+		checkFilters   func(filters dto.PostFilters) bool
+	}{
+		{
+			name:     "admin sees all posts",
+			userRole: domain.RoleAdmin,
+			userID:   1,
+			mockPosts: []*domain.Post{
+				{ID: 1, Title: "Post 1", AuthorID: 2, Status: domain.StatusDraft},
+				{ID: 2, Title: "Post 2", AuthorID: 3, Status: domain.StatusPublished},
+			},
+			mockTotal:      2,
+			expectedStatus: http.StatusOK,
+			checkFilters: func(filters dto.PostFilters) bool {
+				return filters.Status == nil && filters.AuthorID == nil
+			},
+		},
+		{
+			name:     "author sees only own posts",
+			userRole: domain.RoleAuthor,
+			userID:   2,
+			mockPosts: []*domain.Post{
+				{ID: 1, Title: "My Post", AuthorID: 2, Status: domain.StatusDraft},
+			},
+			mockTotal:      1,
+			expectedStatus: http.StatusOK,
+			checkFilters: func(filters dto.PostFilters) bool {
+				return filters.AuthorID != nil && *filters.AuthorID == 2
+			},
+		},
+		{
+			name:           "reader cannot access admin posts",
+			userRole:       domain.RoleReader,
+			userID:         3,
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:        "filter by status",
+			userRole:    domain.RoleAdmin,
+			userID:      1,
+			queryParams: "status=draft",
+			mockPosts: []*domain.Post{
+				{ID: 1, Title: "Draft Post", Status: domain.StatusDraft},
+			},
+			mockTotal:      1,
+			expectedStatus: http.StatusOK,
+			checkFilters: func(filters dto.PostFilters) bool {
+				return filters.Status != nil && *filters.Status == domain.StatusDraft
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedFilters dto.PostFilters
+			
+			postService := &MockPostService{
+				ListFunc: func(filters dto.PostFilters) ([]*domain.Post, int, error) {
+					capturedFilters = filters
+					return tt.mockPosts, tt.mockTotal, nil
+				},
+			}
+			
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					if resource == "posts" && action == "manage" {
+						return user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor || user.Role == domain.RoleAuthor
+					}
+					return false
+				},
+			}
+
+			handler := NewPostAdminHandler(postService, permService)
+
+			req := httptest.NewRequest("GET", "/admin/posts?"+tt.queryParams, nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   make(map[string]string),
+			}
+			ctx.Set("user", &domain.User{ID: tt.userID, Role: tt.userRole})
+
+			handler.List(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+
+			if tt.checkFilters != nil && !tt.checkFilters(capturedFilters) {
+				t.Errorf("Filter check failed for filters: %+v", capturedFilters)
+			}
+		})
+	}
+}
+
+func TestPostAdminHandler_ShowCreateForm(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		expectedStatus int
+	}{
+		{
+			name:           "author can access create form",
+			userRole:       domain.RoleAuthor,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "reader cannot access create form",
+			userRole:       domain.RoleReader,
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postService := &MockPostService{}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role != domain.RoleReader
+				},
+			}
+
+			handler := NewPostAdminHandler(postService, permService)
+
+			req := httptest.NewRequest("GET", "/admin/posts/new", nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.ShowCreateForm(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestPostAdminHandler_ShowEditForm(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		userID         int64
+		postID         string
+		mockPost       *domain.Post
+		mockError      error
+		canEdit        bool
+		expectedStatus int
+	}{
+		{
+			name:           "author can edit own post",
+			userRole:       domain.RoleAuthor,
+			userID:         1,
+			postID:         "1",
+			mockPost:       &domain.Post{ID: 1, Title: "My Post", AuthorID: 1},
+			canEdit:        true,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "author cannot edit others' post",
+			userRole:       domain.RoleAuthor,
+			userID:         1,
+			postID:         "2",
+			mockPost:       &domain.Post{ID: 2, Title: "Other Post", AuthorID: 2},
+			canEdit:        false,
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "editor can edit any post",
+			userRole:       domain.RoleEditor,
+			userID:         1,
+			postID:         "2",
+			mockPost:       &domain.Post{ID: 2, Title: "Any Post", AuthorID: 2},
+			canEdit:        true,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "post not found",
+			userRole:       domain.RoleAdmin,
+			userID:         1,
+			postID:         "999",
+			mockError:      services.ErrPostNotFound,
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postService := &MockPostService{
+				GetByIDFunc: func(id int64) (*domain.Post, error) {
+					return tt.mockPost, tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return tt.canEdit
+				},
+			}
+
+			handler := NewPostAdminHandler(postService, permService)
+
+			req := httptest.NewRequest("GET", "/admin/posts/"+tt.postID+"/edit", nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.postID},
+			}
+			ctx.Set("user", &domain.User{ID: tt.userID, Role: tt.userRole})
+
+			handler.ShowEditForm(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestPostAdminHandler_Store(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		userID         int64
+		postData       dto.CreatePostDTO
+		mockPost       *domain.Post
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:     "author can create post",
+			userRole: domain.RoleAuthor,
+			userID:   1,
+			postData: dto.CreatePostDTO{
+				Title:   "New Post",
+				Content: "Post content here",
+				Status:  domain.StatusDraft,
+			},
+			mockPost:       &domain.Post{ID: 1, Title: "New Post", AuthorID: 1},
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:     "validation error",
+			userRole: domain.RoleAuthor,
+			userID:   1,
+			postData: dto.CreatePostDTO{
+				Title: "", // Empty title
+			},
+			mockError:      services.ErrInvalidInput,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:     "reader cannot create post",
+			userRole: domain.RoleReader,
+			userID:   1,
+			postData: dto.CreatePostDTO{
+				Title:   "Attempt",
+				Content: "Content",
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postService := &MockPostService{
+				CreateFunc: func(userID int64, dto dto.CreatePostDTO) (*domain.Post, error) {
+					return tt.mockPost, tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role != domain.RoleReader
+				},
+			}
+
+			handler := NewPostAdminHandler(postService, permService)
+
+			body, _ := json.Marshal(tt.postData)
+			req := httptest.NewRequest("POST", "/admin/posts", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: tt.userID, Role: tt.userRole})
+
+			handler.Store(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
