@@ -3,9 +3,11 @@ package internal
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
+	"strings"
 	
 	"github.com/toutaio/toutago-cosan-router"
 	"github.com/toutaio/toutago-inertia/pkg/inertia"
@@ -102,18 +104,15 @@ func RenderInertiaPage(c cosan.Context, mgr *inertia.Inertia, component string, 
 		return err
 	}
 	
-	tmpl, err := template.New("app").Parse(string(tmplContent))
-	if err != nil {
-		return err
-	}
+	// Replace placeholders manually to avoid HTML escaping
+	// html/template escapes everything even with template.HTML type
+	html := string(tmplContent)
+	html = strings.Replace(html, "{{.INERTIA}}", pageJSON, 1)
+	html = strings.Replace(html, "{{.INERTIA_HEAD}}", "", 1)
 	
 	c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
 	
-	data := map[string]interface{}{
-		"INERTIA": template.HTML(pageJSON),
-		"INERTIA_HEAD": template.HTML(""),
-	}
-	
-	return tmpl.Execute(c.Response(), data)
+	_, err = fmt.Fprint(c.Response(), html)
+	return err
 }
 [[ end -]]
