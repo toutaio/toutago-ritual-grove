@@ -1,0 +1,39 @@
+package repositories
+
+import (
+	"context"
+	"[[ .module_path ]]/internal/domain"
+)
+
+// SessionRepository defines the interface for session data access
+type SessionRepository interface {
+	// Create creates a new session
+	Create(ctx context.Context, session *domain.Session) error
+
+	// Update updates an existing session
+	Update(ctx context.Context, session *domain.Session) error
+
+	// Delete deletes a session by ID
+	Delete(ctx context.Context, id string) error
+
+	// DeleteByToken deletes a session by token
+	DeleteByToken(ctx context.Context, token string) error
+
+	// DeleteByUserID deletes all sessions for a user
+	DeleteByUserID(ctx context.Context, userID string) error
+
+	// DeleteExpired deletes all expired sessions
+	DeleteExpired(ctx context.Context) error
+
+	// FindByID retrieves a session by ID
+	FindByID(ctx context.Context, id string) (*domain.Session, error)
+
+	// FindByToken retrieves a session by token
+	FindByToken(ctx context.Context, token string) (*domain.Session, error)
+
+	// FindByUserID retrieves all sessions for a user
+	FindByUserID(ctx context.Context, userID string) ([]*domain.Session, error)
+
+	// Count returns the total number of active sessions
+	Count(ctx context.Context) (int, error)
+}

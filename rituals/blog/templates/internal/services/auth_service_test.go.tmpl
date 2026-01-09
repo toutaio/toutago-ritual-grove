@@ -1,0 +1,528 @@
+package services
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// Mock repositories for testing
+type mockUserRepository struct {
+	users          map[string]*domain.User
+	emailIndex     map[string]string
+	usernameIndex  map[string]string
+	createError    error
+	findError      error
+}
+
+func newMockUserRepository() *mockUserRepository {
+	return &mockUserRepository{
+		users:         make(map[string]*domain.User),
+		emailIndex:    make(map[string]string),
+		usernameIndex: make(map[string]string),
+	}
+}
+
+func (m *mockUserRepository) Create(ctx context.Context, user *domain.User) error {
+	if m.createError != nil {
+		return m.createError
+	}
+	m.users[user.ID] = user
+	m.emailIndex[user.Email] = user.ID
+	m.usernameIndex[user.Username] = user.ID
+	return nil
+}
+
+func (m *mockUserRepository) Update(ctx context.Context, user *domain.User) error {
+	m.users[user.ID] = user
+	return nil
+}
+
+func (m *mockUserRepository) Delete(ctx context.Context, id string) error {
+	delete(m.users, id)
+	return nil
+}
+
+func (m *mockUserRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
+	if m.findError != nil {
+		return nil, m.findError
+	}
+	user, ok := m.users[id]
+	if !ok {
+		return nil, errors.New("user not found")
+	}
+	return user, nil
+}
+
+func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	id, ok := m.emailIndex[email]
+	if !ok {
+		return nil, errors.New("user not found")
+	}
+	return m.users[id], nil
+}
+
+func (m *mockUserRepository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+	id, ok := m.usernameIndex[username]
+	if !ok {
+		return nil, errors.New("user not found")
+	}
+	return m.users[id], nil
+}
+
+func (m *mockUserRepository) List(ctx context.Context, filters interface{}) ([]*domain.User, error) {
+	users := make([]*domain.User, 0, len(m.users))
+	for _, user := range m.users {
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+func (m *mockUserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	_, ok := m.emailIndex[email]
+	return ok, nil
+}
+
+func (m *mockUserRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+	_, ok := m.usernameIndex[username]
+	return ok, nil
+}
+
+func (m *mockUserRepository) Count(ctx context.Context) (int, error) {
+	return len(m.users), nil
+}
+
+func (m *mockUserRepository) IsFirstUser(ctx context.Context) (bool, error) {
+	return len(m.users) == 0, nil
+}
+
+type mockSessionRepository struct {
+	sessions    map[string]*domain.Session
+	tokenIndex  map[string]string
+	createError error
+}
+
+func newMockSessionRepository() *mockSessionRepository {
+	return &mockSessionRepository{
+		sessions:   make(map[string]*domain.Session),
+		tokenIndex: make(map[string]string),
+	}
+}
+
+func (m *mockSessionRepository) Create(ctx context.Context, session *domain.Session) error {
+	if m.createError != nil {
+		return m.createError
+	}
+	m.sessions[session.ID] = session
+	m.tokenIndex[session.Token] = session.ID
+	return nil
+}
+
+func (m *mockSessionRepository) Update(ctx context.Context, session *domain.Session) error {
+	m.sessions[session.ID] = session
+	return nil
+}
+
+func (m *mockSessionRepository) Delete(ctx context.Context, id string) error {
+	session := m.sessions[id]
+	if session != nil {
+		delete(m.tokenIndex, session.Token)
+	}
+	delete(m.sessions, id)
+	return nil
+}
+
+func (m *mockSessionRepository) DeleteByToken(ctx context.Context, token string) error {
+	id, ok := m.tokenIndex[token]
+	if !ok {
+		return errors.New("session not found")
+	}
+	return m.Delete(ctx, id)
+}
+
+func (m *mockSessionRepository) DeleteByUserID(ctx context.Context, userID string) error {
+	for id, session := range m.sessions {
+		if session.UserID == userID {
+			delete(m.sessions, id)
+			delete(m.tokenIndex, session.Token)
+		}
+	}
+	return nil
+}
+
+func (m *mockSessionRepository) DeleteExpired(ctx context.Context) error {
+	now := time.Now()
+	for id, session := range m.sessions {
+		if session.ExpiresAt.Before(now) {
+			delete(m.sessions, id)
+			delete(m.tokenIndex, session.Token)
+		}
+	}
+	return nil
+}
+
+func (m *mockSessionRepository) FindByID(ctx context.Context, id string) (*domain.Session, error) {
+	session, ok := m.sessions[id]
+	if !ok {
+		return nil, errors.New("session not found")
+	}
+	return session, nil
+}
+
+func (m *mockSessionRepository) FindByToken(ctx context.Context, token string) (*domain.Session, error) {
+	id, ok := m.tokenIndex[token]
+	if !ok {
+		return nil, errors.New("session not found")
+	}
+	return m.sessions[id], nil
+}
+
+func (m *mockSessionRepository) FindByUserID(ctx context.Context, userID string) ([]*domain.Session, error) {
+	sessions := make([]*domain.Session, 0)
+	for _, session := range m.sessions {
+		if session.UserID == userID {
+			sessions = append(sessions, session)
+		}
+	}
+	return sessions, nil
+}
+
+func (m *mockSessionRepository) Count(ctx context.Context) (int, error) {
+	return len(m.sessions), nil
+}
+
+type mockGuard struct{}
+
+func (m *mockGuard) Authenticate(ctx context.Context, credentials interface{}) (interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockGuard) Validate(ctx context.Context, token string) (interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockGuard) Logout(ctx context.Context, user interface{}) error {
+	return nil
+}
+
+func (m *mockGuard) Name() string {
+	return "mock"
+}
+
+type mockHasher struct{}
+
+func (m *mockHasher) Hash(password string) (string, error) {
+	return "hashed_" + password, nil
+}
+
+func (m *mockHasher) Verify(password, hash string) bool {
+	return "hashed_"+password == hash
+}
+
+func TestAuthService_Register(t *testing.T) {
+	ctx := context.Background()
+	userRepo := newMockUserRepository()
+	sessionRepo := newMockSessionRepository()
+	guard := &mockGuard{}
+	hasher := &mockHasher{}
+	service := NewAuthService(userRepo, sessionRepo, guard, hasher)
+
+	t.Run("successful registration", func(t *testing.T) {
+		dto := dto.RegisterDTO{
+			Email:           "user@example.com",
+			Username:        "testuser",
+			Password:        "password123",
+			PasswordConfirm: "password123",
+		}
+
+		user, err := service.Register(ctx, dto)
+		if err != nil {
+			t.Fatalf("Register() failed: %v", err)
+		}
+
+		if user.Email != dto.Email {
+			t.Errorf("Email mismatch: got %v, want %v", user.Email, dto.Email)
+		}
+
+		if user.Username != dto.Username {
+			t.Errorf("Username mismatch: got %v, want %v", user.Username, dto.Username)
+		}
+
+		if !user.IsActive {
+			t.Error("User should be active")
+		}
+	})
+
+	t.Run("first user becomes admin", func(t *testing.T) {
+		// Clear users
+		userRepo = newMockUserRepository()
+		service = NewAuthService(userRepo, sessionRepo, guard, hasher)
+
+		dto := dto.RegisterDTO{
+			Email:           "admin@example.com",
+			Username:        "admin",
+			Password:        "password123",
+			PasswordConfirm: "password123",
+		}
+
+		user, err := service.Register(ctx, dto)
+		if err != nil {
+			t.Fatalf("Register() failed: %v", err)
+		}
+
+		if user.Role != domain.RoleAdmin {
+			t.Errorf("First user should be admin, got %v", user.Role)
+		}
+	})
+
+	t.Run("second user is not admin", func(t *testing.T) {
+		dto := dto.RegisterDTO{
+			Email:           "user2@example.com",
+			Username:        "user2",
+			Password:        "password123",
+			PasswordConfirm: "password123",
+		}
+
+		user, err := service.Register(ctx, dto)
+		if err != nil {
+			t.Fatalf("Register() failed: %v", err)
+		}
+
+		if user.Role == domain.RoleAdmin {
+			t.Error("Second user should not be admin")
+		}
+	})
+
+	t.Run("duplicate email", func(t *testing.T) {
+		dto := dto.RegisterDTO{
+			Email:           "admin@example.com",
+			Username:        "different",
+			Password:        "password123",
+			PasswordConfirm: "password123",
+		}
+
+		_, err := service.Register(ctx, dto)
+		if err == nil {
+			t.Error("Expected error for duplicate email")
+		}
+	})
+
+	t.Run("duplicate username", func(t *testing.T) {
+		dto := dto.RegisterDTO{
+			Email:           "different@example.com",
+			Username:        "admin",
+			Password:        "password123",
+			PasswordConfirm: "password123",
+		}
+
+		_, err := service.Register(ctx, dto)
+		if err == nil {
+			t.Error("Expected error for duplicate username")
+		}
+	})
+}
+
+func TestAuthService_Login(t *testing.T) {
+	ctx := context.Background()
+	userRepo := newMockUserRepository()
+	sessionRepo := newMockSessionRepository()
+	guard := &mockGuard{}
+	hasher := &mockHasher{}
+	service := NewAuthService(userRepo, sessionRepo, guard, hasher)
+
+	// Create a test user
+	_ = userRepo.Create(ctx, &domain.User{
+		ID:           "user123",
+		Email:        "user@example.com",
+		Username:     "testuser",
+		PasswordHash: hasher.Hash("password123"),
+		Role:         domain.RoleReader,
+		IsActive:     true,
+	})
+
+	t.Run("successful login", func(t *testing.T) {
+		dto := dto.LoginDTO{
+			Email:     "user@example.com",
+			Password:  "password123",
+			IPAddress: "127.0.0.1",
+			UserAgent: "TestAgent",
+		}
+
+		session, err := service.Login(ctx, dto)
+		if err != nil {
+			t.Fatalf("Login() failed: %v", err)
+		}
+
+		if session.UserID != "user123" {
+			t.Errorf("Session UserID mismatch: got %v, want %v", session.UserID, "user123")
+		}
+
+		if session.IPAddress != dto.IPAddress {
+			t.Errorf("IPAddress mismatch: got %v, want %v", session.IPAddress, dto.IPAddress)
+		}
+	})
+
+	t.Run("invalid email", func(t *testing.T) {
+		dto := dto.LoginDTO{
+			Email:    "wrong@example.com",
+			Password: "password123",
+		}
+
+		_, err := service.Login(ctx, dto)
+		if err == nil {
+			t.Error("Expected error for invalid email")
+		}
+	})
+
+	t.Run("invalid password", func(t *testing.T) {
+		dto := dto.LoginDTO{
+			Email:    "user@example.com",
+			Password: "wrongpassword",
+		}
+
+		_, err := service.Login(ctx, dto)
+		if err == nil {
+			t.Error("Expected error for invalid password")
+		}
+	})
+
+	t.Run("inactive user", func(t *testing.T) {
+		_ = userRepo.Create(ctx, &domain.User{
+			ID:           "inactive123",
+			Email:        "inactive@example.com",
+			Username:     "inactive",
+			PasswordHash: hasher.Hash("password123"),
+			Role:         domain.RoleReader,
+			IsActive:     false,
+		})
+
+		dto := dto.LoginDTO{
+			Email:    "inactive@example.com",
+			Password: "password123",
+		}
+
+		_, err := service.Login(ctx, dto)
+		if err == nil {
+			t.Error("Expected error for inactive user")
+		}
+	})
+}
+
+func TestAuthService_VerifySession(t *testing.T) {
+	ctx := context.Background()
+	userRepo := newMockUserRepository()
+	sessionRepo := newMockSessionRepository()
+	guard := &mockGuard{}
+	hasher := &mockHasher{}
+	service := NewAuthService(userRepo, sessionRepo, guard, hasher)
+
+	// Create a test user
+	user := &domain.User{
+		ID:       "user123",
+		Email:    "user@example.com",
+		Username: "testuser",
+		Role:     domain.RoleReader,
+		IsActive: true,
+	}
+	_ = userRepo.Create(ctx, user)
+
+	t.Run("valid session", func(t *testing.T) {
+		session := &domain.Session{
+			ID:        "session123",
+			UserID:    user.ID,
+			Token:     "valid_token",
+			ExpiresAt: time.Now().Add(24 * time.Hour),
+			CreatedAt: time.Now(),
+		}
+		_ = sessionRepo.Create(ctx, session)
+
+		verifiedUser, err := service.VerifySession(ctx, "valid_token")
+		if err != nil {
+			t.Fatalf("VerifySession() failed: %v", err)
+		}
+
+		if verifiedUser.ID != user.ID {
+			t.Errorf("User ID mismatch: got %v, want %v", verifiedUser.ID, user.ID)
+		}
+	})
+
+	t.Run("expired session", func(t *testing.T) {
+		session := &domain.Session{
+			ID:        "expired123",
+			UserID:    user.ID,
+			Token:     "expired_token",
+			ExpiresAt: time.Now().Add(-24 * time.Hour),
+			CreatedAt: time.Now(),
+		}
+		_ = sessionRepo.Create(ctx, session)
+
+		_, err := service.VerifySession(ctx, "expired_token")
+		if err == nil {
+			t.Error("Expected error for expired session")
+		}
+	})
+
+	t.Run("invalid token", func(t *testing.T) {
+		_, err := service.VerifySession(ctx, "invalid_token")
+		if err == nil {
+			t.Error("Expected error for invalid token")
+		}
+	})
+}
+
+func TestAuthService_ChangePassword(t *testing.T) {
+	ctx := context.Background()
+	userRepo := newMockUserRepository()
+	sessionRepo := newMockSessionRepository()
+	guard := &mockGuard{}
+	hasher := &mockHasher{}
+	service := NewAuthService(userRepo, sessionRepo, guard, hasher)
+
+	// Create a test user
+	hashedOldPwd, _ := hasher.Hash("oldpassword123")
+	user := &domain.User{
+		ID:           "user123",
+		Email:        "user@example.com",
+		Username:     "testuser",
+		PasswordHash: hashedOldPwd,
+		Role:         domain.RoleReader,
+		IsActive:     true,
+	}
+	_ = userRepo.Create(ctx, user)
+
+	t.Run("successful password change", func(t *testing.T) {
+		dto := dto.ChangePasswordDTO{
+			OldPassword:        "oldpassword123",
+			NewPassword:        "newpassword123",
+			NewPasswordConfirm: "newpassword123",
+		}
+
+		err := service.ChangePassword(ctx, user.ID, dto)
+		if err != nil {
+			t.Fatalf("ChangePassword() failed: %v", err)
+		}
+
+		// Verify password was changed
+		updatedUser, _ := userRepo.FindByID(ctx, user.ID)
+		if !hasher.Verify("newpassword123", updatedUser.PasswordHash) {
+			t.Error("Password was not changed")
+		}
+	})
+
+	t.Run("incorrect old password", func(t *testing.T) {
+		dto := dto.ChangePasswordDTO{
+			OldPassword:        "wrongpassword",
+			NewPassword:        "newpassword123",
+			NewPasswordConfirm: "newpassword123",
+		}
+
+		err := service.ChangePassword(ctx, user.ID, dto)
+		if err == nil {
+			t.Error("Expected error for incorrect old password")
+		}
+	})
+}

@@ -1,0 +1,134 @@
+package dto
+
+import (
+	"errors"
+	"regexp"
+)
+
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+
+// RegisterDTO represents user registration data
+type RegisterDTO struct {
+	Email           string `json:"email"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	PasswordConfirm string `json:"password_confirm"`
+}
+
+// Validate validates registration data
+func (d *RegisterDTO) Validate() error {
+	if d.Email == "" {
+		return errors.New("email is required")
+	}
+	if !emailRegex.MatchString(d.Email) {
+		return errors.New("invalid email format")
+	}
+	if d.Username == "" {
+		return errors.New("username is required")
+	}
+	if len(d.Username) < 3 {
+		return errors.New("username must be at least 3 characters")
+	}
+	if len(d.Username) > 50 {
+		return errors.New("username must not exceed 50 characters")
+	}
+	if d.Password == "" {
+		return errors.New("password is required")
+	}
+	if len(d.Password) < 8 {
+		return errors.New("password must be at least 8 characters")
+	}
+	if d.Password != d.PasswordConfirm {
+		return errors.New("passwords do not match")
+	}
+	return nil
+}
+
+// LoginDTO represents login credentials
+type LoginDTO struct {
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	IPAddress string `json:"-"`
+	UserAgent string `json:"-"`
+}
+
+// Validate validates login data
+func (d *LoginDTO) Validate() error {
+	if d.Email == "" {
+		return errors.New("email is required")
+	}
+	if !emailRegex.MatchString(d.Email) {
+		return errors.New("invalid email format")
+	}
+	if d.Password == "" {
+		return errors.New("password is required")
+	}
+	return nil
+}
+
+// PasswordResetRequestDTO represents a password reset request
+type PasswordResetRequestDTO struct {
+	Email string `json:"email"`
+}
+
+// Validate validates password reset request data
+func (d *PasswordResetRequestDTO) Validate() error {
+	if d.Email == "" {
+		return errors.New("email is required")
+	}
+	if !emailRegex.MatchString(d.Email) {
+		return errors.New("invalid email format")
+	}
+	return nil
+}
+
+// PasswordResetDTO represents password reset data
+type PasswordResetDTO struct {
+	Token              string `json:"token"`
+	NewPassword        string `json:"new_password"`
+	NewPasswordConfirm string `json:"new_password_confirm"`
+}
+
+// Validate validates password reset data
+func (d *PasswordResetDTO) Validate() error {
+	if d.Token == "" {
+		return errors.New("token is required")
+	}
+	if d.NewPassword == "" {
+		return errors.New("new password is required")
+	}
+	if len(d.NewPassword) < 8 {
+		return errors.New("new password must be at least 8 characters")
+	}
+	if d.NewPassword != d.NewPasswordConfirm {
+		return errors.New("passwords do not match")
+	}
+	return nil
+}
+
+// ChangePasswordDTO represents password change data for logged-in users
+type ChangePasswordDTO struct {
+	OldPassword        string `json:"old_password"`
+	NewPassword        string `json:"new_password"`
+	NewPasswordConfirm string `json:"new_password_confirm"`
+}
+
+// Validate validates password change data
+func (d *ChangePasswordDTO) Validate() error {
+	if d.OldPassword == "" {
+		return errors.New("old password is required")
+	}
+	if d.NewPassword == "" {
+		return errors.New("new password is required")
+	}
+	if len(d.NewPassword) < 8 {
+		return errors.New("new password must be at least 8 characters")
+	}
+	if d.NewPassword != d.NewPasswordConfirm {
+		return errors.New("passwords do not match")
+	}
+	if d.OldPassword == d.NewPassword {
+		return errors.New("new password must be different from old password")
+	}
+	return nil
+}

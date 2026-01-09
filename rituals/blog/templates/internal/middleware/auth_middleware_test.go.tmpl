@@ -1,0 +1,278 @@
+package middleware
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	cosan "github.com/toutaio/toutago-cosan-router"
+)
+
+// Mock AuthService for testing
+type mockAuthService struct {
+	verifySessionFunc func(ctx context.Context, token string) (*domain.User, error)
+}
+
+func (m *mockAuthService) Register(ctx context.Context, registerDTO dto.RegisterDTO) (*domain.User, error) {
+	return nil, nil
+}
+
+func (m *mockAuthService) Login(ctx context.Context, loginDTO dto.LoginDTO) (*domain.Session, error) {
+	return nil, nil
+}
+
+func (m *mockAuthService) Logout(ctx context.Context, sessionID string) error {
+	return nil
+}
+
+func (m *mockAuthService) LogoutAll(ctx context.Context, userID string) error {
+	return nil
+}
+
+func (m *mockAuthService) VerifySession(ctx context.Context, token string) (*domain.User, error) {
+	if m.verifySessionFunc != nil {
+		return m.verifySessionFunc(ctx, token)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockAuthService) RefreshSession(ctx context.Context, token string) (*domain.Session, error) {
+	return nil, nil
+}
+
+func (m *mockAuthService) IsFirstUser(ctx context.Context) (bool, error) {
+	return false, nil
+}
+
+func (m *mockAuthService) SetupFirstAdmin(ctx context.Context, registerDTO dto.RegisterDTO) (*domain.User, error) {
+	return nil, nil
+}
+
+func (m *mockAuthService) RequestPasswordReset(ctx context.Context, dto dto.PasswordResetRequestDTO) error {
+	return nil
+}
+
+func (m *mockAuthService) ResetPassword(ctx context.Context, dto dto.PasswordResetDTO) error {
+	return nil
+}
+
+func (m *mockAuthService) ChangePassword(ctx context.Context, userID string, dto dto.ChangePasswordDTO) error {
+	return nil
+}
+
+func TestAuthMiddleware(t *testing.T) {
+	t.Run("no token - unauthorized", func(t *testing.T) {
+		authService := &mockAuthService{}
+		middleware := AuthMiddleware(authService)
+
+		router := cosan.New()
+		router.Use(middleware)
+		router.GET("/protected", func(c cosan.Context) error {
+			return c.JSON(200, map[string]string{"message": "success"})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != 401 {
+			t.Errorf("Expected status 401, got %d", rec.Code)
+		}
+	})
+
+	t.Run("valid token - authorized", func(t *testing.T) {
+		authService := &mockAuthService{
+			verifySessionFunc: func(ctx context.Context, token string) (*domain.User, error) {
+				return &domain.User{
+					ID:       "user123",
+					Email:    "user@example.com",
+					Username: "testuser",
+					Role:     domain.RoleReader,
+					IsActive: true,
+				}, nil
+			},
+		}
+		middleware := AuthMiddleware(authService)
+
+		router := cosan.New()
+		router.Use(middleware)
+		router.GET("/protected", func(c cosan.Context) error {
+			user, exists := c.Get(ContextKeyUser)
+			if !exists {
+				return c.JSON(500, map[string]string{"error": "user not in context"})
+			}
+			domainUser := user.(*domain.User)
+			return c.JSON(200, map[string]string{"user_id": domainUser.ID})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "session_token",
+			Value: "valid_token",
+		})
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != 200 {
+			t.Errorf("Expected status 200, got %d", rec.Code)
+		}
+	})
+
+	t.Run("invalid token - unauthorized", func(t *testing.T) {
+		authService := &mockAuthService{
+			verifySessionFunc: func(ctx context.Context, token string) (*domain.User, error) {
+				return nil, errors.New("invalid session")
+			},
+		}
+		middleware := AuthMiddleware(authService)
+
+		router := cosan.New()
+		router.Use(middleware)
+		router.GET("/protected", func(c cosan.Context) error {
+			return c.JSON(200, map[string]string{"message": "success"})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "session_token",
+			Value: "invalid_token",
+		})
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != 401 {
+			t.Errorf("Expected status 401, got %d", rec.Code)
+		}
+	})
+}
+
+func TestOptionalAuthMiddleware(t *testing.T) {
+	t.Run("no token - continues without user", func(t *testing.T) {
+		authService := &mockAuthService{}
+		middleware := OptionalAuthMiddleware(authService)
+
+		router := cosan.New()
+		router.Use(middleware)
+		router.GET("/public", func(c cosan.Context) error {
+			_, exists := c.Get(ContextKeyUser)
+			return c.JSON(200, map[string]bool{"hasUser": exists})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/public", nil)
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != 200 {
+			t.Errorf("Expected status 200, got %d", rec.Code)
+		}
+	})
+
+	t.Run("valid token - adds user to context", func(t *testing.T) {
+		authService := &mockAuthService{
+			verifySessionFunc: func(ctx context.Context, token string) (*domain.User, error) {
+				return &domain.User{
+					ID:       "user123",
+					Email:    "user@example.com",
+					Username: "testuser",
+					Role:     domain.RoleReader,
+					IsActive: true,
+				}, nil
+			},
+		}
+		middleware := OptionalAuthMiddleware(authService)
+
+		router := cosan.New()
+		router.Use(middleware)
+		router.GET("/public", func(c cosan.Context) error {
+			user, exists := c.Get(ContextKeyUser)
+			if !exists {
+				return c.JSON(200, map[string]bool{"hasUser": false})
+			}
+			domainUser := user.(*domain.User)
+			return c.JSON(200, map[string]string{"user_id": domainUser.ID})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/public", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "session_token",
+			Value: "valid_token",
+		})
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != 200 {
+			t.Errorf("Expected status 200, got %d", rec.Code)
+		}
+	})
+}
+
+func TestGuestMiddleware(t *testing.T) {
+	t.Run("no token - continues", func(t *testing.T) {
+		authService := &mockAuthService{}
+		middleware := GuestMiddleware(authService)
+
+		router := cosan.New()
+		router.Use(middleware)
+		router.GET("/login", func(c cosan.Context) error {
+			return c.JSON(200, map[string]string{"message": "login page"})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/login", nil)
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != 200 {
+			t.Errorf("Expected status 200, got %d", rec.Code)
+		}
+	})
+
+	t.Run("valid token - redirects to dashboard", func(t *testing.T) {
+		authService := &mockAuthService{
+			verifySessionFunc: func(ctx context.Context, token string) (*domain.User, error) {
+				return &domain.User{
+					ID:       "user123",
+					Email:    "user@example.com",
+					Username: "testuser",
+					Role:     domain.RoleReader,
+					IsActive: true,
+				}, nil
+			},
+		}
+		middleware := GuestMiddleware(authService)
+
+		router := cosan.New()
+		router.Use(middleware)
+		router.GET("/login", func(c cosan.Context) error {
+			return c.JSON(200, map[string]string{"message": "login page"})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/login", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "session_token",
+			Value: "valid_token",
+		})
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != 302 {
+			t.Errorf("Expected status 302 (redirect), got %d", rec.Code)
+		}
+
+		location := rec.Header().Get("Location")
+		if location != "/admin/dashboard" {
+			t.Errorf("Expected redirect to /admin/dashboard, got %s", location)
+		}
+	})
+}

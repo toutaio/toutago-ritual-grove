@@ -1,0 +1,235 @@
+package dto
+
+import "testing"
+
+func TestRegisterDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     RegisterDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid registration",
+			dto: RegisterDTO{
+				Email:           "user@example.com",
+				Username:        "testuser",
+				Password:        "password123",
+				PasswordConfirm: "password123",
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing email",
+			dto: RegisterDTO{
+				Username:        "testuser",
+				Password:        "password123",
+				PasswordConfirm: "password123",
+			},
+			wantErr: true,
+			errMsg:  "email is required",
+		},
+		{
+			name: "invalid email",
+			dto: RegisterDTO{
+				Email:           "invalid",
+				Username:        "testuser",
+				Password:        "password123",
+				PasswordConfirm: "password123",
+			},
+			wantErr: true,
+			errMsg:  "invalid email format",
+		},
+		{
+			name: "username too short",
+			dto: RegisterDTO{
+				Email:           "user@example.com",
+				Username:        "ab",
+				Password:        "password123",
+				PasswordConfirm: "password123",
+			},
+			wantErr: true,
+			errMsg:  "username must be at least 3 characters",
+		},
+		{
+			name: "password too short",
+			dto: RegisterDTO{
+				Email:           "user@example.com",
+				Username:        "testuser",
+				Password:        "pass",
+				PasswordConfirm: "pass",
+			},
+			wantErr: true,
+			errMsg:  "password must be at least 8 characters",
+		},
+		{
+			name: "passwords do not match",
+			dto: RegisterDTO{
+				Email:           "user@example.com",
+				Username:        "testuser",
+				Password:        "password123",
+				PasswordConfirm: "password456",
+			},
+			wantErr: true,
+			errMsg:  "passwords do not match",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Validate() expected error but got nil")
+					return
+				}
+				if err.Error() != tt.errMsg {
+					t.Errorf("Validate() error = %v, want %v", err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Validate() unexpected error = %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestLoginDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     LoginDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid login",
+			dto: LoginDTO{
+				Email:    "user@example.com",
+				Password: "password123",
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing email",
+			dto: LoginDTO{
+				Password: "password123",
+			},
+			wantErr: true,
+			errMsg:  "email is required",
+		},
+		{
+			name: "invalid email",
+			dto: LoginDTO{
+				Email:    "invalid",
+				Password: "password123",
+			},
+			wantErr: true,
+			errMsg:  "invalid email format",
+		},
+		{
+			name: "missing password",
+			dto: LoginDTO{
+				Email: "user@example.com",
+			},
+			wantErr: true,
+			errMsg:  "password is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Validate() expected error but got nil")
+					return
+				}
+				if err.Error() != tt.errMsg {
+					t.Errorf("Validate() error = %v, want %v", err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Validate() unexpected error = %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestChangePasswordDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     ChangePasswordDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid password change",
+			dto: ChangePasswordDTO{
+				OldPassword:        "oldpassword123",
+				NewPassword:        "newpassword123",
+				NewPasswordConfirm: "newpassword123",
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing old password",
+			dto: ChangePasswordDTO{
+				NewPassword:        "newpassword123",
+				NewPasswordConfirm: "newpassword123",
+			},
+			wantErr: true,
+			errMsg:  "old password is required",
+		},
+		{
+			name: "new password too short",
+			dto: ChangePasswordDTO{
+				OldPassword:        "oldpassword123",
+				NewPassword:        "short",
+				NewPasswordConfirm: "short",
+			},
+			wantErr: true,
+			errMsg:  "new password must be at least 8 characters",
+		},
+		{
+			name: "passwords do not match",
+			dto: ChangePasswordDTO{
+				OldPassword:        "oldpassword123",
+				NewPassword:        "newpassword123",
+				NewPasswordConfirm: "different123",
+			},
+			wantErr: true,
+			errMsg:  "passwords do not match",
+		},
+		{
+			name: "new password same as old",
+			dto: ChangePasswordDTO{
+				OldPassword:        "samepassword123",
+				NewPassword:        "samepassword123",
+				NewPasswordConfirm: "samepassword123",
+			},
+			wantErr: true,
+			errMsg:  "new password must be different from old password",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Validate() expected error but got nil")
+					return
+				}
+				if err.Error() != tt.errMsg {
+					t.Errorf("Validate() error = %v, want %v", err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Validate() unexpected error = %v", err)
+				}
+			}
+		})
+	}
+}

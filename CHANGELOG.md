@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Authentication Integration (Phase 1.3)** (TDD)
+  - **Domain Models**:
+    - `User` domain model implementing Breitheamh auth interfaces
+    - `Session` domain model with validation and expiration checking
+    - Comprehensive unit tests for User and Session models (100% coverage)
+  - **Data Transfer Objects**:
+    - `RegisterDTO` with email, username, and password validation
+    - `LoginDTO` with credentials and request metadata
+    - `PasswordResetDTO` and `PasswordResetRequestDTO`
+    - `ChangePasswordDTO` with old/new password validation
+    - Complete test coverage for all DTOs
+  - **Repository Interfaces**:
+    - `UserRepository` interface with CRUD and query methods
+    - `SessionRepository` interface with token and expiration management
+    - `UserFilters` for advanced user queries
+  - **Services**:
+    - `AuthService` interface for authentication operations
+    - `AuthService` implementation wrapping toutago-breitheamh-auth
+    - Support for registration, login, logout, session verification
+    - First-user admin auto-promotion
+    - Password change functionality
+    - Comprehensive unit tests with mocked repositories (90%+ coverage)
+  - **Middleware**:
+    - `AuthMiddleware` requiring authentication with session cookies
+    - `OptionalAuthMiddleware` for mixed public/private routes
+    - `GuestMiddleware` redirecting authenticated users from login pages
+    - `SetupMiddleware` redirecting to first-user setup if needed
+    - Complete test coverage for all middleware functions
+  - **Dependencies**:
+    - Added `github.com/toutaio/toutago-breitheamh-auth v0.1.0`
+    - Added `github.com/google/uuid v1.5.0`
+    - Updated go.mod.tmpl with authentication dependencies
+
 - **Blog Ritual: Complete Authentication System (Phase 1.1-1.2)**
   - **Domain Models**:
     - `User` model with authentication fields (email, username, password, role, status, email verification)

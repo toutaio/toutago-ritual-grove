@@ -1,0 +1,41 @@
+package domain
+
+import (
+	"errors"
+	"time"
+)
+
+// Session represents an authentication session
+type Session struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Token     string    `json:"-"` // Never serialize
+	IPAddress string    `json:"ip_address"`
+	UserAgent string    `json:"user_agent"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Validate ensures session data is valid
+func (s *Session) Validate() error {
+	if s.UserID == "" {
+		return errors.New("user_id is required")
+	}
+	if s.Token == "" {
+		return errors.New("token is required")
+	}
+	if s.ExpiresAt.IsZero() {
+		return errors.New("expires_at is required")
+	}
+	return nil
+}
+
+// IsExpired checks if session is expired
+func (s *Session) IsExpired() bool {
+	return time.Now().After(s.ExpiresAt)
+}
+
+// IsValid checks if session is valid (not expired and has required fields)
+func (s *Session) IsValid() bool {
+	return s.Validate() == nil && !s.IsExpired()
+}

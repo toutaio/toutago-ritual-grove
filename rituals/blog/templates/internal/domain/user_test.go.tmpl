@@ -1,0 +1,203 @@
+package domain
+
+import (
+	"testing"
+	"time"
+)
+
+func TestUser_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		user    User
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid user",
+			user: User{
+				ID:       "123",
+				Email:    "user@example.com",
+				Username: "testuser",
+				Role:     RoleReader,
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing email",
+			user: User{
+				ID:       "123",
+				Username: "testuser",
+				Role:     RoleReader,
+			},
+			wantErr: true,
+			errMsg:  "email is required",
+		},
+		{
+			name: "invalid email format",
+			user: User{
+				ID:       "123",
+				Email:    "invalid-email",
+				Username: "testuser",
+				Role:     RoleReader,
+			},
+			wantErr: true,
+			errMsg:  "invalid email format",
+		},
+		{
+			name: "missing username",
+			user: User{
+				ID:    "123",
+				Email: "user@example.com",
+				Role:  RoleReader,
+			},
+			wantErr: true,
+			errMsg:  "username is required",
+		},
+		{
+			name: "username too short",
+			user: User{
+				ID:       "123",
+				Email:    "user@example.com",
+				Username: "ab",
+				Role:     RoleReader,
+			},
+			wantErr: true,
+			errMsg:  "username must be at least 3 characters",
+		},
+		{
+			name: "username too long",
+			user: User{
+				ID:       "123",
+				Email:    "user@example.com",
+				Username: "this_is_a_very_long_username_that_exceeds_the_maximum_allowed_length",
+				Role:     RoleReader,
+			},
+			wantErr: true,
+			errMsg:  "username must not exceed 50 characters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.user.Validate()
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Validate() expected error but got nil")
+					return
+				}
+				if err.Error() != tt.errMsg {
+					t.Errorf("Validate() error = %v, want %v", err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Validate() unexpected error = %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestUser_HasRole(t *testing.T) {
+	user := User{Role: RoleEditor}
+
+	tests := []struct {
+		name string
+		role Role
+		want bool
+	}{
+		{"has editor role", RoleEditor, true},
+		{"does not have admin role", RoleAdmin, false},
+		{"does not have author role", RoleAuthor, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := user.HasRole(tt.role); got != tt.want {
+				t.Errorf("HasRole() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_IsAdmin(t *testing.T) {
+	tests := []struct {
+		name string
+		role Role
+		want bool
+	}{
+		{"admin user", RoleAdmin, true},
+		{"editor user", RoleEditor, false},
+		{"author user", RoleAuthor, false},
+		{"reader user", RoleReader, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			user := User{Role: tt.role}
+			if got := user.IsAdmin(); got != tt.want {
+				t.Errorf("IsAdmin() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_IsVerified(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name      string
+		verifiedAt *time.Time
+		want      bool
+	}{
+		{"verified user", &now, true},
+		{"unverified user", nil, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			user := User{EmailVerifiedAt: tt.verifiedAt}
+			if got := user.IsVerified(); got != tt.want {
+				t.Errorf("IsVerified() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_BreitheamhInterface(t *testing.T) {
+	user := User{
+		ID:           "user123",
+		PasswordHash: "hashed_password",
+		Role:         RoleAdmin,
+	}
+
+	t.Run("GetID", func(t *testing.T) {
+		if got := user.GetID(); got != "user123" {
+			t.Errorf("GetID() = %v, want %v", got, "user123")
+		}
+	})
+
+	t.Run("GetPassword", func(t *testing.T) {
+		if got := user.GetPassword(); got != "hashed_password" {
+			t.Errorf("GetPassword() = %v, want %v", got, "hashed_password")
+		}
+	})
+
+	t.Run("GetAuthIdentifier", func(t *testing.T) {
+		if got := user.GetAuthIdentifier(); got != "user123" {
+			t.Errorf("GetAuthIdentifier() = %v, want %v", got, "user123")
+		}
+	})
+
+	t.Run("IsSuperAdmin for admin", func(t *testing.T) {
+		if got := user.IsSuperAdmin(); got != true {
+			t.Errorf("IsSuperAdmin() = %v, want %v", got, true)
+		}
+	})
+
+	t.Run("IsSuperAdmin for non-admin", func(t *testing.T) {
+		user.Role = RoleReader
+		if got := user.IsSuperAdmin(); got != false {
+			t.Errorf("IsSuperAdmin() = %v, want %v", got, false)
+		}
+	})
+}

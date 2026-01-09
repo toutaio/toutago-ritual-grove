@@ -1,0 +1,116 @@
+package domain
+
+import (
+	"errors"
+	"regexp"
+	"time"
+)
+
+// Role represents user roles in the system
+type Role string
+
+const (
+	RoleAdmin  Role = "admin"
+	RoleEditor Role = "editor"
+	RoleAuthor Role = "author"
+	RoleReader Role = "reader"
+)
+
+// User represents a user in the blog system
+type User struct {
+	ID              string     `json:"id"`
+	Email           string     `json:"email"`
+	Username        string     `json:"username"`
+	PasswordHash    string     `json:"-"` // Never serialize
+	Role            Role       `json:"role"`
+	IsActive        bool       `json:"is_active"`
+	EmailVerifiedAt *time.Time `json:"email_verified_at,omitempty"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+
+// Validate ensures user data is valid
+func (u *User) Validate() error {
+	if u.Email == "" {
+		return errors.New("email is required")
+	}
+	if !emailRegex.MatchString(u.Email) {
+		return errors.New("invalid email format")
+	}
+	if u.Username == "" {
+		return errors.New("username is required")
+	}
+	if len(u.Username) < 3 {
+		return errors.New("username must be at least 3 characters")
+	}
+	if len(u.Username) > 50 {
+		return errors.New("username must not exceed 50 characters")
+	}
+	return nil
+}
+
+// HasRole checks if user has specific role
+func (u *User) HasRole(role Role) bool {
+	return u.Role == role
+}
+
+// IsAdmin returns true if user is admin
+func (u *User) IsAdmin() bool {
+	return u.Role == RoleAdmin
+}
+
+// IsEditor returns true if user is editor
+func (u *User) IsEditor() bool {
+	return u.Role == RoleEditor
+}
+
+// IsAuthor returns true if user is author
+func (u *User) IsAuthor() bool {
+	return u.Role == RoleAuthor
+}
+
+// IsVerified returns true if email is verified
+func (u *User) IsVerified() bool {
+	return u.EmailVerifiedAt != nil
+}
+
+// Breitheamh User interface implementation
+func (u *User) GetID() string {
+	return u.ID
+}
+
+func (u *User) GetPassword() string {
+	return u.PasswordHash
+}
+
+func (u *User) GetAuthIdentifier() string {
+	return u.ID
+}
+
+func (u *User) GetAuthPassword() string {
+	return u.PasswordHash
+}
+
+func (u *User) HasPermission(permission string) bool {
+	// Admin has all permissions
+	if u.IsAdmin() {
+		return true
+	}
+	// TODO: Implement fine-grained permissions in Phase 2
+	return false
+}
+
+func (u *User) GetRoles() []string {
+	return []string{string(u.Role)}
+}
+
+func (u *User) GetPermissions() []string {
+	// TODO: Implement permissions in Phase 2
+	return []string{}
+}
+
+func (u *User) IsSuperAdmin() bool {
+	return u.IsAdmin()
+}

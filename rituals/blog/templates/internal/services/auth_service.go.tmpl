@@ -1,0 +1,43 @@
+package services
+
+import (
+	"context"
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// AuthService defines the interface for authentication operations
+type AuthService interface {
+	// Register creates a new user account
+	Register(ctx context.Context, registerDTO dto.RegisterDTO) (*domain.User, error)
+
+	// Login authenticates a user and creates a session
+	Login(ctx context.Context, loginDTO dto.LoginDTO) (*domain.Session, error)
+
+	// Logout invalidates a session
+	Logout(ctx context.Context, sessionID string) error
+
+	// LogoutAll invalidates all sessions for a user
+	LogoutAll(ctx context.Context, userID string) error
+
+	// VerifySession validates a session token and returns the user
+	VerifySession(ctx context.Context, token string) (*domain.User, error)
+
+	// RefreshSession extends the expiration of a session
+	RefreshSession(ctx context.Context, token string) (*domain.Session, error)
+
+	// IsFirstUser checks if this is the first user (for admin setup)
+	IsFirstUser(ctx context.Context) (bool, error)
+
+	// SetupFirstAdmin creates the first admin user
+	SetupFirstAdmin(ctx context.Context, registerDTO dto.RegisterDTO) (*domain.User, error)
+
+	// RequestPasswordReset generates a password reset token
+	RequestPasswordReset(ctx context.Context, dto dto.PasswordResetRequestDTO) error
+
+	// ResetPassword resets a user's password using a token
+	ResetPassword(ctx context.Context, dto dto.PasswordResetDTO) error
+
+	// ChangePassword changes a user's password (for logged-in users)
+	ChangePassword(ctx context.Context, userID string, dto dto.ChangePasswordDTO) error
+}

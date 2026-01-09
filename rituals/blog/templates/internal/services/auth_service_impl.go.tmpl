@@ -1,0 +1,330 @@
+package services
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/repositories"
+	
+	"github.com/google/uuid"
+	"github.com/toutaio/toutago-breitheamh-auth/pkg/breitheamh"
+)
+
+type authService struct {
+	userRepo    repositories.UserRepository
+	sessionRepo repositories.SessionRepository
+	guard       breitheamh.Guard
+	hasher      breitheamh.Hasher
+}
+
+// NewAuthService creates a new authentication service
+func NewAuthService(
+	userRepo repositories.UserRepository,
+	sessionRepo repositories.SessionRepository,
+	guard breitheamh.Guard,
+	hasher breitheamh.Hasher,
+) AuthService {
+	return &authService{
+		userRepo:    userRepo,
+		sessionRepo: sessionRepo,
+		guard:       guard,
+		hasher:      hasher,
+	}
+}
+
+func (s *authService) Register(ctx context.Context, registerDTO dto.RegisterDTO) (*domain.User, error) {
+	// Validate DTO
+	if err := registerDTO.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Check if email already exists
+	exists, err := s.userRepo.ExistsByEmail(ctx, registerDTO.Email)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, errors.New("email already registered")
+	}
+
+	// Check if username already exists
+	exists, err = s.userRepo.ExistsByUsername(ctx, registerDTO.Username)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, errors.New("username already taken")
+	}
+
+	// Hash password
+	hashedPassword, err := s.hasher.Hash(registerDTO.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	// Determine role (first user becomes admin)
+	isFirst, err := s.IsFirstUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	role := domain.RoleReader
+	if isFirst {
+		role = domain.RoleAdmin
+	}
+
+	// Create user
+	now := time.Now()
+	user := &domain.User{
+		ID:           uuid.New().String(),
+		Email:        registerDTO.Email,
+		Username:     registerDTO.Username,
+		PasswordHash: hashedPassword,
+		Role:         role,
+		IsActive:     true,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	if err := user.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *authService) Login(ctx context.Context, loginDTO dto.LoginDTO) (*domain.Session, error) {
+	// Validate DTO
+	if err := loginDTO.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Find user by email
+	user, err := s.userRepo.FindByEmail(ctx, loginDTO.Email)
+	if err != nil {
+		return nil, errors.New("invalid credentials")
+	}
+
+	// Check if user is active
+	if !user.IsActive {
+		return nil, errors.New("account is deactivated")
+	}
+
+	// Verify password
+	if !s.hasher.Verify(loginDTO.Password, user.PasswordHash) {
+		return nil, errors.New("invalid credentials")
+	}
+
+	// Generate session token using breitheamh
+	tokenString, err := breitheamh.GenerateSecureToken(32)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create session
+	now := time.Now()
+	session := &domain.Session{
+		ID:        uuid.New().String(),
+		UserID:    user.ID,
+		Token:     tokenString,
+		IPAddress: loginDTO.IPAddress,
+		UserAgent: loginDTO.UserAgent,
+		ExpiresAt: now.Add(24 * time.Hour),
+		CreatedAt: now,
+	}
+
+	if err := session.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := s.sessionRepo.Create(ctx, session); err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+func (s *authService) Logout(ctx context.Context, sessionID string) error {
+	return s.sessionRepo.Delete(ctx, sessionID)
+}
+
+func (s *authService) LogoutAll(ctx context.Context, userID string) error {
+	return s.sessionRepo.DeleteByUserID(ctx, userID)
+}
+
+func (s *authService) VerifySession(ctx context.Context, token string) (*domain.User, error) {
+	// Find session by token
+	session, err := s.sessionRepo.FindByToken(ctx, token)
+	if err != nil {
+		return nil, errors.New("invalid session")
+	}
+
+	// Check if session is valid
+	if !session.IsValid() {
+		// Delete expired session
+		_ = s.sessionRepo.Delete(ctx, session.ID)
+		return nil, errors.New("session expired")
+	}
+
+	// Get user
+	user, err := s.userRepo.FindByID(ctx, session.UserID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Check if user is active
+	if !user.IsActive {
+		return nil, errors.New("account is deactivated")
+	}
+
+	return user, nil
+}
+
+func (s *authService) RefreshSession(ctx context.Context, token string) (*domain.Session, error) {
+	// Find session
+	session, err := s.sessionRepo.FindByToken(ctx, token)
+	if err != nil {
+		return nil, errors.New("invalid session")
+	}
+
+	// Check if session is valid
+	if !session.IsValid() {
+		return nil, errors.New("session expired")
+	}
+
+	// Extend expiration
+	session.ExpiresAt = time.Now().Add(24 * time.Hour)
+
+	if err := s.sessionRepo.Update(ctx, session); err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+func (s *authService) IsFirstUser(ctx context.Context) (bool, error) {
+	return s.userRepo.IsFirstUser(ctx)
+}
+
+func (s *authService) SetupFirstAdmin(ctx context.Context, registerDTO dto.RegisterDTO) (*domain.User, error) {
+	// Validate DTO
+	if err := registerDTO.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Check if this is the first user
+	isFirst, err := s.IsFirstUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !isFirst {
+		return nil, errors.New("admin already exists")
+	}
+
+	// Hash password
+	hashedPassword, err := s.hasher.Hash(registerDTO.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create admin user
+	now := time.Now()
+	user := &domain.User{
+		ID:           uuid.New().String(),
+		Email:        registerDTO.Email,
+		Username:     registerDTO.Username,
+		PasswordHash: hashedPassword,
+		Role:         domain.RoleAdmin,
+		IsActive:     true,
+		EmailVerifiedAt: &now, // Auto-verify first admin
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	if err := user.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *authService) RequestPasswordReset(ctx context.Context, dto dto.PasswordResetRequestDTO) error {
+	// Validate
+	if err := dto.Validate(); err != nil {
+		return err
+	}
+
+	// Find user
+	user, err := s.userRepo.FindByEmail(ctx, dto.Email)
+	if err != nil {
+		// Don't reveal if user exists
+		return nil
+	}
+
+	if !user.IsActive {
+		return nil
+	}
+
+	// TODO: Generate password reset token and send email
+	// This will be implemented in Phase 1.4
+	return errors.New("password reset not yet implemented")
+}
+
+func (s *authService) ResetPassword(ctx context.Context, dto dto.PasswordResetDTO) error {
+	// Validate
+	if err := dto.Validate(); err != nil {
+		return err
+	}
+
+	// TODO: Implement password reset logic
+	// This will be implemented in Phase 1.4
+	return errors.New("password reset not yet implemented")
+}
+
+func (s *authService) ChangePassword(ctx context.Context, userID string, dto dto.ChangePasswordDTO) error {
+	// Validate
+	if err := dto.Validate(); err != nil {
+		return err
+	}
+
+	// Get user
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	// Verify old password
+	if !s.hasher.Verify(dto.OldPassword, user.PasswordHash) {
+		return errors.New("incorrect old password")
+	}
+
+	// Hash new password
+	hashedPassword, err := s.hasher.Hash(dto.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	// Update password
+	user.PasswordHash = hashedPassword
+	user.UpdatedAt = time.Now()
+
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return err
+	}
+
+	// Invalidate all sessions (force re-login)
+	_ = s.sessionRepo.DeleteByUserID(ctx, userID)
+
+	return nil
+}

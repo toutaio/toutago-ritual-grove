@@ -1,0 +1,31 @@
+package middleware
+
+import (
+	"[[ .module_path ]]/internal/services"
+	cosan "github.com/toutaio/toutago-cosan-router"
+)
+
+// SetupMiddleware redirects to setup page if no users exist
+func SetupMiddleware(authService services.AuthService) cosan.HandlerFunc {
+	return func(c cosan.Context) error {
+		// Check if this is the setup route itself
+		if c.Request().URL.Path == "/setup" {
+			return c.Next()
+		}
+
+		// Check if any users exist
+		isFirst, err := authService.IsFirstUser(c.Request().Context())
+		if err != nil {
+			return c.JSON(500, map[string]string{
+				"error": "Internal server error",
+			})
+		}
+
+		// If no users exist, redirect to setup
+		if isFirst {
+			return c.Redirect(302, "/setup")
+		}
+
+		return c.Next()
+	}
+}

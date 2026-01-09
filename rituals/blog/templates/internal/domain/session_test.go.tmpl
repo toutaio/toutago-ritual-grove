@@ -1,0 +1,156 @@
+package domain
+
+import (
+	"testing"
+	"time"
+)
+
+func TestSession_Validate(t *testing.T) {
+	futureTime := time.Now().Add(24 * time.Hour)
+
+	tests := []struct {
+		name    string
+		session Session
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid session",
+			session: Session{
+				ID:        "session123",
+				UserID:    "user123",
+				Token:     "token123",
+				ExpiresAt: futureTime,
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing user_id",
+			session: Session{
+				ID:        "session123",
+				Token:     "token123",
+				ExpiresAt: futureTime,
+			},
+			wantErr: true,
+			errMsg:  "user_id is required",
+		},
+		{
+			name: "missing token",
+			session: Session{
+				ID:        "session123",
+				UserID:    "user123",
+				ExpiresAt: futureTime,
+			},
+			wantErr: true,
+			errMsg:  "token is required",
+		},
+		{
+			name: "missing expires_at",
+			session: Session{
+				ID:     "session123",
+				UserID: "user123",
+				Token:  "token123",
+			},
+			wantErr: true,
+			errMsg:  "expires_at is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.session.Validate()
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Validate() expected error but got nil")
+					return
+				}
+				if err.Error() != tt.errMsg {
+					t.Errorf("Validate() error = %v, want %v", err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Validate() unexpected error = %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestSession_IsExpired(t *testing.T) {
+	tests := []struct {
+		name      string
+		expiresAt time.Time
+		want      bool
+	}{
+		{
+			name:      "not expired - future time",
+			expiresAt: time.Now().Add(24 * time.Hour),
+			want:      false,
+		},
+		{
+			name:      "expired - past time",
+			expiresAt: time.Now().Add(-24 * time.Hour),
+			want:      true,
+		},
+		{
+			name:      "just expired - 1 second ago",
+			expiresAt: time.Now().Add(-1 * time.Second),
+			want:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := Session{ExpiresAt: tt.expiresAt}
+			if got := session.IsExpired(); got != tt.want {
+				t.Errorf("IsExpired() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSession_IsValid(t *testing.T) {
+	tests := []struct {
+		name    string
+		session Session
+		want    bool
+	}{
+		{
+			name: "valid session",
+			session: Session{
+				ID:        "session123",
+				UserID:    "user123",
+				Token:     "token123",
+				ExpiresAt: time.Now().Add(24 * time.Hour),
+			},
+			want: true,
+		},
+		{
+			name: "invalid - missing user_id",
+			session: Session{
+				ID:        "session123",
+				Token:     "token123",
+				ExpiresAt: time.Now().Add(24 * time.Hour),
+			},
+			want: false,
+		},
+		{
+			name: "invalid - expired",
+			session: Session{
+				ID:        "session123",
+				UserID:    "user123",
+				Token:     "token123",
+				ExpiresAt: time.Now().Add(-24 * time.Hour),
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.session.IsValid(); got != tt.want {
+				t.Errorf("IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
