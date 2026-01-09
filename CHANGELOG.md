@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Category Admin UI (Phase 3.2)** (TDD)
+  - **Admin Category Handler**:
+    - `List()` - Paginated category listing
+    - `Store()` - Create new category
+    - `Update()` - Update existing category
+    - `Destroy()` - Delete category
+  - **Admin Category Template**:
+    - Grid-based category display
+    - Inline create/edit modal
+    - Delete confirmation
+    - Real-time AJAX operations
+  - **Comprehensive Testing**:
+    - Category handler tests (12+ test cases)
+    - Permission scenarios (admin/editor restrictions)
+    - CRUD operation coverage
+
 - **Blog Ritual: Admin Post Management UI (Phase 3.1)** (TDD)
   - **Admin Post Handler**:
     - `List()` - Paginated post listing with status/category filters

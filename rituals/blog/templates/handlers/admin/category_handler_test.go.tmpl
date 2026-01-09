@@ -1,0 +1,346 @@
+package admin
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/dto"
+	"[[.module_path]]/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// MockCategoryService for testing
+type MockCategoryService struct {
+	CreateFunc    func(dto dto.CreateCategoryDTO) (*domain.Category, error)
+	GetByIDFunc   func(id int64) (*domain.Category, error)
+	GetBySlugFunc func(slug string) (*domain.Category, error)
+	ListFunc      func(page, limit int) ([]*domain.Category, int, error)
+	UpdateFunc    func(id int64, dto dto.UpdateCategoryDTO) (*domain.Category, error)
+	DeleteFunc    func(id int64) error
+}
+
+func (m *MockCategoryService) Create(dto dto.CreateCategoryDTO) (*domain.Category, error) {
+	if m.CreateFunc != nil {
+		return m.CreateFunc(dto)
+	}
+	return nil, nil
+}
+
+func (m *MockCategoryService) GetByID(id int64) (*domain.Category, error) {
+	if m.GetByIDFunc != nil {
+		return m.GetByIDFunc(id)
+	}
+	return nil, nil
+}
+
+func (m *MockCategoryService) GetBySlug(slug string) (*domain.Category, error) {
+	if m.GetBySlugFunc != nil {
+		return m.GetBySlugFunc(slug)
+	}
+	return nil, nil
+}
+
+func (m *MockCategoryService) List(page, limit int) ([]*domain.Category, int, error) {
+	if m.ListFunc != nil {
+		return m.ListFunc(page, limit)
+	}
+	return []*domain.Category{}, 0, nil
+}
+
+func (m *MockCategoryService) Update(id int64, dto dto.UpdateCategoryDTO) (*domain.Category, error) {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(id, dto)
+	}
+	return nil, nil
+}
+
+func (m *MockCategoryService) Delete(id int64) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(id)
+	}
+	return nil
+}
+
+func TestCategoryAdminHandler_List(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		mockCategories []*domain.Category
+		mockTotal      int
+		expectedStatus int
+	}{
+		{
+			name:     "editor can list categories",
+			userRole: domain.RoleEditor,
+			mockCategories: []*domain.Category{
+				{ID: 1, Name: "Tech", Slug: "tech"},
+				{ID: 2, Name: "Design", Slug: "design"},
+			},
+			mockTotal:      2,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "admin can list categories",
+			userRole:       domain.RoleAdmin,
+			mockCategories: []*domain.Category{},
+			mockTotal:      0,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "author cannot list categories",
+			userRole:       domain.RoleAuthor,
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			categoryService := &MockCategoryService{
+				ListFunc: func(page, limit int) ([]*domain.Category, int, error) {
+					return tt.mockCategories, tt.mockTotal, nil
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor
+				},
+			}
+
+			handler := NewCategoryAdminHandler(categoryService, permService)
+
+			req := httptest.NewRequest("GET", "/admin/categories", nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.List(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestCategoryAdminHandler_Store(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		categoryData   dto.CreateCategoryDTO
+		mockCategory   *domain.Category
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:     "editor can create category",
+			userRole: domain.RoleEditor,
+			categoryData: dto.CreateCategoryDTO{
+				Name:        "Technology",
+				Description: "Tech posts",
+			},
+			mockCategory:   &domain.Category{ID: 1, Name: "Technology", Slug: "technology"},
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:     "validation error",
+			userRole: domain.RoleEditor,
+			categoryData: dto.CreateCategoryDTO{
+				Name: "", // Empty name
+			},
+			mockError:      services.ErrInvalidInput,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:     "author cannot create category",
+			userRole: domain.RoleAuthor,
+			categoryData: dto.CreateCategoryDTO{
+				Name: "Test",
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			categoryService := &MockCategoryService{
+				CreateFunc: func(dto dto.CreateCategoryDTO) (*domain.Category, error) {
+					return tt.mockCategory, tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor
+				},
+			}
+
+			handler := NewCategoryAdminHandler(categoryService, permService)
+
+			body, _ := json.Marshal(tt.categoryData)
+			req := httptest.NewRequest("POST", "/admin/categories", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.Store(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestCategoryAdminHandler_Update(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		categoryID     string
+		updateData     dto.UpdateCategoryDTO
+		mockCategory   *domain.Category
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:       "editor can update category",
+			userRole:   domain.RoleEditor,
+			categoryID: "1",
+			updateData: dto.UpdateCategoryDTO{
+				Name: stringPtr("Updated Name"),
+			},
+			mockCategory:   &domain.Category{ID: 1, Name: "Updated Name"},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "category not found",
+			userRole:       domain.RoleEditor,
+			categoryID:     "999",
+			updateData:     dto.UpdateCategoryDTO{},
+			mockError:      services.ErrCategoryNotFound,
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:       "author cannot update category",
+			userRole:   domain.RoleAuthor,
+			categoryID: "1",
+			updateData: dto.UpdateCategoryDTO{
+				Name: stringPtr("Test"),
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			categoryService := &MockCategoryService{
+				UpdateFunc: func(id int64, dto dto.UpdateCategoryDTO) (*domain.Category, error) {
+					return tt.mockCategory, tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor
+				},
+			}
+
+			handler := NewCategoryAdminHandler(categoryService, permService)
+
+			body, _ := json.Marshal(tt.updateData)
+			req := httptest.NewRequest("PUT", "/admin/categories/"+tt.categoryID, bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.categoryID},
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.Update(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestCategoryAdminHandler_Destroy(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		categoryID     string
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:           "editor can delete category",
+			userRole:       domain.RoleEditor,
+			categoryID:     "1",
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "category not found",
+			userRole:       domain.RoleEditor,
+			categoryID:     "999",
+			mockError:      services.ErrCategoryNotFound,
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "author cannot delete category",
+			userRole:       domain.RoleAuthor,
+			categoryID:     "1",
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			categoryService := &MockCategoryService{
+				DeleteFunc: func(id int64) error {
+					return tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor
+				},
+			}
+
+			handler := NewCategoryAdminHandler(categoryService, permService)
+
+			req := httptest.NewRequest("DELETE", "/admin/categories/"+tt.categoryID, nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.categoryID},
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.Destroy(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func stringPtr(s string) *string {
+	return &s
+}

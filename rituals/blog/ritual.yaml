@@ -185,6 +185,12 @@ files:
     - src: handlers/admin/post_handler_test.go.tmpl
       dest: internal/handlers/admin/post_handler_test.go
 
+    - src: handlers/admin/category_handler.go.tmpl
+      dest: internal/handlers/admin/category_handler.go
+
+    - src: handlers/admin/category_handler_test.go.tmpl
+      dest: internal/handlers/admin/category_handler_test.go
+
     # Post handler with tests
     - src: handlers/post_handler_test.go.tmpl
       dest: internal/handlers/post_handler_test.go
@@ -219,6 +225,10 @@ files:
 
     - src: views/admin/posts/form.html.tmpl
       dest: views/admin/posts/form.html
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
+
+    - src: views/admin/categories/list.html.tmpl
+      dest: views/admin/categories/list.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     - src: views/layout.html.tmpl

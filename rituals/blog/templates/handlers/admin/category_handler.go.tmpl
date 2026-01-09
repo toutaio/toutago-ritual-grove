@@ -1,0 +1,205 @@
+package admin
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/dto"
+	"[[.module_path]]/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// CategoryAdminHandler handles admin category management operations
+type CategoryAdminHandler struct {
+	categoryService services.CategoryService
+	permService     services.PermissionService
+}
+
+// NewCategoryAdminHandler creates a new CategoryAdminHandler
+func NewCategoryAdminHandler(categoryService services.CategoryService, permService services.PermissionService) *CategoryAdminHandler {
+	return &CategoryAdminHandler{
+		categoryService: categoryService,
+		permService:     permService,
+	}
+}
+
+// List shows all categories for admin
+func (h *CategoryAdminHandler) List(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Check permission - only editors and admins can manage categories
+	if !h.permService.Can(currentUser, "manage", "categories") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to manage categories",
+		})
+		return
+	}
+
+	// Parse query parameters
+	page := getQueryInt(ctx, "page", 1)
+	limit := getQueryInt(ctx, "limit", 50)
+
+	// Get categories
+	categories, total, err := h.categoryService.List(page, limit)
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to fetch categories",
+		})
+		return
+	}
+
+	// Calculate pagination
+	totalPages := (total + limit - 1) / limit
+
+	// Return response
+	ctx.Status(http.StatusOK).JSON(map[string]interface{}{
+		"categories":  categories,
+		"total":       total,
+		"page":        page,
+		"limit":       limit,
+		"total_pages": totalPages,
+	})
+}
+
+// Store creates a new category
+func (h *CategoryAdminHandler) Store(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Check permission
+	if !h.permService.Can(currentUser, "create", "categories") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to create categories",
+		})
+		return
+	}
+
+	// Parse request body
+	var createDTO dto.CreateCategoryDTO
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&createDTO); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	// Validate
+	if err := createDTO.Validate(); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Create category
+	category, err := h.categoryService.Create(createDTO)
+	if err != nil {
+		if err == services.ErrInvalidInput {
+			ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+				"error": err.Error(),
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to create category",
+		})
+		return
+	}
+
+	ctx.Status(http.StatusCreated).JSON(category)
+}
+
+// Update updates an existing category
+func (h *CategoryAdminHandler) Update(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Check permission
+	if !h.permService.Can(currentUser, "update", "categories") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to update categories",
+		})
+		return
+	}
+
+	// Parse ID
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid category ID",
+		})
+		return
+	}
+
+	// Parse request body
+	var updateDTO dto.UpdateCategoryDTO
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&updateDTO); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	// Validate
+	if err := updateDTO.Validate(); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Update category
+	category, err := h.categoryService.Update(id, updateDTO)
+	if err != nil {
+		if err == services.ErrCategoryNotFound {
+			ctx.Status(http.StatusNotFound).JSON(map[string]string{
+				"error": "Category not found",
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to update category",
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK).JSON(category)
+}
+
+// Destroy deletes a category
+func (h *CategoryAdminHandler) Destroy(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Check permission
+	if !h.permService.Can(currentUser, "delete", "categories") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to delete categories",
+		})
+		return
+	}
+
+	// Parse ID
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid category ID",
+		})
+		return
+	}
+
+	// Delete category
+	if err := h.categoryService.Delete(id); err != nil {
+		if err == services.ErrCategoryNotFound {
+			ctx.Status(http.StatusNotFound).JSON(map[string]string{
+				"error": "Category not found",
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to delete category",
+		})
+		return
+	}
+
+	ctx.Status(http.StatusNoContent).Send()
+}
