@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Auth UI Templates (Phase 1.4-1.5)**
+  - **SSR Templates**:
+    - Login page with form validation and error display
+    - Register page with password confirmation
+    - Setup page for first-user admin creation
+    - Consistent styling and mobile-responsive design
+  - **Inertia.js Vue Components**:
+    - Login.vue with reactive form handling
+    - Register.vue with client-side validation hints
+    - Setup.vue with admin account creation
+    - Integrated with Inertia router for SPA navigation
+    - Loading states and error handling
+  - **Features**:
+    - Client-side form validation (minlength, required)
+    - Error message display
+    - Processing states (disabled buttons while submitting)
+    - Consistent auth card layout
+    - Responsive design for all screen sizes
+
 - **Blog Ritual: Database Repositories & Auth Handlers (Phase 1.3 completion)**
   - **PostgreSQL Repositories**:
     - `UserRepository` implementation with full CRUD operations

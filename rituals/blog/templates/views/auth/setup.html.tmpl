@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - [[ .app_name ]]</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="setup-header">
+                <h1>Welcome to [[ .app_name ]]</h1>
+                <p class="setup-subtitle">Let's create your admin account</p>
+            </div>
+            
+            {{if .error}}
+            <div class="alert alert-error">
+                {{.error}}
+            </div>
+            {{end}}
+            
+            <form method="POST" action="/setup" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Admin Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        required 
+                        autofocus
+                        minlength="3"
+                        maxlength="50"
+                        placeholder="admin"
+                    >
+                    <small>This will be your admin username</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Admin Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        required
+                        placeholder="admin@example.com"
+                    >
+                    <small>Use a valid email address</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required
+                        minlength="8"
+                        placeholder="At least 8 characters"
+                    >
+                    <small>Choose a strong password</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password_confirm">Confirm Password</label>
+                    <input 
+                        type="password" 
+                        id="password_confirm" 
+                        name="password_confirm" 
+                        required
+                        minlength="8"
+                        placeholder="Re-enter your password"
+                    >
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    Complete Setup
+                </button>
+            </form>
+            
+            <div class="setup-info">
+                <p><strong>Note:</strong> This account will have full administrator privileges.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
