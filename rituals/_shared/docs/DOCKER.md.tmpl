@@ -9,17 +9,14 @@ This project includes Docker and Docker Compose configurations for easy developm
 
 ## Quick Start
 
-1. **Copy environment file**:
-   ```bash
-   cp .env.example .env
-   ```
+✅ **Your `.env` file is already created with your ritual answers!**
 
-2. **Start all services**:
+1. **Start all services**:
    ```bash
    docker-compose up
    ```
 
-3. **Access the application**:
+2. **Access the application**:
    - App: http://localhost:[[.port]]
    [[- if .has_frontend]]
    - Frontend dev server: http://localhost:3000
@@ -28,10 +25,12 @@ This project includes Docker and Docker Compose configurations for easy developm
    - Database: localhost:[[if eq .database_type "postgres"]]5432[[else]]3306[[end]]
    [[- end]]
 
+That's it! Your environment is ready to go.
+
 ## Services
 
 ### App (Go Application)
-- **Image**: golang:1.21-alpine
+- **Image**: golang:1.23-alpine
 - **Hot Reload**: Using Air for automatic rebuilds
 - **Port**: [[.port]] (configurable via `APP_PORT` in .env)
 

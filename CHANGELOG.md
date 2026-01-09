@@ -18,11 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - wait-for-it.sh script for database readiness
   - Shared frontend templates (package.json.tmpl, esbuild.config.js.tmpl)
   - DOCKER.md.tmpl comprehensive user documentation
+  - DATABASE.md.tmpl comprehensive database setup guide
   - Comprehensive test suite (45+ test cases) for Docker functionality
   - Generator support for `_shared:` template prefix
   - Conditional file generation based on ritual answers
   - Docker support added to all rituals: minimal, hello-world, basic-site, blog, wiki, fullstack-inertia-vue
   - Automatic extraction of `_shared` directory from embedded rituals
+  - **Automatic .env file generation** - Ready to use without manual copying!
 
 ### Changed
 - Updated generator to support shared templates via `_shared:` prefix

@@ -288,6 +288,11 @@ files:
       dest: .env.docker.example
       condition: "enable_docker"
     
+    # Create ready-to-use .env file with user's answers
+    - src: _shared:docker/.env.example.tmpl
+      dest: .env
+      condition: "enable_docker"
+    
     - src: _shared:docs/DOCKER.md.tmpl
       dest: DOCKER.md
       condition: "enable_docker"

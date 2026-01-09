@@ -57,6 +57,11 @@ files:
       condition: "enable_docker"
     
     - src: _shared:docker/.env.example.tmpl
+    
+    # Create ready-to-use .env file with user's answers
+    - src: _shared:docker/.env.example.tmpl
+      dest: .env
+      condition: "enable_docker"
       dest: .env.example
       condition: "enable_docker"
     

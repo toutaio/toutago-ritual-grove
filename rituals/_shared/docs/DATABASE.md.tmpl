@@ -4,33 +4,30 @@ This guide helps you set up and configure your database for local development an
 
 ## Quick Start
 
-### 1. Copy Environment File
+### ✅ Good News: Your .env is Already Created!
 
-```bash
-cp .env.example .env
-```
+The ritual wizard has already created your `.env` file with the database credentials you provided during setup!
 
-### 2. Edit Database Credentials
-
-Open `.env` and configure your database:
-
-```env
-# Database settings
-DB_USER=myapp_user
-DB_PASSWORD=secure_password_here
-DB_NAME=myapp_db
-
-# For MySQL, also set:
-# DB_ROOT_PASSWORD=mysql_root_password
-```
-
-### 3. Start Docker Services
+### Just Start Docker
 
 ```bash
 docker-compose up
 ```
 
-The database will be automatically initialized with your credentials!
+That's it! The database will be automatically initialized with your credentials.
+
+### Verify Your Settings (Optional)
+
+```bash
+cat .env | grep DB_
+```
+
+You should see your database configuration:
+```env
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=your_database_name
+```
 
 ## Understanding the Setup
 
