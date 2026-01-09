@@ -95,3 +95,24 @@ func (dto *UpdateCategoryDTO) Validate() error {
 	}
 	return nil
 }
+
+// BulkActionDTO represents bulk action request
+type BulkActionDTO struct {
+	Action  string  `json:"action" validate:"required,oneof=delete publish archive"`
+	PostIDs []int64 `json:"post_ids" validate:"required,min=1"`
+}
+
+// Validate validates the bulk action DTO
+func (dto *BulkActionDTO) Validate() error {
+	if dto.Action == "" {
+		return errors.New("action is required")
+	}
+	if dto.Action != "delete" && dto.Action != "publish" && dto.Action != "archive" {
+		return errors.New("invalid action, must be: delete, publish, or archive")
+	}
+	if len(dto.PostIDs) == 0 {
+		return errors.New("at least one post ID is required")
+	}
+	return nil
+}
+

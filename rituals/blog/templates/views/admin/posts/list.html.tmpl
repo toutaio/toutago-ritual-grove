@@ -148,6 +148,41 @@
             padding: 4rem 2rem;
             color: #6c757d;
         }
+        .bulk-actions {
+            background: #f8f9fa;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            display: none;
+            align-items: center;
+            gap: 1rem;
+        }
+        .bulk-actions.active {
+            display: flex;
+        }
+        .bulk-actions-label {
+            font-weight: 500;
+        }
+        .checkbox-cell {
+            width: 40px;
+        }
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -204,10 +239,25 @@
             </form>
         </div>
 
+        {{if can .current_user "bulk" "posts"}}
+        <div class="bulk-actions" id="bulkActions">
+            <span class="bulk-actions-label"><span id="selectedCount">0</span> selected</span>
+            <button onclick="bulkAction('publish')" class="btn btn-success">Publish Selected</button>
+            <button onclick="bulkAction('archive')" class="btn btn-secondary">Archive Selected</button>
+            <button onclick="bulkAction('delete')" class="btn btn-danger">Delete Selected</button>
+            <button onclick="clearSelection()" class="btn" style="margin-left: auto;">Clear Selection</button>
+        </div>
+        {{end}}
+
         {{if .posts}}
         <table class="posts-table">
             <thead>
                 <tr>
+                    {{if can .current_user "bulk" "posts"}}
+                    <th class="checkbox-cell">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                    </th>
+                    {{end}}
                     <th>Title</th>
                     <th>Author</th>
                     <th>Category</th>
@@ -219,6 +269,11 @@
             <tbody>
                 {{range .posts}}
                 <tr>
+                    {{if can $.current_user "bulk" "posts"}}
+                    <td class="checkbox-cell">
+                        <input type="checkbox" class="post-checkbox" value="{{.ID}}" onchange="updateBulkActions()">
+                    </td>
+                    {{end}}
                     <td>
                         <strong>{{.Title}}</strong>
                         {{if .Excerpt}}
@@ -322,6 +377,76 @@
                     return response.json().then(data => {
                         alert('Error: ' + (data.error || 'Failed to delete post'));
                     });
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+
+        // Bulk action functions
+        function updateBulkActions() {
+            const checkboxes = document.querySelectorAll('.post-checkbox:checked');
+            const count = checkboxes.length;
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedCount) selectedCount.textContent = count;
+            if (bulkActions) {
+                if (count > 0) {
+                    bulkActions.classList.add('active');
+                } else {
+                    bulkActions.classList.remove('active');
+                }
+            }
+        }
+
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.post-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            updateBulkActions();
+        }
+
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('.post-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateBulkActions();
+        }
+
+        function bulkAction(action) {
+            const checkboxes = document.querySelectorAll('.post-checkbox:checked');
+            const postIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            if (postIds.length === 0) {
+                alert('Please select at least one post');
+                return;
+            }
+
+            let confirmMessage = `Are you sure you want to ${action} ${postIds.length} post(s)?`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            fetch('/admin/posts/bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: action,
+                    post_ids: postIds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success_count > 0) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.errors ? data.errors.join(', ') : 'Bulk action failed'));
                 }
             })
             .catch(error => {

@@ -392,3 +392,135 @@ func TestPostAdminHandler_Store(t *testing.T) {
 		})
 	}
 }
+
+func TestPostAdminHandler_BulkAction(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		userID         int64
+		bulkAction     dto.BulkActionDTO
+		mockError      error
+		expectedStatus int
+		expectedCalls  int
+	}{
+		{
+			name:     "admin can bulk delete posts",
+			userRole: domain.RoleAdmin,
+			userID:   1,
+			bulkAction: dto.BulkActionDTO{
+				Action:  "delete",
+				PostIDs: []int64{1, 2, 3},
+			},
+			expectedStatus: http.StatusOK,
+			expectedCalls:  3,
+		},
+		{
+			name:     "admin can bulk publish posts",
+			userRole: domain.RoleAdmin,
+			userID:   1,
+			bulkAction: dto.BulkActionDTO{
+				Action:  "publish",
+				PostIDs: []int64{4, 5},
+			},
+			expectedStatus: http.StatusOK,
+			expectedCalls:  2,
+		},
+		{
+			name:     "author cannot bulk delete others' posts",
+			userRole: domain.RoleAuthor,
+			userID:   2,
+			bulkAction: dto.BulkActionDTO{
+				Action:  "delete",
+				PostIDs: []int64{1, 2}, // Not their posts
+			},
+			expectedStatus: http.StatusForbidden,
+			expectedCalls:  0,
+		},
+		{
+			name:     "invalid action",
+			userRole: domain.RoleAdmin,
+			userID:   1,
+			bulkAction: dto.BulkActionDTO{
+				Action:  "invalid",
+				PostIDs: []int64{1},
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedCalls:  0,
+		},
+		{
+			name:     "no post IDs provided",
+			userRole: domain.RoleAdmin,
+			userID:   1,
+			bulkAction: dto.BulkActionDTO{
+				Action:  "delete",
+				PostIDs: []int64{},
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedCalls:  0,
+		},
+		{
+			name:     "editor can bulk publish",
+			userRole: domain.RoleEditor,
+			userID:   3,
+			bulkAction: dto.BulkActionDTO{
+				Action:  "publish",
+				PostIDs: []int64{1, 2},
+			},
+			expectedStatus: http.StatusOK,
+			expectedCalls:  2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deleteCalls := 0
+			publishCalls := 0
+
+			postService := &MockPostService{
+				DeleteFunc: func(postID, userID int64) error {
+					deleteCalls++
+					return tt.mockError
+				},
+				PublishFunc: func(postID, userID int64) (*domain.Post, error) {
+					publishCalls++
+					return &domain.Post{ID: postID, Status: domain.StatusPublished}, tt.mockError
+				},
+			}
+
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					// Admin and editor can do bulk actions
+					if user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor {
+						return true
+					}
+					return false
+				},
+			}
+
+			handler := NewPostAdminHandler(postService, permService)
+
+			body, _ := json.Marshal(tt.bulkAction)
+			req := httptest.NewRequest("POST", "/admin/posts/bulk", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: tt.userID, Role: tt.userRole})
+
+			handler.BulkAction(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+
+			totalCalls := deleteCalls + publishCalls
+			if totalCalls != tt.expectedCalls {
+				t.Errorf("Expected %d service calls, got %d", tt.expectedCalls, totalCalls)
+			}
+		})
+	}
+}
+

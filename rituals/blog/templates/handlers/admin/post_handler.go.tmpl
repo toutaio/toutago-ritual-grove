@@ -2,6 +2,7 @@ package admin
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -341,6 +342,74 @@ func (h *PostAdminHandler) Publish(ctx *router.Context) {
 	}
 
 	ctx.Status(http.StatusOK).JSON(post)
+}
+
+// BulkAction performs bulk actions on multiple posts
+func (h *PostAdminHandler) BulkAction(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Only admins and editors can perform bulk actions
+	if !h.permService.Can(currentUser, "bulk", "posts") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to perform bulk actions",
+		})
+		return
+	}
+
+	// Parse request body
+	var bulkAction dto.BulkActionDTO
+	if err := ctx.BindJSON(&bulkAction); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid request data",
+		})
+		return
+	}
+
+	// Validate
+	if err := bulkAction.Validate(); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Perform action on each post
+	successCount := 0
+	failureCount := 0
+	errors := []string{}
+
+	for _, postID := range bulkAction.PostIDs {
+		var err error
+
+		switch bulkAction.Action {
+		case "delete":
+			err = h.postService.Delete(postID, currentUser.ID)
+		case "publish":
+			_, err = h.postService.Publish(postID, currentUser.ID)
+		case "archive":
+			// Archive by updating status
+			_, err = h.postService.Update(postID, currentUser.ID, dto.UpdatePostDTO{
+				Status: "archived",
+			})
+		default:
+			err = fmt.Errorf("unknown action: %s", bulkAction.Action)
+		}
+
+		if err != nil {
+			failureCount++
+			errors = append(errors, fmt.Sprintf("Post %d: %v", postID, err))
+		} else {
+			successCount++
+		}
+	}
+
+	// Return results
+	ctx.Status(http.StatusOK).JSON(map[string]interface{}{
+		"success_count": successCount,
+		"failure_count": failureCount,
+		"errors":        errors,
+		"message":       fmt.Sprintf("Bulk action completed: %d succeeded, %d failed", successCount, failureCount),
+	})
 }
 
 // Helper function

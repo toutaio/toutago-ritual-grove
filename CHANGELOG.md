@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Bulk Actions for Posts (Phase 4.2)** (TDD)
+  - **Bulk Action Handler**:
+    - Support for bulk delete, publish, and archive
+    - Permission checks for bulk operations
+    - Detailed result reporting (success/failure counts)
+  - **Enhanced Post List UI**:
+    - Select all/individual checkboxes
+    - Bulk action toolbar (appears when posts selected)
+    - Visual feedback for selected posts
+    - Confirmation dialogs
+  - **DTO & Validation**:
+    - BulkActionDTO with action and post IDs
+    - Input validation
+  - **Comprehensive Testing**:
+    - 7+ bulk action test cases
+    - Permission scenarios
+    - Invalid input handling
+    - Multi-post operations
+
 - **Blog Ritual: Admin Dashboard (Phase 4.1)** (TDD)
   - **Dashboard Handler**:
     - `Index()` - Display dashboard overview
