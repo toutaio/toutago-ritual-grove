@@ -1,165 +1,173 @@
-# Blog Ritual
+# Blog Ritual for Toutā
 
-A comprehensive blog ritual for Toutā that generates a full-featured blog application with posts, categories, and optional comments.
+A full-featured, production-ready blog system ritual for the Toutā Go framework.
 
 ## Features
 
-- **Post Management**: Full CRUD operations for blog posts
-- **Categories**: Organize posts by category
-- **Comments**: Optional comment system with moderation
-- **Markdown Support**: Optional Markdown rendering for posts
-- **RESTful API**: Clean API endpoints for all operations
-- **Responsive Design**: Mobile-friendly CSS included
-- **Database Migrations**: Schema migrations included
-- **Multi-database**: Supports PostgreSQL and MySQL
+### Core Functionality
+- ✅ **Complete Authentication System**
+  - First-user admin setup
+  - Login/Register/Logout
+  - Session management with Breitheamh
+  - Password hashing and security
 
-## Usage
+- ✅ **Role-Based Access Control (RBAC)**
+  - 4 user roles: Admin, Editor, Author, User
+  - Granular permissions system
+  - Resource-level access control
+  - UI elements adapt to user permissions
 
-Initialize a new blog project:
+- ✅ **Post Management**
+  - Create, Read, Update, Delete (CRUD)
+  - Draft, Published, Archived statuses
+  - Markdown editor (EasyMDE)
+  - Featured images
+  - Category assignment
+  - Slug generation
+  - Bulk actions (delete, publish, archive)
 
+- ✅ **Category Management**
+  - Full CRUD operations
+  - Slug auto-generation
+  - Post count tracking
+  - Public category archives
+
+- ✅ **User Management**
+  - Admin user list
+  - Role assignment
+  - User activation/deactivation
+  - Profile editing
+
+- ✅ **Admin Dashboard**
+  - Statistics overview (posts, users, categories)
+  - Quick actions
+  - Activity monitoring
+  - Role-based interface
+
+### Technical Features
+- ✅ **Multi-Database Support** - PostgreSQL and MySQL
+- ✅ **Comprehensive Testing** - 120+ test cases (TDD)
+- ✅ **Error Handling** - Professional error pages (404, 403, 500)
+- ✅ **Security** - Multi-layer permission checks, input validation
+- ✅ **Modern UI** - Responsive design, professional admin interface
+
+## Installation
+
+### Prerequisites
+- Go 1.21 or higher
+- PostgreSQL or MySQL database
+- Toutā framework installed
+
+### Quick Start
+
+1. **Create a new blog project:**
 ```bash
-touta ritual init blog
+touta perform blog
 ```
 
-You'll be prompted for:
+2. **Answer the setup questions:**
 - Blog name
 - Go module path
-- Server port
-- Database configuration (type, host, port, name, credentials)
-- Comment system (enable/disable)
-- Posts per page
-- Markdown support (enable/disable)
+- Port number
+- Database type
+- Enable Docker
 
-## Generated Structure
+3. **Set up and run:**
+```bash
+cd myblog
+go run main.go migrate up
+go run main.go serve
+```
+
+4. **Access the setup page:**
+Open `http://localhost:8080/auth/setup` and create your first admin user.
+
+## User Roles & Permissions
+
+| Role | Create Post | Edit Own | Edit Any | Delete Own | Delete Any | Publish | Manage Users | Manage Categories |
+|------|------------|----------|----------|------------|------------|---------|--------------|-------------------|
+| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Editor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| **Author** | ✅ | ✅ | ❌ | ✅ | ❌ | Own only | ❌ | ❌ |
+| **User** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+## Project Structure
 
 ```
 myblog/
-├── main.go                    # Application entry point
-├── go.mod                     # Go module definition
 ├── internal/
-│   ├── models/
-│   │   ├── post.go           # Post model
-│   │   ├── category.go       # Category model
-│   │   └── comment.go        # Comment model (if enabled)
-│   └── handlers/
-│       ├── post.go           # Post handlers
-│       ├── category.go       # Category handlers
-│       └── comment.go        # Comment handlers (if enabled)
-├── views/
-│   ├── layout.html           # Base HTML layout
-│   ├── post_list.html        # Posts listing
-│   ├── post_detail.html      # Single post view
-│   └── category_list.html    # Categories listing
-├── public/
-│   └── css/
-│       └── style.css         # Blog styles
-├── migrations/
-│   ├── 001_initial_schema.sql       # Up migration
-│   └── 001_initial_schema_down.sql  # Down migration
-├── .env.example              # Environment variables template
-└── README.md                 # Project documentation
+│   ├── domain/          # Domain models (User, Post, Category)
+│   ├── dto/             # Data Transfer Objects with validation
+│   ├── services/        # Business logic layer
+│   ├── repositories/    # Data access layer
+│   ├── handlers/        # HTTP handlers
+│   │   └── admin/       # Admin-specific handlers
+│   └── helpers/         # Template helpers
+├── views/               # HTML templates
+│   ├── auth/           # Authentication pages
+│   ├── admin/          # Admin interface
+│   ├── posts/          # Public blog views
+│   └── errors/         # Error pages
+├── public/             # Static assets
+├── migrations/         # Database migrations
+└── main.go            # Application entry point
 ```
 
-## API Endpoints
+## Usage
 
-### Posts
-- `GET /` - Homepage (posts list)
-- `GET /posts` - List all posts
-- `GET /posts/:id` - Get a specific post
-- `POST /posts` - Create a new post
-- `PUT /posts/:id` - Update a post
-- `DELETE /posts/:id` - Delete a post
+### Creating a Post
 
-### Categories
-- `GET /categories` - List all categories
-- `GET /categories/:id` - Get a specific category
+1. Login to your account
+2. Navigate to **Admin → Posts → Create New Post**
+3. Fill in the details (title, content, category, status)
+4. Click **Save Post**
 
-### Comments (if enabled)
-- `POST /posts/:id/comments` - Add a comment to a post
-- `DELETE /comments/:id` - Delete a comment
+### Bulk Actions
 
-## Database Schema
+1. Go to **Admin → Posts**
+2. Select multiple posts using checkboxes
+3. Choose an action (Publish/Archive/Delete)
+4. Confirm the action
 
-### posts
-- `id` - Primary key
-- `title` - Post title
-- `slug` - URL-friendly slug
-- `content` - Post content
-- `excerpt` - Short excerpt
-- `category_id` - Foreign key to categories
-- `author_id` - Author identifier
-- `status` - draft | published | archived
-- `published_at` - Publication timestamp
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
+## Development
 
-### categories
-- `id` - Primary key
-- `name` - Category name
-- `slug` - URL-friendly slug
-- `description` - Category description
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
+### Running Tests
 
-### comments (optional)
-- `id` - Primary key
-- `post_id` - Foreign key to posts
-- `author` - Commenter name
-- `email` - Commenter email
-- `content` - Comment content
-- `status` - pending | approved | spam
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
-
-## Configuration
-
-The ritual generates a `.env.example` file with all configuration options:
-
-```env
-DB_TYPE=postgres
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=blog_db
-DB_USER=blog_user
-DB_PASSWORD=your_password
-
-PORT=8080
-APP_ENV=development
-
-POSTS_PER_PAGE=10
-ENABLE_COMMENTS=true
-ENABLE_MARKDOWN=true
+```bash
+go test ./...              # Run all tests
+go test -cover ./...       # With coverage
+go test -v ./...           # Verbose output
 ```
 
-## Post-Installation Steps
+### Database Migrations
 
-1. Copy `.env.example` to `.env` and configure your database
-2. Run the migration: Execute `migrations/001_initial_schema.sql`
-3. Install dependencies: `go mod tidy`
-4. Start the server: `go run main.go`
+```bash
+go run main.go migrate up      # Run migrations
+go run main.go migrate down    # Rollback migrations
+```
 
-## Customization
+## Architecture
 
-The generated code provides a solid foundation. Common customizations:
+The blog follows Clean Architecture principles:
 
-- **Add authentication**: Integrate toutago-breitheamh-auth for user management
-- **Enhance models**: Add more fields like tags, featured images, SEO metadata
-- **Add search**: Implement full-text search for posts
-- **RSS feed**: Add RSS/Atom feed generation
-- **Admin panel**: Create an admin interface for content management
-- **Rich editor**: Integrate a WYSIWYG editor
-- **Image upload**: Add support for post images
+```
+Handlers → Services → Repositories → Domain
+```
 
-## Requirements
-
-- Go 1.21 or higher
-- PostgreSQL or MySQL database
-- Toutā framework components:
-  - toutago-cosan-router
-  - toutago-fith-renderer
-  - toutago-datamapper
-  - toutago-nasc-dependency-injector
+- **Handlers**: HTTP request/response
+- **Services**: Business logic & permissions
+- **Repositories**: Database access
+- **Domain**: Core entities
 
 ## License
 
-MIT
+MIT License
+
+## Support
+
+- **Documentation**: https://touta.io/docs
+- **Issues**: https://github.com/toutaio/toutago-ritual-grove/issues
+
+---
+
+Built with ❤️ by the Toutā Team
