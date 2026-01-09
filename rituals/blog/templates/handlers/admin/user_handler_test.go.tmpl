@@ -1,0 +1,446 @@
+package admin
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/dto"
+	"[[.module_path]]/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// MockUserService implements services.UserService for testing
+type MockUserService struct {
+	ListFunc       func(filters dto.UserFilters) ([]*domain.User, int, error)
+	GetByIDFunc    func(id int64) (*domain.User, error)
+	UpdateFunc     func(id int64, update dto.UpdateUserDTO) (*domain.User, error)
+	DeleteFunc     func(id int64) error
+	ChangeRoleFunc func(id int64, role domain.Role) error
+}
+
+func (m *MockUserService) Create(dto dto.CreateUserDTO) (*domain.User, error) {
+	return nil, nil
+}
+
+func (m *MockUserService) List(filters dto.UserFilters) ([]*domain.User, int, error) {
+	if m.ListFunc != nil {
+		return m.ListFunc(filters)
+	}
+	return []*domain.User{}, 0, nil
+}
+
+func (m *MockUserService) GetByID(id int64) (*domain.User, error) {
+	if m.GetByIDFunc != nil {
+		return m.GetByIDFunc(id)
+	}
+	return nil, nil
+}
+
+func (m *MockUserService) GetByEmail(email string) (*domain.User, error) {
+	return nil, nil
+}
+
+func (m *MockUserService) Update(id int64, update dto.UpdateUserDTO) (*domain.User, error) {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(id, update)
+	}
+	return nil, nil
+}
+
+func (m *MockUserService) Delete(id int64) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(id)
+	}
+	return nil
+}
+
+func (m *MockUserService) ChangeRole(id int64, role domain.Role) error {
+	if m.ChangeRoleFunc != nil {
+		return m.ChangeRoleFunc(id, role)
+	}
+	return nil
+}
+
+// MockPermissionService implements services.PermissionService for testing
+type MockPermissionService struct {
+	CanFunc func(user *domain.User, action, resource string, resourceID ...int64) bool
+}
+
+func (m *MockPermissionService) Can(user *domain.User, action, resource string, resourceID ...int64) bool {
+	if m.CanFunc != nil {
+		return m.CanFunc(user, action, resource, resourceID...)
+	}
+	return true
+}
+
+func TestUserHandler_List(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		queryParams    string
+		mockUsers      []*domain.User
+		mockTotal      int
+		mockError      error
+		expectedStatus int
+		expectedCount  int
+	}{
+		{
+			name:     "admin can list all users",
+			userRole: domain.RoleAdmin,
+			mockUsers: []*domain.User{
+				{ID: 1, Email: "admin@example.com", Name: "Admin", Role: domain.RoleAdmin},
+				{ID: 2, Email: "author@example.com", Name: "Author", Role: domain.RoleAuthor},
+			},
+			mockTotal:      2,
+			expectedStatus: http.StatusOK,
+			expectedCount:  2,
+		},
+		{
+			name:     "list with pagination",
+			userRole: domain.RoleAdmin,
+			queryParams: "page=1&limit=10",
+			mockUsers: []*domain.User{
+				{ID: 1, Email: "user1@example.com", Name: "User 1", Role: domain.RoleAuthor},
+			},
+			mockTotal:      1,
+			expectedStatus: http.StatusOK,
+			expectedCount:  1,
+		},
+		{
+			name:     "list with role filter",
+			userRole: domain.RoleAdmin,
+			queryParams: "role=author",
+			mockUsers: []*domain.User{
+				{ID: 2, Email: "author@example.com", Name: "Author", Role: domain.RoleAuthor},
+			},
+			mockTotal:      1,
+			expectedStatus: http.StatusOK,
+			expectedCount:  1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock services
+			userService := &MockUserService{
+				ListFunc: func(filters dto.UserFilters) ([]*domain.User, int, error) {
+					return tt.mockUsers, tt.mockTotal, tt.mockError
+				},
+			}
+			permService := &MockPermissionService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin
+				},
+			}
+
+			handler := NewUserHandler(userService, permService)
+
+			// Create request
+			req := httptest.NewRequest("GET", "/admin/users?"+tt.queryParams, nil)
+			w := httptest.NewRecorder()
+
+			// Create mock context with user
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   make(map[string]string),
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			// Execute
+			handler.List(ctx)
+
+			// Assert
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestUserHandler_GetByID(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		targetUserID   string
+		mockUser       *domain.User
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:         "admin can view user details",
+			userRole:     domain.RoleAdmin,
+			targetUserID: "2",
+			mockUser:     &domain.User{ID: 2, Email: "author@example.com", Name: "Author", Role: domain.RoleAuthor},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:         "non-admin cannot view other users",
+			userRole:     domain.RoleAuthor,
+			targetUserID: "2",
+			mockUser:     &domain.User{ID: 2, Email: "author@example.com", Name: "Author", Role: domain.RoleAuthor},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "user not found returns 404",
+			userRole:       domain.RoleAdmin,
+			targetUserID:   "999",
+			mockError:      services.ErrUserNotFound,
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userService := &MockUserService{
+				GetByIDFunc: func(id int64) (*domain.User, error) {
+					return tt.mockUser, tt.mockError
+				},
+			}
+			permService := &MockPermissionService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin
+				},
+			}
+
+			handler := NewUserHandler(userService, permService)
+
+			req := httptest.NewRequest("GET", "/admin/users/"+tt.targetUserID, nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.targetUserID},
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.GetByID(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestUserHandler_Update(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		targetUserID   string
+		updateData     dto.UpdateUserDTO
+		mockUser       *domain.User
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:         "admin can update user",
+			userRole:     domain.RoleAdmin,
+			targetUserID: "2",
+			updateData: dto.UpdateUserDTO{
+				Name:  stringPtr("Updated Name"),
+				Email: stringPtr("updated@example.com"),
+			},
+			mockUser:       &domain.User{ID: 2, Email: "updated@example.com", Name: "Updated Name"},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:         "non-admin cannot update other users",
+			userRole:     domain.RoleAuthor,
+			targetUserID: "2",
+			updateData: dto.UpdateUserDTO{
+				Name: stringPtr("Hacker"),
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:         "validation error returns 400",
+			userRole:     domain.RoleAdmin,
+			targetUserID: "2",
+			updateData: dto.UpdateUserDTO{
+				Email: stringPtr("invalid-email"),
+			},
+			mockError:      services.ErrInvalidEmail,
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userService := &MockUserService{
+				UpdateFunc: func(id int64, update dto.UpdateUserDTO) (*domain.User, error) {
+					return tt.mockUser, tt.mockError
+				},
+			}
+			permService := &MockPermissionService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin
+				},
+			}
+
+			handler := NewUserHandler(userService, permService)
+
+			body, _ := json.Marshal(tt.updateData)
+			req := httptest.NewRequest("PUT", "/admin/users/"+tt.targetUserID, bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.targetUserID},
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.Update(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestUserHandler_Delete(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		currentUserID  int64
+		targetUserID   string
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:           "admin can delete user",
+			userRole:       domain.RoleAdmin,
+			currentUserID:  1,
+			targetUserID:   "2",
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "cannot delete yourself",
+			userRole:       domain.RoleAdmin,
+			currentUserID:  1,
+			targetUserID:   "1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "non-admin cannot delete users",
+			userRole:       domain.RoleAuthor,
+			currentUserID:  2,
+			targetUserID:   "3",
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userService := &MockUserService{
+				DeleteFunc: func(id int64) error {
+					return tt.mockError
+				},
+			}
+			permService := &MockPermissionService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin
+				},
+			}
+
+			handler := NewUserHandler(userService, permService)
+
+			req := httptest.NewRequest("DELETE", "/admin/users/"+tt.targetUserID, nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.targetUserID},
+			}
+			ctx.Set("user", &domain.User{ID: tt.currentUserID, Role: tt.userRole})
+
+			handler.Delete(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestUserHandler_ChangeRole(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		targetUserID   string
+		newRole        string
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:           "admin can change user role",
+			userRole:       domain.RoleAdmin,
+			targetUserID:   "2",
+			newRole:        "editor",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "non-admin cannot change roles",
+			userRole:       domain.RoleAuthor,
+			targetUserID:   "2",
+			newRole:        "admin",
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "invalid role returns 400",
+			userRole:       domain.RoleAdmin,
+			targetUserID:   "2",
+			newRole:        "invalid_role",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userService := &MockUserService{
+				ChangeRoleFunc: func(id int64, role domain.Role) error {
+					return tt.mockError
+				},
+			}
+			permService := &MockPermissionService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin
+				},
+			}
+
+			handler := NewUserHandler(userService, permService)
+
+			body, _ := json.Marshal(map[string]string{"role": tt.newRole})
+			req := httptest.NewRequest("POST", "/admin/users/"+tt.targetUserID+"/role", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.targetUserID},
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.ChangeRole(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+// Helper function
+func stringPtr(s string) *string {
+	return &s
+}

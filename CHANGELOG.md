@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Post Management Service (Phase 2.3)** (TDD)
+  - **PostService Interface & Implementation**:
+    - Full CRUD operations with permission checks
+    - Methods: `Create()`, `Update()`, `Delete()`, `Publish()`, `Archive()`
+    - Automatic slug generation from titles
+    - Author ownership validation
+    - Status management (draft, published, archived)
+  - **Post DTOs**:
+    - `CreatePostDTO` and `UpdatePostDTO` with validation
+    - `PostFilters` for querying and pagination
+    - `CreateCategoryDTO` and `UpdateCategoryDTO`
+  - **Repository Interfaces**:
+    - `PostRepository` with comprehensive query methods
+    - `CategoryRepository` for category management
+    - Support for filtering by author, category, status
+  - **Slug Generation**:
+    - URL-friendly slug generator utility
+    - Automatic uniqueness handling
+  - **Comprehensive Testing**:
+    - Mock repository for isolated tests
+    - Permission-based test scenarios
+    - Ownership and access control tests
+    - Edge cases coverage
+
 - **Blog Ritual: User Management Service (Phase 2.2)** (TDD)
   - **UserService Interface**:
     - CRUD operations for user management

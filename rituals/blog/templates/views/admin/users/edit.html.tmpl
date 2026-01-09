@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - [[.app_name]]</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-header {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .admin-nav {
+            background: #343a40;
+            padding: 1rem;
+        }
+        .admin-nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin-right: 1rem;
+            border-radius: 4px;
+        }
+        .admin-nav a:hover {
+            background: #495057;
+        }
+        .admin-nav a.active {
+            background: #007bff;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        .form-group .help-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        .form-group .error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-left: 1rem;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .role-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        .role-info h4 {
+            margin-top: 0;
+            color: #004085;
+        }
+        .role-info ul {
+            margin: 0.5rem 0 0 1.5rem;
+            color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <nav class="admin-nav">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/posts">Posts</a>
+        <a href="/admin/users" class="active">Users</a>
+        <a href="/admin/categories">Categories</a>
+        <a href="/">View Site</a>
+        <a href="/auth/logout" style="float: right;">Logout</a>
+    </nav>
+
+    <div class="admin-header">
+        <h1>Edit User</h1>
+        <p>Update user information and role</p>
+    </div>
+
+    <div class="form-container">
+        {{if .success}}
+        <div class="alert alert-success">
+            {{.success}}
+        </div>
+        {{end}}
+
+        {{if .error}}
+        <div class="alert alert-error">
+            {{.error}}
+        </div>
+        {{end}}
+
+        <form method="POST" action="/admin/users/{{.user.ID}}">
+            <div class="form-group">
+                <label for="name">Name *</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    value="{{.user.Name}}" 
+                    required
+                >
+                {{if .errors.name}}
+                <div class="error">{{.errors.name}}</div>
+                {{end}}
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    value="{{.user.Email}}" 
+                    required
+                >
+                <div class="help-text">Must be a valid email address</div>
+                {{if .errors.email}}
+                <div class="error">{{.errors.email}}</div>
+                {{end}}
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role *</label>
+                <select id="role" name="role" required onchange="showRoleInfo(this.value)">
+                    <option value="reader" {{if eq .user.Role "reader"}}selected{{end}}>Reader</option>
+                    <option value="author" {{if eq .user.Role "author"}}selected{{end}}>Author</option>
+                    <option value="editor" {{if eq .user.Role "editor"}}selected{{end}}>Editor</option>
+                    <option value="admin" {{if eq .user.Role "admin"}}selected{{end}}>Administrator</option>
+                </select>
+                {{if .errors.role}}
+                <div class="error">{{.errors.role}}</div>
+                {{end}}
+
+                <div class="role-info" id="role-info" style="display: none;">
+                    <h4 id="role-title"></h4>
+                    <ul id="role-permissions"></ul>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">New Password (optional)</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password"
+                    placeholder="Leave blank to keep current password"
+                >
+                <div class="help-text">Minimum 8 characters</div>
+                {{if .errors.password}}
+                <div class="error">{{.errors.password}}</div>
+                {{end}}
+            </div>
+
+            <div class="form-group">
+                <label for="password_confirmation">Confirm New Password</label>
+                <input 
+                    type="password" 
+                    id="password_confirmation" 
+                    name="password_confirmation"
+                >
+                {{if .errors.password_confirmation}}
+                <div class="error">{{.errors.password_confirmation}}</div>
+                {{end}}
+            </div>
+
+            <div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="/admin/users" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const roleInfo = {
+            reader: {
+                title: "Reader",
+                permissions: [
+                    "View published posts",
+                    "View public content",
+                    "No content creation abilities"
+                ]
+            },
+            author: {
+                title: "Author",
+                permissions: [
+                    "Create and edit own posts",
+                    "Publish own posts",
+                    "Cannot edit others' posts",
+                    "Cannot manage categories or users"
+                ]
+            },
+            editor: {
+                title: "Editor",
+                permissions: [
+                    "Create, edit, and publish all posts",
+                    "Manage categories",
+                    "Edit any author's posts",
+                    "Cannot manage users or settings"
+                ]
+            },
+            admin: {
+                title: "Administrator",
+                permissions: [
+                    "Full access to all features",
+                    "Manage all posts and categories",
+                    "Manage users and roles",
+                    "Access admin settings",
+                    "Delete any content"
+                ]
+            }
+        };
+
+        function showRoleInfo(role) {
+            const info = roleInfo[role];
+            if (info) {
+                document.getElementById('role-title').textContent = info.title + ' Permissions:';
+                const permList = document.getElementById('role-permissions');
+                permList.innerHTML = info.permissions.map(p => `<li>${p}</li>`).join('');
+                document.getElementById('role-info').style.display = 'block';
+            }
+        }
+
+        // Show role info for current selection on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('role');
+            showRoleInfo(roleSelect.value);
+        });
+    </script>
+</body>
+</html>

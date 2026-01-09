@@ -1,0 +1,396 @@
+package handlers
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/dto"
+	"[[.module_path]]/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+type MockPostService struct {
+	ListFunc      func(filters dto.PostFilters) ([]*domain.Post, int, error)
+	GetByIDFunc   func(id int64) (*domain.Post, error)
+	GetBySlugFunc func(slug string) (*domain.Post, error)
+	CreateFunc    func(userID int64, dto dto.CreatePostDTO) (*domain.Post, error)
+	UpdateFunc    func(postID, userID int64, dto dto.UpdatePostDTO) (*domain.Post, error)
+	DeleteFunc    func(postID, userID int64) error
+	PublishFunc   func(postID, userID int64) (*domain.Post, error)
+}
+
+func (m *MockPostService) List(filters dto.PostFilters) ([]*domain.Post, int, error) {
+	if m.ListFunc != nil {
+		return m.ListFunc(filters)
+	}
+	return []*domain.Post{}, 0, nil
+}
+
+func (m *MockPostService) GetByID(id int64) (*domain.Post, error) {
+	if m.GetByIDFunc != nil {
+		return m.GetByIDFunc(id)
+	}
+	return nil, nil
+}
+
+func (m *MockPostService) GetBySlug(slug string) (*domain.Post, error) {
+	if m.GetBySlugFunc != nil {
+		return m.GetBySlugFunc(slug)
+	}
+	return nil, nil
+}
+
+func (m *MockPostService) Create(userID int64, dto dto.CreatePostDTO) (*domain.Post, error) {
+	if m.CreateFunc != nil {
+		return m.CreateFunc(userID, dto)
+	}
+	return nil, nil
+}
+
+func (m *MockPostService) Update(postID, userID int64, dto dto.UpdatePostDTO) (*domain.Post, error) {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(postID, userID, dto)
+	}
+	return nil, nil
+}
+
+func (m *MockPostService) Delete(postID, userID int64) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(postID, userID)
+	}
+	return nil
+}
+
+func (m *MockPostService) Publish(postID, userID int64) (*domain.Post, error) {
+	if m.PublishFunc != nil {
+		return m.PublishFunc(postID, userID)
+	}
+	return nil, nil
+}
+
+type MockPermService struct {
+	CanFunc func(user *domain.User, action, resource string, resourceID ...int64) bool
+}
+
+func (m *MockPermService) Can(user *domain.User, action, resource string, resourceID ...int64) bool {
+	if m.CanFunc != nil {
+		return m.CanFunc(user, action, resource, resourceID...)
+	}
+	return true
+}
+
+func TestPostHandler_List(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryParams    string
+		mockPosts      []*domain.Post
+		mockTotal      int
+		expectedStatus int
+	}{
+		{
+			name: "list published posts",
+			mockPosts: []*domain.Post{
+				{ID: 1, Title: "Post 1", Status: domain.StatusPublished},
+				{ID: 2, Title: "Post 2", Status: domain.StatusPublished},
+			},
+			mockTotal:      2,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:        "list with pagination",
+			queryParams: "page=1&limit=10",
+			mockPosts: []*domain.Post{
+				{ID: 1, Title: "Post 1", Status: domain.StatusPublished},
+			},
+			mockTotal:      1,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:        "list by category",
+			queryParams: "category_id=1",
+			mockPosts: []*domain.Post{
+				{ID: 1, Title: "Post 1", CategoryID: int64Ptr(1), Status: domain.StatusPublished},
+			},
+			mockTotal:      1,
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postService := &MockPostService{
+				ListFunc: func(filters dto.PostFilters) ([]*domain.Post, int, error) {
+					return tt.mockPosts, tt.mockTotal, nil
+				},
+			}
+			permService := &MockPermService{}
+
+			handler := NewPostHandler(postService, permService)
+
+			req := httptest.NewRequest("GET", "/posts?"+tt.queryParams, nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   make(map[string]string),
+			}
+
+			handler.List(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestPostHandler_Create(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		createData     dto.CreatePostDTO
+		mockPost       *domain.Post
+		mockError      error
+		canCreate      bool
+		expectedStatus int
+	}{
+		{
+			name:     "author can create post",
+			userRole: domain.RoleAuthor,
+			createData: dto.CreatePostDTO{
+				Title:   "New Post",
+				Content: "Post content",
+				Status:  domain.StatusDraft,
+			},
+			mockPost:       &domain.Post{ID: 1, Title: "New Post"},
+			canCreate:      true,
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:     "reader cannot create post",
+			userRole: domain.RoleReader,
+			createData: dto.CreatePostDTO{
+				Title:   "New Post",
+				Content: "Post content",
+			},
+			canCreate:      false,
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:     "validation error",
+			userRole: domain.RoleAuthor,
+			createData: dto.CreatePostDTO{
+				Title: "", // Empty title should fail
+			},
+			canCreate:      true,
+			mockError:      services.ErrInvalidInput,
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postService := &MockPostService{
+				CreateFunc: func(userID int64, dto dto.CreatePostDTO) (*domain.Post, error) {
+					return tt.mockPost, tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return tt.canCreate
+				},
+			}
+
+			handler := NewPostHandler(postService, permService)
+
+			body, _ := json.Marshal(tt.createData)
+			req := httptest.NewRequest("POST", "/posts", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.Create(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestPostHandler_Update(t *testing.T) {
+	tests := []struct {
+		name           string
+		userID         int64
+		userRole       domain.Role
+		postID         string
+		postAuthorID   int64
+		updateData     dto.UpdatePostDTO
+		mockPost       *domain.Post
+		mockError      error
+		canUpdate      bool
+		expectedStatus int
+	}{
+		{
+			name:         "author can update own post",
+			userID:       1,
+			userRole:     domain.RoleAuthor,
+			postID:       "1",
+			postAuthorID: 1,
+			updateData: dto.UpdatePostDTO{
+				Title: stringPtr("Updated Title"),
+			},
+			mockPost:       &domain.Post{ID: 1, Title: "Updated Title", AuthorID: 1},
+			canUpdate:      true,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:         "author cannot update others' post",
+			userID:       1,
+			userRole:     domain.RoleAuthor,
+			postID:       "2",
+			postAuthorID: 2,
+			updateData: dto.UpdatePostDTO{
+				Title: stringPtr("Hacked"),
+			},
+			canUpdate:      false,
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:         "editor can update any post",
+			userID:       1,
+			userRole:     domain.RoleEditor,
+			postID:       "2",
+			postAuthorID: 2,
+			updateData: dto.UpdatePostDTO{
+				Title: stringPtr("Editor Updated"),
+			},
+			mockPost:       &domain.Post{ID: 2, Title: "Editor Updated", AuthorID: 2},
+			canUpdate:      true,
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postService := &MockPostService{
+				UpdateFunc: func(postID, userID int64, dto dto.UpdatePostDTO) (*domain.Post, error) {
+					return tt.mockPost, tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return tt.canUpdate
+				},
+			}
+
+			handler := NewPostHandler(postService, permService)
+
+			body, _ := json.Marshal(tt.updateData)
+			req := httptest.NewRequest("PUT", "/posts/"+tt.postID, bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.postID},
+			}
+			ctx.Set("user", &domain.User{ID: tt.userID, Role: tt.userRole})
+
+			handler.Update(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestPostHandler_Delete(t *testing.T) {
+	tests := []struct {
+		name           string
+		userID         int64
+		userRole       domain.Role
+		postID         string
+		canDelete      bool
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:           "author can delete own post",
+			userID:         1,
+			userRole:       domain.RoleAuthor,
+			postID:         "1",
+			canDelete:      true,
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "author cannot delete others' post",
+			userID:         1,
+			userRole:       domain.RoleAuthor,
+			postID:         "2",
+			canDelete:      false,
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "admin can delete any post",
+			userID:         1,
+			userRole:       domain.RoleAdmin,
+			postID:         "2",
+			canDelete:      true,
+			expectedStatus: http.StatusNoContent,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postService := &MockPostService{
+				DeleteFunc: func(postID, userID int64) error {
+					return tt.mockError
+				},
+			}
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return tt.canDelete
+				},
+			}
+
+			handler := NewPostHandler(postService, permService)
+
+			req := httptest.NewRequest("DELETE", "/posts/"+tt.postID, nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+				Params:   map[string]string{"id": tt.postID},
+			}
+			ctx.Set("user", &domain.User{ID: tt.userID, Role: tt.userRole})
+
+			handler.Delete(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func int64Ptr(i int64) *int64 {
+	return &i
+}
+
+func stringPtr(s string) *string {
+	return &s
+}

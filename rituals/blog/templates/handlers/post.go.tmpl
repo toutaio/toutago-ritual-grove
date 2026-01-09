@@ -1,117 +1,394 @@
 package handlers
 
 import (
-"[[ .module_path ]]/internal/models"
-[[ if eq .frontend_type "inertia-vue" -]]
-"[[ .module_path ]]/internal"
-[[ end -]]
-"github.com/toutaio/toutago-cosan-router"
-nasc "github.com/toutaio/toutago-nasc-dependency-injector"
-[[ if eq .frontend_type "inertia-vue" -]]
-"github.com/toutaio/toutago-inertia/pkg/inertia"
-[[ end -]]
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/services"
+	[[ if eq .frontend_type "inertia-vue" -]]
+	"[[ .module_path ]]/internal"
+	[[ end -]]
+	"github.com/toutaio/toutago-cosan-router"
+	[[ if eq .frontend_type "inertia-vue" -]]
+	"github.com/toutaio/toutago-inertia/pkg/inertia"
+	[[ end -]]
 )
 
 // PostHandler handles blog post operations
 type PostHandler struct {
-container *nasc.Nasc
-[[ if eq .frontend_type "inertia-vue" -]]
-inertia *inertia.Inertia
-[[ end -]]
+	postService services.PostService
+	permService services.PermissionService
+	[[ if eq .frontend_type "inertia-vue" -]]
+	inertia *inertia.Inertia
+	[[ end -]]
 }
 
 // NewPostHandler creates a new post handler
-func NewPostHandler(container *nasc.Nasc[[ if eq .frontend_type "inertia-vue" ]], inertiaInstance *inertia.Inertia[[ end ]]) *PostHandler {
-return &PostHandler{
-container: container,
-[[ if eq .frontend_type "inertia-vue" -]]
-inertia: inertiaInstance,
-[[ end -]]
-}
+func NewPostHandler(postService services.PostService, permService services.PermissionService[[ if eq .frontend_type "inertia-vue" ]], inertiaInstance *inertia.Inertia[[ end ]]) *PostHandler {
+	return &PostHandler{
+		postService: postService,
+		permService: permService,
+		[[ if eq .frontend_type "inertia-vue" -]]
+		inertia: inertiaInstance,
+		[[ end -]]
+	}
 }
 
 // List shows all posts
-func (h *PostHandler) List(c cosan.Context) error {
-// TODO: Implement pagination
-posts := []models.Post{
-// Mock data for now
-}
+func (h *PostHandler) List(ctx *router.Context) {
+	// Parse query parameters
+	filters := dto.PostFilters{
+		Page:   getQueryInt(ctx, "page", 1),
+		Limit:  getQueryInt(ctx, "limit", [[ .posts_per_page ]]),
+		Status: statusPtr(domain.StatusPublished), // Only show published posts to public
+	}
 
-[[ if eq .frontend_type "inertia-vue" -]]
-return internal.RenderInertiaPage(c, h.inertia, "Posts/Index", map[string]interface{}{
-"posts": posts,
-})
-[[ else -]]
-return c.JSON(200, posts)
-[[ end -]]
+	if categoryID := ctx.Query("category_id"); categoryID != "" {
+		if id, err := strconv.ParseInt(categoryID, 10, 64); err == nil {
+			filters.CategoryID = &id
+		}
+	}
+
+	// If user is authenticated, allow viewing drafts (own posts)
+	if user, ok := ctx.Get("user").(*domain.User); ok && user != nil {
+		// Authors/Editors/Admins can see drafts in admin area
+		if ctx.Request.URL.Path == "/admin/posts" {
+			filters.Status = nil // Show all statuses
+			if user.Role == domain.RoleAuthor {
+				filters.AuthorID = &user.ID // Only own posts
+			}
+		}
+	}
+
+	posts, total, err := h.postService.List(filters)
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to fetch posts",
+		})
+		return
+	}
+
+	totalPages := (total + filters.Limit - 1) / filters.Limit
+
+	[[ if eq .frontend_type "inertia-vue" -]]
+	return internal.RenderInertiaPage(ctx, h.inertia, "Posts/Index", map[string]interface{}{
+		"posts":       posts,
+		"total":       total,
+		"page":        filters.Page,
+		"total_pages": totalPages,
+	})
+	[[ else -]]
+	ctx.Status(http.StatusOK).JSON(map[string]interface{}{
+		"posts":       posts,
+		"total":       total,
+		"page":        filters.Page,
+		"total_pages": totalPages,
+	})
+	[[ end -]]
 }
 
 // Show displays a single post
-func (h *PostHandler) Show(c cosan.Context) error {
-// TODO: Fetch post from database
-id := c.Param("id")
+func (h *PostHandler) Show(ctx *router.Context) {
+	slug := ctx.Param("slug")
+	if slug == "" {
+		// Try ID-based lookup
+		id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+		if err != nil {
+			ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+				"error": "Invalid post identifier",
+			})
+			return
+		}
+		post, err := h.postService.GetByID(id)
+		if err != nil {
+			if err == services.ErrPostNotFound {
+				ctx.Status(http.StatusNotFound).JSON(map[string]string{
+					"error": "Post not found",
+				})
+				return
+			}
+			ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+				"error": "Failed to fetch post",
+			})
+			return
+		}
+		[[ if eq .frontend_type "inertia-vue" -]]
+		return internal.RenderInertiaPage(ctx, h.inertia, "Posts/Show", map[string]interface{}{
+			"post": post,
+		})
+		[[ else -]]
+		ctx.Status(http.StatusOK).JSON(post)
+		[[ end -]]
+		return
+	}
 
-post := models.Post{
-// Mock data for now
-}
-_ = id // Use id when implementing
+	post, err := h.postService.GetBySlug(slug)
+	if err != nil {
+		if err == services.ErrPostNotFound {
+			ctx.Status(http.StatusNotFound).JSON(map[string]string{
+				"error": "Post not found",
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to fetch post",
+		})
+		return
+	}
 
-[[ if eq .frontend_type "inertia-vue" -]]
-return internal.RenderInertiaPage(c, h.inertia, "Posts/Show", map[string]interface{}{
-"post": post,
-})
-[[ else -]]
-return c.JSON(200, post)
-[[ end -]]
+	[[ if eq .frontend_type "inertia-vue" -]]
+	return internal.RenderInertiaPage(ctx, h.inertia, "Posts/Show", map[string]interface{}{
+		"post": post,
+	})
+	[[ else -]]
+	ctx.Status(http.StatusOK).JSON(post)
+	[[ end -]]
 }
 
 // Create creates a new post
-func (h *PostHandler) Create(c cosan.Context) error {
-var post models.Post
-if err := c.Bind(&post); err != nil {
-return c.JSON(400, map[string]string{"error": "Invalid request"})
-}
+func (h *PostHandler) Create(ctx *router.Context) {
+	user, ok := ctx.Get("user").(*domain.User)
+	if !ok || user == nil {
+		ctx.Status(http.StatusUnauthorized).JSON(map[string]string{
+			"error": "Authentication required",
+		})
+		return
+	}
 
-// TODO: Save to database
-[[ if eq .frontend_type "inertia-vue" -]]
-// Redirect back to posts list after creation
-ic := internal.GetInertiaContext(c, h.inertia)
-return ic.Redirect("/posts")
-[[ else -]]
-return c.JSON(201, post)
-[[ end -]]
+	// Check permission
+	if !h.permService.Can(user, "create", "posts") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to create posts",
+		})
+		return
+	}
+
+	var createDTO dto.CreatePostDTO
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&createDTO); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	// Validate
+	if err := createDTO.Validate(); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	post, err := h.postService.Create(user.ID, createDTO)
+	if err != nil {
+		if err == services.ErrInvalidInput {
+			ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+				"error": err.Error(),
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to create post",
+		})
+		return
+	}
+
+	[[ if eq .frontend_type "inertia-vue" -]]
+	ic := internal.GetInertiaContext(ctx, h.inertia)
+	return ic.Redirect("/posts/" + post.Slug)
+	[[ else -]]
+	ctx.Status(http.StatusCreated).JSON(post)
+	[[ end -]]
 }
 
 // Update updates an existing post
-func (h *PostHandler) Update(c cosan.Context) error {
-id := c.Param("id")
-var post models.Post
-if err := c.Bind(&post); err != nil {
-return c.JSON(400, map[string]string{"error": "Invalid request"})
-}
+func (h *PostHandler) Update(ctx *router.Context) {
+	user, ok := ctx.Get("user").(*domain.User)
+	if !ok || user == nil {
+		ctx.Status(http.StatusUnauthorized).JSON(map[string]string{
+			"error": "Authentication required",
+		})
+		return
+	}
 
-// TODO: Update in database
-_ = id // Use id when implementing
-[[ if eq .frontend_type "inertia-vue" -]]
-// Redirect back to post detail after update
-ic := internal.GetInertiaContext(c, h.inertia)
-return ic.Redirect("/posts/" + id)
-[[ else -]]
-return c.JSON(200, post)
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid post ID",
+		})
+		return
+	}
+
+	// Check permission
+	if !h.permService.Can(user, "update", "posts", id) {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to update this post",
+		})
+		return
+	}
+
+	var updateDTO dto.UpdatePostDTO
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&updateDTO); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	// Validate
+	if err := updateDTO.Validate(); err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	post, err := h.postService.Update(id, user.ID, updateDTO)
+	if err != nil {
+		if err == services.ErrPostNotFound {
+			ctx.Status(http.StatusNotFound).JSON(map[string]string{
+				"error": "Post not found",
+			})
+			return
+		}
+		if err == services.ErrPermissionDenied {
+			ctx.Status(http.StatusForbidden).JSON(map[string]string{
+				"error": "You don't have permission to update this post",
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to update post",
+		})
+		return
+	}
+
+	[[ if eq .frontend_type "inertia-vue" -]]
+	ic := internal.GetInertiaContext(ctx, h.inertia)
+	return ic.Redirect("/posts/" + post.Slug)
+	[[ else -]]
+	ctx.Status(http.StatusOK).JSON(post)
+	[[ end -]]
+}
 [[ end -]]
 }
 
 // Delete deletes a post
-func (h *PostHandler) Delete(c cosan.Context) error {
-id := c.Param("id")
+func (h *PostHandler) Delete(ctx *router.Context) {
+	user, ok := ctx.Get("user").(*domain.User)
+	if !ok || user == nil {
+		ctx.Status(http.StatusUnauthorized).JSON(map[string]string{
+			"error": "Authentication required",
+		})
+		return
+	}
 
-// TODO: Delete from database
-_ = id // Use id when implementing
-[[ if eq .frontend_type "inertia-vue" -]]
-// Redirect back to posts list after deletion
-ic := internal.GetInertiaContext(c, h.inertia)
-return ic.Redirect("/posts")
-[[ else -]]
-return c.JSON(204, nil)
-[[ end -]]
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid post ID",
+		})
+		return
+	}
+
+	// Check permission
+	if !h.permService.Can(user, "delete", "posts", id) {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to delete this post",
+		})
+		return
+	}
+
+	if err := h.postService.Delete(id, user.ID); err != nil {
+		if err == services.ErrPostNotFound {
+			ctx.Status(http.StatusNotFound).JSON(map[string]string{
+				"error": "Post not found",
+			})
+			return
+		}
+		if err == services.ErrPermissionDenied {
+			ctx.Status(http.StatusForbidden).JSON(map[string]string{
+				"error": "You don't have permission to delete this post",
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to delete post",
+		})
+		return
+	}
+
+	[[ if eq .frontend_type "inertia-vue" -]]
+	ic := internal.GetInertiaContext(ctx, h.inertia)
+	return ic.Redirect("/admin/posts")
+	[[ else -]]
+	ctx.Status(http.StatusNoContent).Send()
+	[[ end -]]
 }
+
+// Publish publishes a draft post
+func (h *PostHandler) Publish(ctx *router.Context) {
+	user, ok := ctx.Get("user").(*domain.User)
+	if !ok || user == nil {
+		ctx.Status(http.StatusUnauthorized).JSON(map[string]string{
+			"error": "Authentication required",
+		})
+		return
+	}
+
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]string{
+			"error": "Invalid post ID",
+		})
+		return
+	}
+
+	// Check permission
+	if !h.permService.Can(user, "publish", "posts", id) {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to publish this post",
+		})
+		return
+	}
+
+	post, err := h.postService.Publish(id, user.ID)
+	if err != nil {
+		if err == services.ErrPostNotFound {
+			ctx.Status(http.StatusNotFound).JSON(map[string]string{
+				"error": "Post not found",
+			})
+			return
+		}
+		if err == services.ErrPermissionDenied {
+			ctx.Status(http.StatusForbidden).JSON(map[string]string{
+				"error": "You don't have permission to publish this post",
+			})
+			return
+		}
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to publish post",
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK).JSON(post)
+}
+
+// Helper functions
+func getQueryInt(ctx *router.Context, key string, defaultValue int) int {
+	if val := ctx.Query(key); val != "" {
+		if i, err := strconv.Atoi(val); err == nil {
+			return i
+		}
+	}
+	return defaultValue
+}
+
+func statusPtr(status domain.PostStatus) *domain.PostStatus {
+	return &status
+}
+
