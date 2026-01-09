@@ -109,9 +109,9 @@ func RenderInertiaPage(c cosan.Context, mgr *inertia.Inertia, component string, 
 	
 	c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
 	
-	data := map[string]template.HTML{
+	data := map[string]interface{}{
 		"INERTIA": template.HTML(pageJSON),
-		"INERTIA_HEAD": "",
+		"INERTIA_HEAD": template.HTML(""),
 	}
 	
 	return tmpl.Execute(c.Response(), data)
