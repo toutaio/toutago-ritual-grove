@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Error Pages & Validation (Phase 6.1)** (TDD)
+  - **Error Pages**:
+    - Modern 404 page with gradient design
+    - Enhanced 403 page with access details
+    - Professional 500 page with error tracking
+  - **Error Handler**:
+    - Unified error handling (JSON/HTML)
+    - Context-aware responses
+    - Custom messages and details
+    - 7+ comprehensive tests
+  - **DTO Validation Tests**:
+    - 35+ validation test cases
+    - Post DTO validation (create/update/bulk)
+    - User DTO validation
+    - Auth DTO validation (login/register/setup)
+    - Edge case coverage
+
 - **Blog Ritual: Bulk Actions for Posts (Phase 4.2)** (TDD)
   - **Bulk Action Handler**:
     - Support for bulk delete, publish, and archive

@@ -1,0 +1,307 @@
+package dto
+
+import (
+	"testing"
+)
+
+func TestCreatePostDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     CreatePostDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid post",
+			dto: CreatePostDTO{
+				Title:   "Valid Title",
+				Content: "This is valid content",
+				Status:  "draft",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty title",
+			dto: CreatePostDTO{
+				Title:   "",
+				Content: "Content",
+				Status:  "draft",
+			},
+			wantErr: true,
+			errMsg:  "title is required",
+		},
+		{
+			name: "title too long",
+			dto: CreatePostDTO{
+				Title:   string(make([]byte, 256)), // 256 chars
+				Content: "Content",
+				Status:  "draft",
+			},
+			wantErr: true,
+			errMsg:  "title too long",
+		},
+		{
+			name: "empty content",
+			dto: CreatePostDTO{
+				Title:   "Title",
+				Content: "",
+				Status:  "draft",
+			},
+			wantErr: true,
+			errMsg:  "content is required",
+		},
+		{
+			name: "invalid status",
+			dto: CreatePostDTO{
+				Title:   "Title",
+				Content: "Content",
+				Status:  "invalid",
+			},
+			wantErr: true,
+			errMsg:  "status must be either 'draft' or 'published'",
+		},
+		{
+			name: "published status valid",
+			dto: CreatePostDTO{
+				Title:   "Title",
+				Content: "Content",
+				Status:  "published",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				if err.Error() != tt.errMsg {
+					t.Errorf("Expected error message %q, got %q", tt.errMsg, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestUpdatePostDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     UpdatePostDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid update - all fields",
+			dto: UpdatePostDTO{
+				Title:   "Updated Title",
+				Content: "Updated content",
+				Status:  "published",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid update - partial",
+			dto: UpdatePostDTO{
+				Title: "Updated Title",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "valid update - empty (no changes)",
+			dto:     UpdatePostDTO{},
+			wantErr: false,
+		},
+		{
+			name: "title too long",
+			dto: UpdatePostDTO{
+				Title: string(make([]byte, 256)),
+			},
+			wantErr: true,
+			errMsg:  "title too long",
+		},
+		{
+			name: "invalid status",
+			dto: UpdatePostDTO{
+				Status: "invalid",
+			},
+			wantErr: true,
+			errMsg:  "invalid status",
+		},
+		{
+			name: "archived status valid",
+			dto: UpdatePostDTO{
+				Status: "archived",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				if err.Error() != tt.errMsg {
+					t.Errorf("Expected error message %q, got %q", tt.errMsg, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestCreateCategoryDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     CreateCategoryDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid category",
+			dto: CreateCategoryDTO{
+				Name:        "Technology",
+				Description: "Tech articles",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty name",
+			dto: CreateCategoryDTO{
+				Name:        "",
+				Description: "Description",
+			},
+			wantErr: true,
+			errMsg:  "name is required",
+		},
+		{
+			name: "name too long",
+			dto: CreateCategoryDTO{
+				Name: string(make([]byte, 101)),
+			},
+			wantErr: true,
+			errMsg:  "name too long",
+		},
+		{
+			name: "valid without description",
+			dto: CreateCategoryDTO{
+				Name: "Category",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				if err.Error() != tt.errMsg {
+					t.Errorf("Expected error message %q, got %q", tt.errMsg, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestBulkActionDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     BulkActionDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid delete action",
+			dto: BulkActionDTO{
+				Action:  "delete",
+				PostIDs: []int64{1, 2, 3},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid publish action",
+			dto: BulkActionDTO{
+				Action:  "publish",
+				PostIDs: []int64{4, 5},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid archive action",
+			dto: BulkActionDTO{
+				Action:  "archive",
+				PostIDs: []int64{6},
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty action",
+			dto: BulkActionDTO{
+				Action:  "",
+				PostIDs: []int64{1},
+			},
+			wantErr: true,
+			errMsg:  "action is required",
+		},
+		{
+			name: "invalid action",
+			dto: BulkActionDTO{
+				Action:  "invalid",
+				PostIDs: []int64{1},
+			},
+			wantErr: true,
+			errMsg:  "invalid action, must be: delete, publish, or archive",
+		},
+		{
+			name: "empty post IDs",
+			dto: BulkActionDTO{
+				Action:  "delete",
+				PostIDs: []int64{},
+			},
+			wantErr: true,
+			errMsg:  "at least one post ID is required",
+		},
+		{
+			name: "nil post IDs",
+			dto: BulkActionDTO{
+				Action:  "delete",
+				PostIDs: nil,
+			},
+			wantErr: true,
+			errMsg:  "at least one post ID is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				if err.Error() != tt.errMsg {
+					t.Errorf("Expected error message %q, got %q", tt.errMsg, err.Error())
+				}
+			}
+		})
+	}
+}

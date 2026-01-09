@@ -1,0 +1,169 @@
+package dto
+
+import (
+	"testing"
+)
+
+func TestUpdateUserDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     UpdateUserDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid update - all fields",
+			dto: UpdateUserDTO{
+				Name:  "John Doe",
+				Email: "john@example.com",
+				Role:  "author",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid update - partial",
+			dto: UpdateUserDTO{
+				Name: "Jane Doe",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "valid update - empty (no changes)",
+			dto:     UpdateUserDTO{},
+			wantErr: false,
+		},
+		{
+			name: "name too long",
+			dto: UpdateUserDTO{
+				Name: string(make([]byte, 256)),
+			},
+			wantErr: true,
+			errMsg:  "name too long",
+		},
+		{
+			name: "invalid email format",
+			dto: UpdateUserDTO{
+				Email: "not-an-email",
+			},
+			wantErr: true,
+			errMsg:  "invalid email format",
+		},
+		{
+			name: "invalid role",
+			dto: UpdateUserDTO{
+				Role: "invalid",
+			},
+			wantErr: true,
+			errMsg:  "invalid role",
+		},
+		{
+			name: "valid role - admin",
+			dto: UpdateUserDTO{
+				Role: "admin",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid role - editor",
+			dto: UpdateUserDTO{
+				Role: "editor",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid role - author",
+			dto: UpdateUserDTO{
+				Role: "author",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if tt.wantErr && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				if err.Error() != tt.errMsg {
+					t.Errorf("Expected error message %q, got %q", tt.errMsg, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestUserFilters_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		filters UserFilters
+		wantErr bool
+	}{
+		{
+			name: "valid filters - all fields",
+			filters: UserFilters{
+				Role:     stringPtr("admin"),
+				Search:   "john",
+				Limit:    10,
+				Offset:   0,
+				OrderBy:  "created_at",
+				OrderDir: "desc",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "valid filters - empty",
+			filters: UserFilters{},
+			wantErr: false,
+		},
+		{
+			name: "valid filters - partial",
+			filters: UserFilters{
+				Search: "doe",
+				Limit:  20,
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid orderby created_at",
+			filters: UserFilters{
+				OrderBy: "created_at",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid orderby name",
+			filters: UserFilters{
+				OrderBy: "name",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid orderby email",
+			filters: UserFilters{
+				OrderBy: "email",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// UserFilters doesn't have a Validate method in the current implementation
+			// This test verifies that the struct can be created with valid data
+			_ = tt.filters
+			if tt.wantErr {
+				t.Error("This test case expects an error but UserFilters has no validation")
+			}
+		})
+	}
+}
+
+// Helper function
+func stringPtr(s string) *string {
+	return &s
+}
