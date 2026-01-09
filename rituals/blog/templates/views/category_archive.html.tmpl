@@ -1,0 +1,209 @@
+[[ define "content" ]]
+<div class="category-archive">
+    <div class="category-header">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <span class="separator">›</span>
+            <a href="/categories">Categories</a>
+            <span class="separator">›</span>
+            <span>{{.category.Name}}</span>
+        </nav>
+
+        <h1>{{.category.Name}}</h1>
+        {{if .category.Description}}
+        <p class="category-description">{{.category.Description}}</p>
+        {{end}}
+        <div class="meta">
+            <span>{{.total}} {{if eq .total 1}}post{{else}}posts{{end}}</span>
+        </div>
+    </div>
+
+    {{if .posts}}
+    <div class="posts-list">
+        {{range .posts}}
+        <article class="post-card">
+            {{if .FeaturedImageURL}}
+            <div class="post-image">
+                <a href="/posts/{{.Slug}}">
+                    <img src="{{.FeaturedImageURL}}" alt="{{.Title}}">
+                </a>
+            </div>
+            {{end}}
+            <div class="post-content">
+                <h2 class="post-title">
+                    <a href="/posts/{{.Slug}}">{{.Title}}</a>
+                </h2>
+                <div class="post-meta">
+                    <span class="author">by {{.Author.Name}}</span>
+                    <span class="separator">•</span>
+                    <time>{{.PublishedAt.Format "January 2, 2006"}}</time>
+                </div>
+                {{if .Excerpt}}
+                <p class="post-excerpt">{{.Excerpt}}</p>
+                {{end}}
+                <a href="/posts/{{.Slug}}" class="read-more">Read more →</a>
+            </div>
+        </article>
+        {{end}}
+    </div>
+
+    {{if gt .total_pages 1}}
+    <div class="pagination">
+        {{if gt .page 1}}
+        <a href="?page={{sub .page 1}}" class="pagination-link">← Previous</a>
+        {{end}}
+        
+        <div class="pagination-info">
+            Page {{.page}} of {{.total_pages}}
+        </div>
+        
+        {{if lt .page .total_pages}}
+        <a href="?page={{add .page 1}}" class="pagination-link">Next →</a>
+        {{end}}
+    </div>
+    {{end}}
+    {{else}}
+    <div class="empty-state">
+        <p>No posts in this category yet.</p>
+        <a href="/categories" class="btn">Browse Other Categories</a>
+    </div>
+    {{end}}
+</div>
+
+<style>
+.category-archive {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+.breadcrumb {
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+.breadcrumb a {
+    color: #007bff;
+    text-decoration: none;
+}
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+.breadcrumb .separator {
+    margin: 0 0.5rem;
+    color: #6c757d;
+}
+.category-header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+.category-header h1 {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+.category-description {
+    font-size: 1.125rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+.category-header .meta {
+    color: #6c757d;
+}
+.posts-list {
+    margin-bottom: 3rem;
+}
+.post-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+.post-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.post-image {
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+}
+.post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.post-content {
+    padding: 1.5rem;
+}
+.post-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.75rem;
+}
+.post-title a {
+    color: #333;
+    text-decoration: none;
+}
+.post-title a:hover {
+    color: #007bff;
+}
+.post-meta {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+.post-meta .separator {
+    margin: 0 0.5rem;
+}
+.post-excerpt {
+    color: #495057;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+.read-more {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+.read-more:hover {
+    text-decoration: underline;
+}
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 0;
+}
+.pagination-link {
+    padding: 0.75rem 1.5rem;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+}
+.pagination-link:hover {
+    background: #0056b3;
+}
+.pagination-info {
+    color: #6c757d;
+}
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+}
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+.btn:hover {
+    background: #0056b3;
+}
+</style>
+[[ end ]]

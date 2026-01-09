@@ -1,13 +1,100 @@
 [[ define "content" ]]
-<div class="categories">
-    <h2>Categories</h2>
-    <ul class="category-list">
-        [[ range .Categories ]]
-        <li>
-            <a href="/categories/[[ .ID ]]">[[ .Name ]]</a>
-            <span class="post-count">([[ .PostCount ]] posts)</span>
-        </li>
-        [[ end ]]
-    </ul>
+<div class="categories-page">
+    <div class="page-header">
+        <h1>Browse by Category</h1>
+        <p class="subtitle">Explore our content organized by topic</p>
+    </div>
+
+    {{if .categories}}
+    <div class="categories-grid">
+        {{range .categories}}
+        <div class="category-card">
+            <h2 class="category-name">
+                <a href="/categories/{{.Slug}}">{{.Name}}</a>
+            </h2>
+            {{if .Description}}
+            <p class="category-description">{{.Description}}</p>
+            {{end}}
+            <div class="category-meta">
+                <span class="post-count">{{.PostCount}} {{if eq .PostCount 1}}post{{else}}posts{{end}}</span>
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="empty-state">
+        <p>No categories available yet.</p>
+    </div>
+    {{end}}
 </div>
+
+<style>
+.categories-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.page-header h1 {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+.page-header .subtitle {
+    font-size: 1.125rem;
+    color: #6c757d;
+}
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+.category-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.category-name {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+}
+.category-name a {
+    color: #333;
+    text-decoration: none;
+}
+.category-name a:hover {
+    color: #007bff;
+}
+.category-description {
+    color: #6c757d;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+.category-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+.post-count {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+}
+</style>
 [[ end ]]

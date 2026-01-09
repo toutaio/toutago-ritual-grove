@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Enhanced Public Blog Views (Phase 3.4)** (TDD)
+  - **Category Views**:
+    - Enhanced category list with grid layout
+    - Category archive page showing posts by category
+    - Breadcrumb navigation
+    - Post count per category
+  - **Features**:
+    - Responsive grid layouts
+    - Featured image support
+    - Post excerpts
+    - Pagination for category archives
+    - Improved typography and spacing
+    - Hover effects and transitions
+
 - **Blog Ritual: Category Admin UI (Phase 3.2)** (TDD)
   - **Admin Category Handler**:
     - `List()` - Paginated category listing
