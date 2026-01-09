@@ -1,7 +1,7 @@
 # Development Dockerfile for Go application
 # Uses Air for hot reload during development
 
-FROM golang:1.23-alpine AS base
+FROM golang:1.25-alpine AS base
 
 # Install development tools
 RUN apk add --no-cache git

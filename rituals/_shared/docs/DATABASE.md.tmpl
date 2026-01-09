@@ -1,0 +1,275 @@
+# Database Setup Guide
+
+This guide helps you set up and configure your database for local development and Docker.
+
+## Quick Start
+
+### 1. Copy Environment File
+
+```bash
+cp .env.example .env
+```
+
+### 2. Edit Database Credentials
+
+Open `.env` and configure your database:
+
+```env
+# Database settings
+DB_USER=myapp_user
+DB_PASSWORD=secure_password_here
+DB_NAME=myapp_db
+
+# For MySQL, also set:
+# DB_ROOT_PASSWORD=mysql_root_password
+```
+
+### 3. Start Docker Services
+
+```bash
+docker-compose up
+```
+
+The database will be automatically initialized with your credentials!
+
+## Understanding the Setup
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_USER` | Database username | `blog_user` |
+| `DB_PASSWORD` | Database password | `secretpass123` |
+| `DB_NAME` | Database name | `blog_db` |
+| `DB_HOST` | Database host (auto-set in Docker) | `db` |
+| `DB_PORT` | Database port | `5432` (Postgres) or `3306` (MySQL) |
+
+### PostgreSQL Setup
+
+PostgreSQL creates the database automatically using these env vars:
+- `POSTGRES_USER` → creates user
+- `POSTGRES_PASSWORD` → sets password
+- `POSTGRES_DB` → creates database
+
+**Important:** Your application's `DB_NAME` must match `POSTGRES_DB`!
+
+### MySQL Setup
+
+MySQL uses:
+- `MYSQL_ROOT_PASSWORD` → root user password
+- `MYSQL_USER` → creates application user
+- `MYSQL_PASSWORD` → sets user password
+- `MYSQL_DATABASE` → creates database
+
+## Common Issues & Solutions
+
+### Issue: "database does not exist"
+
+**Error:**
+```
+FATAL: database "blog_user" does not exist
+```
+
+**Cause:** Database name mismatch between config and environment.
+
+**Solution:**
+1. Check your `.env` file:
+   ```bash
+   cat .env | grep DB_NAME
+   ```
+
+2. Ensure DB_NAME matches what your app expects:
+   ```env
+   DB_NAME=blog_db  # Should match your app's configuration
+   ```
+
+3. Restart containers:
+   ```bash
+   docker-compose down -v  # ⚠️  Removes data volumes!
+   docker-compose up
+   ```
+
+### Issue: Connection refused
+
+**Solution:**
+Wait for health check to pass:
+```bash
+docker-compose ps
+# Wait for "healthy" status
+```
+
+### Issue: Permission denied
+
+**Solution:**
+Ensure DB_USER has correct permissions:
+```sql
+-- For PostgreSQL
+GRANT ALL PRIVILEGES ON DATABASE your_db TO your_user;
+
+-- For MySQL
+GRANT ALL PRIVILEGES ON your_db.* TO 'your_user'@'%';
+```
+
+## Manual Database Setup
+
+If you prefer to set up the database manually:
+
+### PostgreSQL
+
+```bash
+# Connect to database container
+docker-compose exec db psql -U postgres
+
+# In psql:
+CREATE DATABASE myapp_db;
+CREATE USER myapp_user WITH PASSWORD 'secure_password';
+GRANT ALL PRIVILEGES ON DATABASE myapp_db TO myapp_user;
+\q
+```
+
+### MySQL
+
+```bash
+# Connect to database container
+docker-compose exec db mysql -u root -p
+
+# In MySQL:
+CREATE DATABASE myapp_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'myapp_user'@'%' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON myapp_db.* TO 'myapp_user'@'%';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+## Migrations
+
+### Running Migrations
+
+Place SQL files in `./migrations/` directory:
+
+```bash
+migrations/
+├── 001_initial_schema.sql
+├── 002_add_users_table.sql
+└── 003_add_posts_table.sql
+```
+
+These run automatically on **first container start** via `/docker-entrypoint-initdb.d/`.
+
+**Note:** Migrations only run once! If database already exists, you must run migrations manually.
+
+### Manual Migration
+
+```bash
+# PostgreSQL
+docker-compose exec db psql -U $DB_USER -d $DB_NAME -f /app/migrations/001_initial_schema.sql
+
+# MySQL
+docker-compose exec db mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < migrations/001_initial_schema.sql
+```
+
+## Backup & Restore
+
+### Backup
+
+```bash
+# PostgreSQL
+docker-compose exec -T db pg_dump -U $DB_USER $DB_NAME > backup.sql
+
+# MySQL
+docker-compose exec -T db mysqldump -u $DB_USER -p$DB_PASSWORD $DB_NAME > backup.sql
+```
+
+### Restore
+
+```bash
+# PostgreSQL
+docker-compose exec -T db psql -U $DB_USER $DB_NAME < backup.sql
+
+# MySQL
+docker-compose exec -T db mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backup.sql
+```
+
+## Reset Database
+
+⚠️ **Warning:** This deletes all data!
+
+```bash
+# Stop and remove volumes
+docker-compose down -v
+
+# Start fresh
+docker-compose up
+```
+
+## Production Considerations
+
+For production:
+
+1. **Use secrets management:**
+   ```bash
+   export DB_PASSWORD=$(cat /run/secrets/db_password)
+   ```
+
+2. **Limit permissions:**
+   - Don't use root/postgres user
+   - Grant only needed permissions
+
+3. **Enable SSL:**
+   - Configure SSL certificates
+   - Require SSL connections
+
+4. **Regular backups:**
+   - Set up automated backups
+   - Test restore procedures
+
+5. **Monitor connections:**
+   - Set connection limits
+   - Monitor slow queries
+
+## Troubleshooting
+
+### View logs
+
+```bash
+# Database logs
+docker-compose logs db
+
+# Follow logs
+docker-compose logs -f db
+
+# App logs
+docker-compose logs app
+```
+
+### Check connection
+
+```bash
+# From app container
+docker-compose exec app sh -c 'nc -zv db 5432'
+
+# From host
+nc -zv localhost 5432
+```
+
+### Verify environment
+
+```bash
+# Check env vars in container
+docker-compose exec db env | grep POSTGRES
+
+# Check from app
+docker-compose exec app env | grep DB_
+```
+
+## Need Help?
+
+1. Check logs: `docker-compose logs`
+2. Verify `.env` file matches ritual answers
+3. Ensure health checks pass: `docker-compose ps`
+4. Try fresh start: `docker-compose down -v && docker-compose up`
+
+---
+
+**Generated by:** Toutā Ritual Grove  
+**Documentation:** See DOCKER.md for more Docker information

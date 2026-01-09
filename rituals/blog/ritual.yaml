@@ -291,6 +291,10 @@ files:
     - src: _shared:docs/DOCKER.md.tmpl
       dest: DOCKER.md
       condition: "enable_docker"
+    
+    - src: _shared:docs/DATABASE.md.tmpl
+      dest: DATABASE.md
+      condition: "[[ and (eq .enable_docker true) .database_type ]]"
 
   static:
     - src: style.css

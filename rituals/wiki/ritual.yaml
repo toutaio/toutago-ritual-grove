@@ -149,6 +149,10 @@ files:
     - src: _shared:docs/DOCKER.md.tmpl
       dest: DOCKER.md
       condition: "enable_docker"
+    
+    - src: _shared:docs/DATABASE.md.tmpl
+      dest: DATABASE.md
+      condition: "enable_docker"
       
   static:
     - src: wiki.css
