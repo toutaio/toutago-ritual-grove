@@ -179,6 +179,47 @@ func toKebabCase(s string) string {
 	return strings.Join(words, "-")
 }
 
+// slugify converts a string to a valid Docker container name
+// Must consist only of lowercase alphanumeric characters, hyphens, and underscores
+// Must start with a letter or number
+func slugify(s string) string {
+	// Convert to lowercase and trim spaces
+	s = strings.TrimSpace(strings.ToLower(s))
+	
+	// Replace spaces and common separators with hyphens
+	s = strings.ReplaceAll(s, " ", "-")
+	s = strings.ReplaceAll(s, "_", "-")
+	
+	// Remove invalid characters (keep only alphanumeric and hyphens)
+	var result strings.Builder
+	for _, ch := range s {
+		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' {
+			result.WriteRune(ch)
+		}
+	}
+	
+	// Remove consecutive hyphens
+	slug := result.String()
+	for strings.Contains(slug, "--") {
+		slug = strings.ReplaceAll(slug, "--", "-")
+	}
+	
+	// Remove leading and trailing hyphens
+	slug = strings.Trim(slug, "-")
+	
+	// If empty, return default
+	if slug == "" {
+		return "app"
+	}
+	
+	// If starts with hyphen (shouldn't happen after trim, but be safe)
+	if slug[0] == '-' {
+		slug = "app-" + slug[1:]
+	}
+	
+	return slug
+}
+
 func splitWords(s string) []string {
 	// Split on common delimiters
 	s = strings.ReplaceAll(s, "-", " ")

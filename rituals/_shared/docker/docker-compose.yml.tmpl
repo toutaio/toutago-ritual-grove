@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_app
+    container_name: ${COMPOSE_PROJECT_NAME:-[[slugify .app_name]]}_app
     restart: unless-stopped
     ports:
       - "${APP_PORT:-[[.port]]}:[[.port]]"
@@ -33,7 +33,7 @@ services:
   db:
     [[- if eq .database_type "postgres"]]
     image: postgres:16-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_db
+    container_name: ${COMPOSE_PROJECT_NAME:-[[slugify .app_name]]}_db
     restart: unless-stopped
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -57,7 +57,7 @@ services:
       start_period: 10s
     [[- else if eq .database_type "mysql"]]
     image: mysql:8-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_db
+    container_name: ${COMPOSE_PROJECT_NAME:-[[slugify .app_name]]}_db
     restart: unless-stopped
     ports:
       - "${DB_PORT:-3306}:3306"
@@ -88,7 +88,7 @@ services:
 
   frontend:
     image: node:20-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-[[.app_name]]}_frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-[[slugify .app_name]]}_frontend
     restart: unless-stopped
     working_dir: /app/frontend
     command: npm run dev

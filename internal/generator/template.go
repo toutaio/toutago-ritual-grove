@@ -40,6 +40,7 @@ func NewGoTemplateEngineWithDelimiters(left, right string) *GoTemplateEngine {
 		"camel":  toCamelCase,
 		"snake":  toSnakeCase,
 		"kebab":  toKebabCase,
+		"slugify": slugify,
 		
 		// Docker helpers
 		"dockerImage":  DockerImage,
