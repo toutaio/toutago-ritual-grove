@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - [[.app_name]]</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-nav {
+            background: #343a40;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .admin-nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin-right: 1rem;
+            border-radius: 4px;
+        }
+        .admin-nav a:hover {
+            background: #495057;
+        }
+        .admin-nav a.active {
+            background: #007bff;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .page-header {
+            margin-bottom: 2rem;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .page-header .subtitle {
+            color: #6c757d;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .stat-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .stat-card.posts .icon {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .stat-card.users .icon {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .stat-card.categories .icon {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .quick-actions {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .quick-actions h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .recent-activity {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .recent-activity h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        .activity-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .activity-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        .activity-item .time {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        .activity-item .message {
+            color: #333;
+            margin-top: 0.25rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        .welcome-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .welcome-message h2 {
+            margin: 0 0 0.5rem 0;
+        }
+        .welcome-message p {
+            margin: 0;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <nav class="admin-nav">
+        <a href="/admin" class="active">Dashboard</a>
+        <a href="/admin/posts">Posts</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/categories">Categories</a>
+        <a href="/">View Site</a>
+        <a href="/auth/logout" style="float: right;">Logout</a>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="welcome-message">
+            <h2>Welcome back, {{.user.Name}}!</h2>
+            <p>Here's what's happening with your blog today.</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card posts">
+                <div class="icon">📝</div>
+                <div class="label">Total Posts</div>
+                <div class="value">{{.stats.total_posts}}</div>
+                <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #6c757d;">
+                    {{.stats.published_posts}} published, {{.stats.draft_posts}} drafts
+                </div>
+            </div>
+
+            <div class="stat-card users">
+                <div class="icon">👥</div>
+                <div class="label">Total Users</div>
+                <div class="value">{{.stats.total_users}}</div>
+            </div>
+
+            <div class="stat-card categories">
+                <div class="icon">📁</div>
+                <div class="label">Categories</div>
+                <div class="value">{{.stats.total_categories}}</div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="action-buttons">
+                {{if can .user "create" "posts"}}
+                <a href="/admin/posts/new" class="btn btn-primary">✏️ New Post</a>
+                {{end}}
+                {{if can .user "create" "categories"}}
+                <a href="/admin/categories" class="btn btn-success">📁 Manage Categories</a>
+                {{end}}
+                {{if can .user "create" "users"}}
+                <a href="/admin/users" class="btn btn-secondary">👥 Manage Users</a>
+                {{end}}
+                <a href="/" class="btn btn-secondary">🌐 View Site</a>
+            </div>
+        </div>
+
+        <div class="recent-activity">
+            <h2>Recent Activity</h2>
+            {{if .activity}}
+            <ul class="activity-list">
+                {{range .activity}}
+                <li class="activity-item">
+                    <div class="time">{{.CreatedAt.Format "January 2, 2006 at 3:04 PM"}}</div>
+                    <div class="message">
+                        <strong>{{.UserName}}</strong> {{.Message}}
+                    </div>
+                </li>
+                {{end}}
+            </ul>
+            {{else}}
+            <div class="empty-state">
+                <p>No recent activity to display.</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</body>
+</html>

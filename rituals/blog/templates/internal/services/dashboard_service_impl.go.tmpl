@@ -1,0 +1,99 @@
+package services
+
+import (
+	"[[.module_path]]/internal/domain"
+)
+
+// PostCounter defines methods for counting posts
+type PostCounter interface {
+	CountAll() (int, error)
+	CountByStatus(status domain.PostStatus) (int, error)
+}
+
+// UserCounter defines methods for counting users
+type UserCounter interface {
+	Count() (int, error)
+}
+
+// CategoryCounter defines methods for counting categories
+type CategoryCounter interface {
+	Count() (int, error)
+}
+
+// DashboardServiceImpl implements DashboardService
+type DashboardServiceImpl struct {
+	postCounter     PostCounter
+	userCounter     UserCounter
+	categoryCounter CategoryCounter
+}
+
+// NewDashboardServiceImpl creates a new DashboardServiceImpl
+func NewDashboardServiceImpl(
+	postCounter PostCounter,
+	userCounter UserCounter,
+	categoryCounter CategoryCounter,
+) *DashboardServiceImpl {
+	return &DashboardServiceImpl{
+		postCounter:     postCounter,
+		userCounter:     userCounter,
+		categoryCounter: categoryCounter,
+	}
+}
+
+// GetStats retrieves dashboard statistics
+func (s *DashboardServiceImpl) GetStats() (*DashboardStats, error) {
+	stats := &DashboardStats{}
+
+	// Get post counts
+	if s.postCounter != nil {
+		totalPosts, err := s.postCounter.CountAll()
+		if err != nil {
+			return nil, err
+		}
+		stats.TotalPosts = totalPosts
+
+		publishedPosts, err := s.postCounter.CountByStatus(domain.PostStatusPublished)
+		if err != nil {
+			return nil, err
+		}
+		stats.PublishedPosts = publishedPosts
+
+		draftPosts, err := s.postCounter.CountByStatus(domain.PostStatusDraft)
+		if err != nil {
+			return nil, err
+		}
+		stats.DraftPosts = draftPosts
+	}
+
+	// Get user count
+	if s.userCounter != nil {
+		totalUsers, err := s.userCounter.Count()
+		if err != nil {
+			return nil, err
+		}
+		stats.TotalUsers = totalUsers
+	}
+
+	// Get category count
+	if s.categoryCounter != nil {
+		totalCategories, err := s.categoryCounter.Count()
+		if err != nil {
+			return nil, err
+		}
+		stats.TotalCategories = totalCategories
+	}
+
+	return stats, nil
+}
+
+// GetRecentActivity retrieves recent activity
+func (s *DashboardServiceImpl) GetRecentActivity(limit int) ([]*ActivityItem, error) {
+	// For now, return empty activity list
+	// In a real implementation, this would query an activity log table
+	// or aggregate from posts, users, and other entities
+	
+	// Placeholder for future implementation
+	activities := make([]*ActivityItem, 0)
+	
+	return activities, nil
+}

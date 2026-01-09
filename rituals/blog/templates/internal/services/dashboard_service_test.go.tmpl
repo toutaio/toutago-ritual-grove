@@ -1,0 +1,183 @@
+package services
+
+import (
+	"testing"
+
+	"[[.module_path]]/internal/domain"
+)
+
+// MockPostRepository for dashboard tests
+type MockPostRepositoryForDashboard struct {
+	CountAllFunc       func() (int, error)
+	CountByStatusFunc  func(status domain.PostStatus) (int, error)
+}
+
+func (m *MockPostRepositoryForDashboard) CountAll() (int, error) {
+	if m.CountAllFunc != nil {
+		return m.CountAllFunc()
+	}
+	return 0, nil
+}
+
+func (m *MockPostRepositoryForDashboard) CountByStatus(status domain.PostStatus) (int, error) {
+	if m.CountByStatusFunc != nil {
+		return m.CountByStatusFunc(status)
+	}
+	return 0, nil
+}
+
+// MockUserRepositoryForDashboard for dashboard tests
+type MockUserRepositoryForDashboard struct {
+	CountFunc func() (int, error)
+}
+
+func (m *MockUserRepositoryForDashboard) Count() (int, error) {
+	if m.CountFunc != nil {
+		return m.CountFunc()
+	}
+	return 0, nil
+}
+
+// MockCategoryRepositoryForDashboard for dashboard tests
+type MockCategoryRepositoryForDashboard struct {
+	CountFunc func() (int, error)
+}
+
+func (m *MockCategoryRepositoryForDashboard) Count() (int, error) {
+	if m.CountFunc != nil {
+		return m.CountFunc()
+	}
+	return 0, nil
+}
+
+func TestDashboardService_GetStats(t *testing.T) {
+	tests := []struct {
+		name              string
+		totalPosts        int
+		publishedPosts    int
+		draftPosts        int
+		totalUsers        int
+		totalCategories   int
+		expectedTotal     int
+		expectedPublished int
+		expectedDraft     int
+	}{
+		{
+			name:              "get stats successfully",
+			totalPosts:        100,
+			publishedPosts:    80,
+			draftPosts:        20,
+			totalUsers:        5,
+			totalCategories:   3,
+			expectedTotal:     100,
+			expectedPublished: 80,
+			expectedDraft:     20,
+		},
+		{
+			name:              "empty stats",
+			totalPosts:        0,
+			publishedPosts:    0,
+			draftPosts:        0,
+			totalUsers:        0,
+			totalCategories:   0,
+			expectedTotal:     0,
+			expectedPublished: 0,
+			expectedDraft:     0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			postRepo := &MockPostRepositoryForDashboard{
+				CountAllFunc: func() (int, error) {
+					return tt.totalPosts, nil
+				},
+				CountByStatusFunc: func(status domain.PostStatus) (int, error) {
+					if status == domain.PostStatusPublished {
+						return tt.publishedPosts, nil
+					}
+					return tt.draftPosts, nil
+				},
+			}
+
+			userRepo := &MockUserRepositoryForDashboard{
+				CountFunc: func() (int, error) {
+					return tt.totalUsers, nil
+				},
+			}
+
+			categoryRepo := &MockCategoryRepositoryForDashboard{
+				CountFunc: func() (int, error) {
+					return tt.totalCategories, nil
+				},
+			}
+
+			service := NewDashboardServiceImpl(postRepo, userRepo, categoryRepo)
+			stats, err := service.GetStats()
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if stats.TotalPosts != tt.expectedTotal {
+				t.Errorf("Expected total posts %d, got %d", tt.expectedTotal, stats.TotalPosts)
+			}
+
+			if stats.PublishedPosts != tt.expectedPublished {
+				t.Errorf("Expected published posts %d, got %d", tt.expectedPublished, stats.PublishedPosts)
+			}
+
+			if stats.DraftPosts != tt.expectedDraft {
+				t.Errorf("Expected draft posts %d, got %d", tt.expectedDraft, stats.DraftPosts)
+			}
+
+			if stats.TotalUsers != tt.totalUsers {
+				t.Errorf("Expected total users %d, got %d", tt.totalUsers, stats.TotalUsers)
+			}
+
+			if stats.TotalCategories != tt.totalCategories {
+				t.Errorf("Expected total categories %d, got %d", tt.totalCategories, stats.TotalCategories)
+			}
+		})
+	}
+}
+
+func TestDashboardService_GetRecentActivity(t *testing.T) {
+	tests := []struct {
+		name          string
+		limit         int
+		expectedLimit int
+	}{
+		{
+			name:          "get recent activity with limit",
+			limit:         10,
+			expectedLimit: 10,
+		},
+		{
+			name:          "get recent activity with large limit",
+			limit:         100,
+			expectedLimit: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewDashboardServiceImpl(nil, nil, nil)
+			activity, err := service.GetRecentActivity(tt.limit)
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if activity == nil {
+				t.Error("Expected activity list, got nil")
+			}
+
+			// For now, activity is empty as we don't have activity tracking
+			// This test validates the structure
+			if len(activity) > tt.expectedLimit {
+				t.Errorf("Expected max %d activities, got %d", tt.expectedLimit, len(activity))
+			}
+		})
+	}
+}

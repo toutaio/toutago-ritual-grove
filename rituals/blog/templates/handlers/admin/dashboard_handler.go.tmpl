@@ -1,0 +1,111 @@
+package admin
+
+import (
+	"net/http"
+
+	"[[.module_path]]/internal/domain"
+	"[[.module_path]]/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// DashboardHandler handles admin dashboard operations
+type DashboardHandler struct {
+	dashboardService services.DashboardService
+	permService      services.PermissionService
+}
+
+// NewDashboardHandler creates a new DashboardHandler
+func NewDashboardHandler(dashboardService services.DashboardService, permService services.PermissionService) *DashboardHandler {
+	return &DashboardHandler{
+		dashboardService: dashboardService,
+		permService:      permService,
+	}
+}
+
+// Index displays the admin dashboard
+func (h *DashboardHandler) Index(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Check permission - only authenticated users with content access
+	if !h.permService.Can(currentUser, "view", "dashboard") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to view the dashboard",
+		})
+		return
+	}
+
+	// Get dashboard stats
+	stats, err := h.dashboardService.GetStats()
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to load dashboard statistics",
+		})
+		return
+	}
+
+	// Get recent activity
+	activity, err := h.dashboardService.GetRecentActivity(10)
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to load recent activity",
+		})
+		return
+	}
+
+	// Return dashboard data
+	ctx.Status(http.StatusOK).JSON(map[string]interface{}{
+		"stats":    stats,
+		"activity": activity,
+		"user":     currentUser,
+	})
+}
+
+// Stats returns dashboard statistics as JSON
+func (h *DashboardHandler) Stats(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Check permission
+	if !h.permService.Can(currentUser, "view", "dashboard") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to view statistics",
+		})
+		return
+	}
+
+	// Get stats
+	stats, err := h.dashboardService.GetStats()
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to load statistics",
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK).JSON(stats)
+}
+
+// RecentActivity returns recent activity as JSON
+func (h *DashboardHandler) RecentActivity(ctx *router.Context) {
+	currentUser := ctx.Get("user").(*domain.User)
+
+	// Check permission
+	if !h.permService.Can(currentUser, "view", "dashboard") {
+		ctx.Status(http.StatusForbidden).JSON(map[string]string{
+			"error": "You don't have permission to view activity",
+		})
+		return
+	}
+
+	// Get activity
+	activity, err := h.dashboardService.GetRecentActivity(20)
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError).JSON(map[string]string{
+			"error": "Failed to load activity",
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK).JSON(map[string]interface{}{
+		"activity": activity,
+	})
+}

@@ -1,0 +1,33 @@
+package services
+
+import (
+	"time"
+)
+
+// DashboardStats represents dashboard statistics
+type DashboardStats struct {
+	TotalPosts      int `json:"total_posts"`
+	PublishedPosts  int `json:"published_posts"`
+	DraftPosts      int `json:"draft_posts"`
+	TotalUsers      int `json:"total_users"`
+	TotalCategories int `json:"total_categories"`
+}
+
+// ActivityItem represents a recent activity
+type ActivityItem struct {
+	ID        int64     `json:"id"`
+	Type      string    `json:"type"` // "post_created", "post_published", "user_registered"
+	Message   string    `json:"message"`
+	UserID    int64     `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// DashboardService defines dashboard operations
+type DashboardService interface {
+	// GetStats retrieves dashboard statistics
+	GetStats() (*DashboardStats, error)
+
+	// GetRecentActivity retrieves recent activity
+	GetRecentActivity(limit int) ([]*ActivityItem, error)
+}

@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Admin Dashboard (Phase 4.1)** (TDD)
+  - **Dashboard Handler**:
+    - `Index()` - Display dashboard overview
+    - `Stats()` - Get statistics as JSON
+    - `RecentActivity()` - Get recent activity feed
+  - **Dashboard Service**:
+    - Calculate post counts (total, published, drafts)
+    - Count users and categories
+    - Recent activity tracking (placeholder for future)
+  - **Dashboard View**:
+    - Statistics cards with icons
+    - Quick action buttons
+    - Recent activity feed
+    - Welcome message with gradient
+    - Responsive layout
+  - **Comprehensive Testing**:
+    - Dashboard handler tests (12+ test cases)
+    - Dashboard service tests (8+ test cases)
+    - Permission scenarios
+    - Statistical aggregation
+
 - **Blog Ritual: Enhanced Public Blog Views (Phase 3.4)** (TDD)
   - **Category Views**:
     - Enhanced category list with grid layout

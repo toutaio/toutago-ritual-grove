@@ -1,0 +1,259 @@
+package admin
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"[[.module_path]]/internal/domain"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// MockDashboardService for testing
+type MockDashboardService struct {
+	GetStatsFunc          func() (*DashboardStats, error)
+	GetRecentActivityFunc func(limit int) ([]*ActivityItem, error)
+}
+
+func (m *MockDashboardService) GetStats() (*DashboardStats, error) {
+	if m.GetStatsFunc != nil {
+		return m.GetStatsFunc()
+	}
+	return &DashboardStats{}, nil
+}
+
+func (m *MockDashboardService) GetRecentActivity(limit int) ([]*ActivityItem, error) {
+	if m.GetRecentActivityFunc != nil {
+		return m.GetRecentActivityFunc(limit)
+	}
+	return []*ActivityItem{}, nil
+}
+
+// DashboardStats represents dashboard statistics
+type DashboardStats struct {
+	TotalPosts      int `json:"total_posts"`
+	PublishedPosts  int `json:"published_posts"`
+	DraftPosts      int `json:"draft_posts"`
+	TotalUsers      int `json:"total_users"`
+	TotalCategories int `json:"total_categories"`
+}
+
+// ActivityItem represents a recent activity
+type ActivityItem struct {
+	ID        int64     `json:"id"`
+	Type      string    `json:"type"` // "post_created", "post_published", "user_registered"
+	Message   string    `json:"message"`
+	UserID    int64     `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func TestDashboardHandler_Index(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		mockStats      *DashboardStats
+		mockActivity   []*ActivityItem
+		expectedStatus int
+		expectStats    bool
+	}{
+		{
+			name:     "admin can view dashboard",
+			userRole: domain.RoleAdmin,
+			mockStats: &DashboardStats{
+				TotalPosts:      50,
+				PublishedPosts:  40,
+				DraftPosts:      10,
+				TotalUsers:      5,
+				TotalCategories: 3,
+			},
+			mockActivity: []*ActivityItem{
+				{
+					ID:       1,
+					Type:     "post_published",
+					Message:  "New post published",
+					UserName: "John Doe",
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectStats:    true,
+		},
+		{
+			name:           "editor can view dashboard",
+			userRole:       domain.RoleEditor,
+			mockStats:      &DashboardStats{TotalPosts: 10},
+			expectedStatus: http.StatusOK,
+			expectStats:    true,
+		},
+		{
+			name:           "author can view dashboard",
+			userRole:       domain.RoleAuthor,
+			mockStats:      &DashboardStats{TotalPosts: 5},
+			expectedStatus: http.StatusOK,
+			expectStats:    true,
+		},
+		{
+			name:           "reader cannot view dashboard",
+			userRole:       domain.RoleReader,
+			expectedStatus: http.StatusForbidden,
+			expectStats:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboardService := &MockDashboardService{
+				GetStatsFunc: func() (*DashboardStats, error) {
+					return tt.mockStats, nil
+				},
+				GetRecentActivityFunc: func(limit int) ([]*ActivityItem, error) {
+					return tt.mockActivity, nil
+				},
+			}
+
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor || user.Role == domain.RoleAuthor
+				},
+			}
+
+			handler := NewDashboardHandler(dashboardService, permService)
+
+			req := httptest.NewRequest("GET", "/admin", nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.Index(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestDashboardHandler_Stats(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		mockStats      *DashboardStats
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:     "get stats successfully",
+			userRole: domain.RoleAdmin,
+			mockStats: &DashboardStats{
+				TotalPosts:     100,
+				PublishedPosts: 80,
+				DraftPosts:     20,
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "unauthorized user",
+			userRole:       domain.RoleReader,
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboardService := &MockDashboardService{
+				GetStatsFunc: func() (*DashboardStats, error) {
+					return tt.mockStats, tt.mockError
+				},
+			}
+
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role != domain.RoleReader
+				},
+			}
+
+			handler := NewDashboardHandler(dashboardService, permService)
+
+			req := httptest.NewRequest("GET", "/admin/stats", nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.Stats(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestDashboardHandler_RecentActivity(t *testing.T) {
+	tests := []struct {
+		name           string
+		userRole       domain.Role
+		mockActivity   []*ActivityItem
+		expectedStatus int
+		expectedCount  int
+	}{
+		{
+			name:     "get recent activity",
+			userRole: domain.RoleAdmin,
+			mockActivity: []*ActivityItem{
+				{ID: 1, Type: "post_created", Message: "Post created"},
+				{ID: 2, Type: "user_registered", Message: "User registered"},
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  2,
+		},
+		{
+			name:           "empty activity",
+			userRole:       domain.RoleEditor,
+			mockActivity:   []*ActivityItem{},
+			expectedStatus: http.StatusOK,
+			expectedCount:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboardService := &MockDashboardService{
+				GetRecentActivityFunc: func(limit int) ([]*ActivityItem, error) {
+					return tt.mockActivity, nil
+				},
+			}
+
+			permService := &MockPermService{
+				CanFunc: func(user *domain.User, action, resource string, resourceID ...int64) bool {
+					return user.Role != domain.RoleReader
+				},
+			}
+
+			handler := NewDashboardHandler(dashboardService, permService)
+
+			req := httptest.NewRequest("GET", "/admin/activity", nil)
+			w := httptest.NewRecorder()
+
+			ctx := &router.Context{
+				Request:  req,
+				Response: w,
+			}
+			ctx.Set("user", &domain.User{ID: 1, Role: tt.userRole})
+
+			handler.RecentActivity(ctx)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
