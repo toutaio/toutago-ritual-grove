@@ -1,0 +1,77 @@
+package models
+
+import (
+	"time"
+)
+
+// Session represents a user session
+type Session struct {
+	ID        int64     `json:"id" db:"id"`
+	UserID    int64     `json:"user_id" db:"user_id"`
+	Token     string    `json:"token" db:"token" validate:"required"`
+	IPAddress string    `json:"ip_address" db:"ip_address"`
+	UserAgent string    `json:"user_agent" db:"user_agent"`
+	ExpiresAt time.Time `json:"expires_at" db:"expires_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// IsExpired checks if the session has expired
+func (s *Session) IsExpired() bool {
+	return time.Now().After(s.ExpiresAt)
+}
+
+// IsValid checks if the session is still valid
+func (s *Session) IsValid() bool {
+	return !s.IsExpired()
+}
+
+// TableName returns the table name for Session
+func (s *Session) TableName() string {
+	return "sessions"
+}
+
+// VerificationToken represents email verification and password reset tokens
+type VerificationToken struct {
+	ID        int64     `json:"id" db:"id"`
+	UserID    int64     `json:"user_id" db:"user_id"`
+	Token     string    `json:"token" db:"token" validate:"required"`
+	Type      TokenType `json:"type" db:"type" validate:"required,oneof=email_verification password_reset"`
+	ExpiresAt time.Time `json:"expires_at" db:"expires_at"`
+	UsedAt    *time.Time `json:"used_at,omitempty" db:"used_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+}
+
+// TokenType represents the type of verification token
+type TokenType string
+
+const (
+	TokenTypeEmailVerification TokenType = "email_verification"
+	TokenTypePasswordReset     TokenType = "password_reset"
+)
+
+// IsExpired checks if the token has expired
+func (t *VerificationToken) IsExpired() bool {
+	return time.Now().After(t.ExpiresAt)
+}
+
+// IsUsed checks if the token has been used
+func (t *VerificationToken) IsUsed() bool {
+	return t.UsedAt != nil
+}
+
+// IsValid checks if the token is valid (not expired and not used)
+func (t *VerificationToken) IsValid() bool {
+	return !t.IsExpired() && !t.IsUsed()
+}
+
+// MarkAsUsed marks the token as used
+func (t *VerificationToken) MarkAsUsed() {
+	now := time.Now()
+	t.UsedAt = &now
+}
+
+// TableName returns the table name for VerificationToken
+func (t *VerificationToken) TableName() string {
+	return "verification_tokens"
+}

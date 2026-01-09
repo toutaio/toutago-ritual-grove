@@ -1,0 +1,207 @@
+package models
+
+import (
+	"testing"
+	"time"
+)
+
+func TestSession_IsExpired(t *testing.T) {
+	tests := []struct {
+		name      string
+		expiresAt time.Time
+		want      bool
+	}{
+		{
+			name:      "expired session",
+			expiresAt: time.Now().Add(-1 * time.Hour),
+			want:      true,
+		},
+		{
+			name:      "valid session",
+			expiresAt: time.Now().Add(1 * time.Hour),
+			want:      false,
+		},
+		{
+			name:      "just expired",
+			expiresAt: time.Now().Add(-1 * time.Second),
+			want:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Session{ExpiresAt: tt.expiresAt}
+			if got := s.IsExpired(); got != tt.want {
+				t.Errorf("Session.IsExpired() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSession_IsValid(t *testing.T) {
+	tests := []struct {
+		name      string
+		expiresAt time.Time
+		want      bool
+	}{
+		{
+			name:      "valid session",
+			expiresAt: time.Now().Add(1 * time.Hour),
+			want:      true,
+		},
+		{
+			name:      "expired session",
+			expiresAt: time.Now().Add(-1 * time.Hour),
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Session{ExpiresAt: tt.expiresAt}
+			if got := s.IsValid(); got != tt.want {
+				t.Errorf("Session.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSession_TableName(t *testing.T) {
+	s := &Session{}
+	want := "sessions"
+	if got := s.TableName(); got != want {
+		t.Errorf("Session.TableName() = %v, want %v", got, want)
+	}
+}
+
+func TestVerificationToken_IsExpired(t *testing.T) {
+	tests := []struct {
+		name      string
+		expiresAt time.Time
+		want      bool
+	}{
+		{
+			name:      "expired token",
+			expiresAt: time.Now().Add(-1 * time.Hour),
+			want:      true,
+		},
+		{
+			name:      "valid token",
+			expiresAt: time.Now().Add(1 * time.Hour),
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token := &VerificationToken{ExpiresAt: tt.expiresAt}
+			if got := token.IsExpired(); got != tt.want {
+				t.Errorf("VerificationToken.IsExpired() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerificationToken_IsUsed(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name   string
+		usedAt *time.Time
+		want   bool
+	}{
+		{
+			name:   "unused token",
+			usedAt: nil,
+			want:   false,
+		},
+		{
+			name:   "used token",
+			usedAt: &now,
+			want:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token := &VerificationToken{UsedAt: tt.usedAt}
+			if got := token.IsUsed(); got != tt.want {
+				t.Errorf("VerificationToken.IsUsed() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerificationToken_IsValid(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name      string
+		expiresAt time.Time
+		usedAt    *time.Time
+		want      bool
+	}{
+		{
+			name:      "valid token",
+			expiresAt: time.Now().Add(1 * time.Hour),
+			usedAt:    nil,
+			want:      true,
+		},
+		{
+			name:      "expired token",
+			expiresAt: time.Now().Add(-1 * time.Hour),
+			usedAt:    nil,
+			want:      false,
+		},
+		{
+			name:      "used token",
+			expiresAt: time.Now().Add(1 * time.Hour),
+			usedAt:    &now,
+			want:      false,
+		},
+		{
+			name:      "expired and used token",
+			expiresAt: time.Now().Add(-1 * time.Hour),
+			usedAt:    &now,
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token := &VerificationToken{
+				ExpiresAt: tt.expiresAt,
+				UsedAt:    tt.usedAt,
+			}
+			if got := token.IsValid(); got != tt.want {
+				t.Errorf("VerificationToken.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerificationToken_MarkAsUsed(t *testing.T) {
+	token := &VerificationToken{
+		ExpiresAt: time.Now().Add(1 * time.Hour),
+	}
+
+	if token.IsUsed() {
+		t.Error("Token should not be used initially")
+	}
+
+	token.MarkAsUsed()
+
+	if !token.IsUsed() {
+		t.Error("Token should be marked as used")
+	}
+
+	if token.UsedAt == nil {
+		t.Error("UsedAt should be set")
+	}
+}
+
+func TestVerificationToken_TableName(t *testing.T) {
+	token := &VerificationToken{}
+	want := "verification_tokens"
+	if got := token.TableName(); got != want {
+		t.Errorf("VerificationToken.TableName() = %v, want %v", got, want)
+	}
+}

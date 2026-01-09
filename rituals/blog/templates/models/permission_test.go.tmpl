@@ -1,0 +1,199 @@
+package models
+
+import (
+	"testing"
+)
+
+func TestHasPermission(t *testing.T) {
+	tests := []struct {
+		name       string
+		role       Role
+		permission Permission
+		want       bool
+	}{
+		// Admin tests
+		{
+			name:       "admin has post create",
+			role:       RoleAdmin,
+			permission: PermissionPostCreate,
+			want:       true,
+		},
+		{
+			name:       "admin has user delete",
+			role:       RoleAdmin,
+			permission: PermissionUserDelete,
+			want:       true,
+		},
+		{
+			name:       "admin has settings edit",
+			role:       RoleAdmin,
+			permission: PermissionSettingsEdit,
+			want:       true,
+		},
+		// Editor tests
+		{
+			name:       "editor has post publish",
+			role:       RoleEditor,
+			permission: PermissionPostPublish,
+			want:       true,
+		},
+		{
+			name:       "editor cannot edit settings",
+			role:       RoleEditor,
+			permission: PermissionSettingsEdit,
+			want:       false,
+		},
+		{
+			name:       "editor cannot manage users",
+			role:       RoleEditor,
+			permission: PermissionUserEdit,
+			want:       false,
+		},
+		{
+			name:       "editor can moderate comments",
+			role:       RoleEditor,
+			permission: PermissionCommentModerate,
+			want:       true,
+		},
+		// Author tests
+		{
+			name:       "author has post create",
+			role:       RoleAuthor,
+			permission: PermissionPostCreate,
+			want:       true,
+		},
+		{
+			name:       "author cannot publish",
+			role:       RoleAuthor,
+			permission: PermissionPostPublish,
+			want:       false,
+		},
+		{
+			name:       "author cannot delete posts",
+			role:       RoleAuthor,
+			permission: PermissionPostDelete,
+			want:       false,
+		},
+		{
+			name:       "author can upload media",
+			role:       RoleAuthor,
+			permission: PermissionMediaUpload,
+			want:       true,
+		},
+		// Reader tests
+		{
+			name:       "reader can view posts",
+			role:       RoleReader,
+			permission: PermissionPostView,
+			want:       true,
+		},
+		{
+			name:       "reader cannot create posts",
+			role:       RoleReader,
+			permission: PermissionPostCreate,
+			want:       false,
+		},
+		{
+			name:       "reader can create comments",
+			role:       RoleReader,
+			permission: PermissionCommentCreate,
+			want:       true,
+		},
+		{
+			name:       "reader cannot moderate comments",
+			role:       RoleReader,
+			permission: PermissionCommentModerate,
+			want:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := HasPermission(tt.role, tt.permission); got != tt.want {
+				t.Errorf("HasPermission(%v, %v) = %v, want %v", tt.role, tt.permission, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetRolePermissions(t *testing.T) {
+	tests := []struct {
+		name string
+		role Role
+		want int // number of permissions
+	}{
+		{
+			name: "admin has all permissions",
+			role: RoleAdmin,
+			want: 29, // Count all admin permissions
+		},
+		{
+			name: "editor has moderate permissions",
+			role: RoleEditor,
+			want: 18, // Count editor permissions
+		},
+		{
+			name: "author has limited permissions",
+			role: RoleAuthor,
+			want: 10, // Count author permissions
+		},
+		{
+			name: "reader has minimal permissions",
+			role: RoleReader,
+			want: 5, // Count reader permissions
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			perms := GetRolePermissions(tt.role)
+			if len(perms) != tt.want {
+				t.Errorf("GetRolePermissions(%v) returned %d permissions, want %d", tt.role, len(perms), tt.want)
+			}
+		})
+	}
+}
+
+func TestGetRolePermissions_InvalidRole(t *testing.T) {
+	perms := GetRolePermissions(Role("invalid"))
+	if len(perms) != 0 {
+		t.Errorf("GetRolePermissions(invalid) should return empty slice, got %d permissions", len(perms))
+	}
+}
+
+func TestRolePermissionsCompleteness(t *testing.T) {
+	// Test that all roles are defined in RolePermissions
+	roles := []Role{RoleAdmin, RoleEditor, RoleAuthor, RoleReader}
+	
+	for _, role := range roles {
+		t.Run(string(role), func(t *testing.T) {
+			if _, exists := RolePermissions[role]; !exists {
+				t.Errorf("Role %v not found in RolePermissions", role)
+			}
+		})
+	}
+}
+
+func TestPermissionHierarchy(t *testing.T) {
+	// Test that admin has more permissions than editor
+	adminPerms := GetRolePermissions(RoleAdmin)
+	editorPerms := GetRolePermissions(RoleEditor)
+	
+	if len(adminPerms) <= len(editorPerms) {
+		t.Error("Admin should have more permissions than Editor")
+	}
+	
+	// Test that editor has more permissions than author
+	authorPerms := GetRolePermissions(RoleAuthor)
+	
+	if len(editorPerms) <= len(authorPerms) {
+		t.Error("Editor should have more permissions than Author")
+	}
+	
+	// Test that author has more permissions than reader
+	readerPerms := GetRolePermissions(RoleReader)
+	
+	if len(authorPerms) <= len(readerPerms) {
+		t.Error("Author should have more permissions than Reader")
+	}
+}

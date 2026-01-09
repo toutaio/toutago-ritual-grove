@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- **Blog Ritual: Complete Authentication System (Phase 1.1-1.2)**
+  - **Domain Models**:
+    - `User` model with authentication fields (email, username, password, role, status, email verification)
+    - `Session` model for session management with expiration tracking
+    - `VerificationToken` model for email verification and password reset flows
+    - `Role` type: Admin, Editor, Author, Reader
+    - `UserStatus` type: Active, Inactive, Locked
+    - `Permission` constants for granular access control (29 permissions across posts, categories, users, comments, tags, media, settings)
+    - `RolePermissions` matrix mapping roles to permissions
+    - Comprehensive test coverage (user_test.go, session_test.go, permission_test.go)
+  - **Database Migrations**:
+    - Migration 001: `users` table with full authentication support
+    - Migration 002: `sessions` table with token management
+    - Migration 003: `verification_tokens` table for email/password flows
+    - Migration 004: Updated `posts` table with author_id FK and soft deletes
+    - Migration 005: `tags` and `post_tags` tables for WordPress-style tagging
+    - Migration 006: `media` table for S3/cloud storage tracking
+    - Migration 007: `webhooks` and `webhook_deliveries` tables for event notifications
+    - All migrations include proper indexes, foreign key constraints, and up/down scripts
+    - PostgreSQL triggers for automatic `updated_at` timestamps
+
 - **Docker Support**
   - Added shared Docker templates in `rituals/_shared/docker/`
   - Dockerfile.go.tmpl with Air for hot reload

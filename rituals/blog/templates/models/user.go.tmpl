@@ -1,0 +1,71 @@
+package models
+
+import (
+	"time"
+)
+
+// User represents a blog user/author
+type User struct {
+	ID                int64      `json:"id" db:"id"`
+	Email             string     `json:"email" db:"email" validate:"required,email"`
+	Username          string     `json:"username" db:"username" validate:"required,min=3,max=50"`
+	Password          string     `json:"-" db:"password" validate:"required,min=8"`
+	Role              Role       `json:"role" db:"role" validate:"required,oneof=admin editor author reader"`
+	Status            UserStatus `json:"status" db:"status" validate:"required,oneof=active inactive locked"`
+	EmailVerified     bool       `json:"email_verified" db:"email_verified"`
+	EmailVerifiedAt   *time.Time `json:"email_verified_at,omitempty" db:"email_verified_at"`
+	FailedLoginCount  int        `json:"failed_login_count" db:"failed_login_count"`
+	LastLoginAt       *time.Time `json:"last_login_at,omitempty" db:"last_login_at"`
+	LastLoginIP       string     `json:"last_login_ip,omitempty" db:"last_login_ip"`
+	CreatedAt         time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at" db:"updated_at"`
+}
+
+// Role represents user roles
+type Role string
+
+const (
+	RoleAdmin  Role = "admin"
+	RoleEditor Role = "editor"
+	RoleAuthor Role = "author"
+	RoleReader Role = "reader"
+)
+
+// UserStatus represents user account status
+type UserStatus string
+
+const (
+	UserStatusActive   UserStatus = "active"
+	UserStatusInactive UserStatus = "inactive"
+	UserStatusLocked   UserStatus = "locked"
+)
+
+// HasRole checks if user has the specified role
+func (u *User) HasRole(role Role) bool {
+	return u.Role == role
+}
+
+// IsAdmin checks if user is an admin
+func (u *User) IsAdmin() bool {
+	return u.Role == RoleAdmin
+}
+
+// CanEdit checks if user can edit content
+func (u *User) CanEdit() bool {
+	return u.Role == RoleAdmin || u.Role == RoleEditor
+}
+
+// CanAuthor checks if user can create posts
+func (u *User) CanAuthor() bool {
+	return u.Role == RoleAdmin || u.Role == RoleEditor || u.Role == RoleAuthor
+}
+
+// IsActive checks if user account is active
+func (u *User) IsActive() bool {
+	return u.Status == UserStatusActive && u.EmailVerified
+}
+
+// TableName returns the table name for User
+func (u *User) TableName() string {
+	return "users"
+}

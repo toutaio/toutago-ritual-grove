@@ -1,0 +1,165 @@
+package models
+
+import (
+	"testing"
+	"time"
+)
+
+func TestUser_HasRole(t *testing.T) {
+	tests := []struct {
+		name     string
+		userRole Role
+		checkRole Role
+		want     bool
+	}{
+		{
+			name:      "admin has admin role",
+			userRole:  RoleAdmin,
+			checkRole: RoleAdmin,
+			want:      true,
+		},
+		{
+			name:      "admin does not have editor role",
+			userRole:  RoleAdmin,
+			checkRole: RoleEditor,
+			want:      false,
+		},
+		{
+			name:      "author has author role",
+			userRole:  RoleAuthor,
+			checkRole: RoleAuthor,
+			want:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &User{Role: tt.userRole}
+			if got := u.HasRole(tt.checkRole); got != tt.want {
+				t.Errorf("User.HasRole() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_IsAdmin(t *testing.T) {
+	tests := []struct {
+		name string
+		role Role
+		want bool
+	}{
+		{"admin user", RoleAdmin, true},
+		{"editor user", RoleEditor, false},
+		{"author user", RoleAuthor, false},
+		{"reader user", RoleReader, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &User{Role: tt.role}
+			if got := u.IsAdmin(); got != tt.want {
+				t.Errorf("User.IsAdmin() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_CanEdit(t *testing.T) {
+	tests := []struct {
+		name string
+		role Role
+		want bool
+	}{
+		{"admin can edit", RoleAdmin, true},
+		{"editor can edit", RoleEditor, true},
+		{"author cannot edit", RoleAuthor, false},
+		{"reader cannot edit", RoleReader, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &User{Role: tt.role}
+			if got := u.CanEdit(); got != tt.want {
+				t.Errorf("User.CanEdit() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_CanAuthor(t *testing.T) {
+	tests := []struct {
+		name string
+		role Role
+		want bool
+	}{
+		{"admin can author", RoleAdmin, true},
+		{"editor can author", RoleEditor, true},
+		{"author can author", RoleAuthor, true},
+		{"reader cannot author", RoleReader, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &User{Role: tt.role}
+			if got := u.CanAuthor(); got != tt.want {
+				t.Errorf("User.CanAuthor() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_IsActive(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name          string
+		status        UserStatus
+		emailVerified bool
+		want          bool
+	}{
+		{
+			name:          "active and verified",
+			status:        UserStatusActive,
+			emailVerified: true,
+			want:          true,
+		},
+		{
+			name:          "active but not verified",
+			status:        UserStatusActive,
+			emailVerified: false,
+			want:          false,
+		},
+		{
+			name:          "inactive but verified",
+			status:        UserStatusInactive,
+			emailVerified: true,
+			want:          false,
+		},
+		{
+			name:          "locked and verified",
+			status:        UserStatusLocked,
+			emailVerified: true,
+			want:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &User{
+				Status:          tt.status,
+				EmailVerified:   tt.emailVerified,
+				EmailVerifiedAt: &now,
+			}
+			if got := u.IsActive(); got != tt.want {
+				t.Errorf("User.IsActive() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUser_TableName(t *testing.T) {
+	u := &User{}
+	want := "users"
+	if got := u.TableName(); got != want {
+		t.Errorf("User.TableName() = %v, want %v", got, want)
+	}
+}

@@ -1,0 +1,128 @@
+package models
+
+// Permission represents a specific permission in the system
+type Permission string
+
+// Post permissions
+const (
+	PermissionPostView   Permission = "post.view"
+	PermissionPostCreate Permission = "post.create"
+	PermissionPostEdit   Permission = "post.edit"
+	PermissionPostDelete Permission = "post.delete"
+	PermissionPostPublish Permission = "post.publish"
+)
+
+// Category permissions
+const (
+	PermissionCategoryView   Permission = "category.view"
+	PermissionCategoryCreate Permission = "category.create"
+	PermissionCategoryEdit   Permission = "category.edit"
+	PermissionCategoryDelete Permission = "category.delete"
+)
+
+// User permissions
+const (
+	PermissionUserView   Permission = "user.view"
+	PermissionUserCreate Permission = "user.create"
+	PermissionUserEdit   Permission = "user.edit"
+	PermissionUserDelete Permission = "user.delete"
+)
+
+// Comment permissions
+const (
+	PermissionCommentView    Permission = "comment.view"
+	PermissionCommentCreate  Permission = "comment.create"
+	PermissionCommentEdit    Permission = "comment.edit"
+	PermissionCommentDelete  Permission = "comment.delete"
+	PermissionCommentModerate Permission = "comment.moderate"
+)
+
+// Tag permissions
+const (
+	PermissionTagView   Permission = "tag.view"
+	PermissionTagCreate Permission = "tag.create"
+	PermissionTagEdit   Permission = "tag.edit"
+	PermissionTagDelete Permission = "tag.delete"
+)
+
+// Media permissions
+const (
+	PermissionMediaView   Permission = "media.view"
+	PermissionMediaUpload Permission = "media.upload"
+	PermissionMediaDelete Permission = "media.delete"
+)
+
+// Settings permissions
+const (
+	PermissionSettingsView Permission = "settings.view"
+	PermissionSettingsEdit Permission = "settings.edit"
+)
+
+// Dashboard permissions
+const (
+	PermissionDashboardView Permission = "dashboard.view"
+)
+
+// RolePermissions maps roles to their permissions
+var RolePermissions = map[Role][]Permission{
+	RoleAdmin: {
+		// Admins have all permissions
+		PermissionPostView, PermissionPostCreate, PermissionPostEdit, PermissionPostDelete, PermissionPostPublish,
+		PermissionCategoryView, PermissionCategoryCreate, PermissionCategoryEdit, PermissionCategoryDelete,
+		PermissionUserView, PermissionUserCreate, PermissionUserEdit, PermissionUserDelete,
+		PermissionCommentView, PermissionCommentCreate, PermissionCommentEdit, PermissionCommentDelete, PermissionCommentModerate,
+		PermissionTagView, PermissionTagCreate, PermissionTagEdit, PermissionTagDelete,
+		PermissionMediaView, PermissionMediaUpload, PermissionMediaDelete,
+		PermissionSettingsView, PermissionSettingsEdit,
+		PermissionDashboardView,
+	},
+	RoleEditor: {
+		// Editors can manage all content
+		PermissionPostView, PermissionPostCreate, PermissionPostEdit, PermissionPostDelete, PermissionPostPublish,
+		PermissionCategoryView, PermissionCategoryCreate, PermissionCategoryEdit, PermissionCategoryDelete,
+		PermissionCommentView, PermissionCommentCreate, PermissionCommentEdit, PermissionCommentDelete, PermissionCommentModerate,
+		PermissionTagView, PermissionTagCreate, PermissionTagEdit, PermissionTagDelete,
+		PermissionMediaView, PermissionMediaUpload, PermissionMediaDelete,
+		PermissionDashboardView,
+	},
+	RoleAuthor: {
+		// Authors can create and manage their own posts
+		PermissionPostView, PermissionPostCreate, PermissionPostEdit,
+		PermissionCategoryView,
+		PermissionCommentView, PermissionCommentCreate,
+		PermissionTagView,
+		PermissionMediaView, PermissionMediaUpload,
+		PermissionDashboardView,
+	},
+	RoleReader: {
+		// Readers can only view public content
+		PermissionPostView,
+		PermissionCategoryView,
+		PermissionCommentView, PermissionCommentCreate,
+		PermissionTagView,
+	},
+}
+
+// HasPermission checks if a role has a specific permission
+func HasPermission(role Role, permission Permission) bool {
+	permissions, exists := RolePermissions[role]
+	if !exists {
+		return false
+	}
+	
+	for _, p := range permissions {
+		if p == permission {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// GetRolePermissions returns all permissions for a role
+func GetRolePermissions(role Role) []Permission {
+	if permissions, exists := RolePermissions[role]; exists {
+		return permissions
+	}
+	return []Permission{}
+}
