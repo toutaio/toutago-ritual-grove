@@ -1,0 +1,237 @@
+package mysql
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/repositories"
+)
+
+type userRepository struct {
+	db *sql.DB
+}
+
+// NewUserRepository creates a new MySQL user repository
+func NewUserRepository(db *sql.DB) repositories.UserRepository {
+	return &userRepository{db: db}
+}
+
+func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
+	query := `
+		INSERT INTO users (id, email, username, password_hash, role, is_active, email_verified_at, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		user.ID,
+		user.Email,
+		user.Username,
+		user.PasswordHash,
+		user.Role,
+		user.IsActive,
+		user.EmailVerifiedAt,
+		user.CreatedAt,
+		user.UpdatedAt,
+	)
+	return err
+}
+
+func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
+	query := `
+		UPDATE users 
+		SET email = ?, username = ?, password_hash = ?, role = ?, 
+		    is_active = ?, email_verified_at = ?, updated_at = ?
+		WHERE id = ?
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		user.Email,
+		user.Username,
+		user.PasswordHash,
+		user.Role,
+		user.IsActive,
+		user.EmailVerifiedAt,
+		user.UpdatedAt,
+		user.ID,
+	)
+	return err
+}
+
+func (r *userRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM users WHERE id = ?`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
+	query := `
+		SELECT id, email, username, password_hash, role, is_active, 
+		       email_verified_at, created_at, updated_at
+		FROM users
+		WHERE id = ?
+	`
+	user := &domain.User{}
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Username,
+		&user.PasswordHash,
+		&user.Role,
+		&user.IsActive,
+		&user.EmailVerifiedAt,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	query := `
+		SELECT id, email, username, password_hash, role, is_active, 
+		       email_verified_at, created_at, updated_at
+		FROM users
+		WHERE email = ?
+	`
+	user := &domain.User{}
+	err := r.db.QueryRowContext(ctx, query, email).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Username,
+		&user.PasswordHash,
+		&user.Role,
+		&user.IsActive,
+		&user.EmailVerifiedAt,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *userRepository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+	query := `
+		SELECT id, email, username, password_hash, role, is_active, 
+		       email_verified_at, created_at, updated_at
+		FROM users
+		WHERE username = ?
+	`
+	user := &domain.User{}
+	err := r.db.QueryRowContext(ctx, query, username).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Username,
+		&user.PasswordHash,
+		&user.Role,
+		&user.IsActive,
+		&user.EmailVerifiedAt,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *userRepository) List(ctx context.Context, filters repositories.UserFilters) ([]*domain.User, error) {
+	query := `
+		SELECT id, email, username, password_hash, role, is_active, 
+		       email_verified_at, created_at, updated_at
+		FROM users
+		WHERE 1=1
+	`
+	args := []interface{}{}
+	
+	if filters.Role != nil {
+		query += " AND role = ?"
+		args = append(args, *filters.Role)
+	}
+	
+	if filters.IsActive != nil {
+		query += " AND is_active = ?"
+		args = append(args, *filters.IsActive)
+	}
+	
+	query += " ORDER BY created_at DESC"
+	
+	if filters.Limit > 0 {
+		query += " LIMIT ?"
+		args = append(args, filters.Limit)
+	}
+	
+	if filters.Offset > 0 {
+		query += " OFFSET ?"
+		args = append(args, filters.Offset)
+	}
+	
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	users := []*domain.User{}
+	for rows.Next() {
+		user := &domain.User{}
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.Username,
+			&user.PasswordHash,
+			&user.Role,
+			&user.IsActive,
+			&user.EmailVerifiedAt,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	
+	return users, rows.Err()
+}
+
+func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)`
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
+	return exists, err
+}
+
+func (r *userRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE username = ?)`
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, username).Scan(&exists)
+	return exists, err
+}
+
+func (r *userRepository) Count(ctx context.Context) (int, error) {
+	query := `SELECT COUNT(*) FROM users`
+	var count int
+	err := r.db.QueryRowContext(ctx, query).Scan(&count)
+	return count, err
+}
+
+func (r *userRepository) IsFirstUser(ctx context.Context) (bool, error) {
+	count, err := r.Count(ctx)
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
+}

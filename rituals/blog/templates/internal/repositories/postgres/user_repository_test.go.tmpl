@@ -1,0 +1,253 @@
+package postgres
+
+import (
+	"context"
+	"database/sql"
+	"testing"
+	"time"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/repositories"
+
+	_ "github.com/lib/pq"
+)
+
+func setupTestDB(t *testing.T) *sql.DB {
+	// This would connect to a test database
+	// For template, we'll use environment variables
+	connStr := "host=localhost port=5432 user=test password=test dbname=test_blog sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		t.Skipf("Skipping database tests: %v", err)
+	}
+	
+	if err := db.Ping(); err != nil {
+		t.Skipf("Skipping database tests - cannot connect: %v", err)
+	}
+	
+	// Clean up tables
+	_, _ = db.Exec("TRUNCATE TABLE sessions, users CASCADE")
+	
+	return db
+}
+
+func TestUserRepository_Create(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	
+	repo := NewUserRepository(db)
+	ctx := context.Background()
+	
+	now := time.Now()
+	user := &domain.User{
+		ID:           "user-123",
+		Email:        "test@example.com",
+		Username:     "testuser",
+		PasswordHash: "hashed_password",
+		Role:         domain.RoleReader,
+		IsActive:     true,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+	
+	err := repo.Create(ctx, user)
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
+	
+	// Verify user was created
+	found, err := repo.FindByID(ctx, user.ID)
+	if err != nil {
+		t.Fatalf("FindByID failed: %v", err)
+	}
+	
+	if found.Email != user.Email {
+		t.Errorf("Email mismatch: got %v, want %v", found.Email, user.Email)
+	}
+	if found.Username != user.Username {
+		t.Errorf("Username mismatch: got %v, want %v", found.Username, user.Username)
+	}
+}
+
+func TestUserRepository_FindByEmail(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	
+	repo := NewUserRepository(db)
+	ctx := context.Background()
+	
+	user := &domain.User{
+		ID:           "user-456",
+		Email:        "find@example.com",
+		Username:     "findme",
+		PasswordHash: "hashed",
+		Role:         domain.RoleReader,
+		IsActive:     true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	
+	_ = repo.Create(ctx, user)
+	
+	found, err := repo.FindByEmail(ctx, "find@example.com")
+	if err != nil {
+		t.Fatalf("FindByEmail failed: %v", err)
+	}
+	
+	if found.ID != user.ID {
+		t.Errorf("ID mismatch: got %v, want %v", found.ID, user.ID)
+	}
+}
+
+func TestUserRepository_ExistsByEmail(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	
+	repo := NewUserRepository(db)
+	ctx := context.Background()
+	
+	user := &domain.User{
+		ID:           "user-789",
+		Email:        "exists@example.com",
+		Username:     "existsuser",
+		PasswordHash: "hashed",
+		Role:         domain.RoleReader,
+		IsActive:     true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	
+	_ = repo.Create(ctx, user)
+	
+	exists, err := repo.ExistsByEmail(ctx, "exists@example.com")
+	if err != nil {
+		t.Fatalf("ExistsByEmail failed: %v", err)
+	}
+	
+	if !exists {
+		t.Error("Expected email to exist")
+	}
+	
+	exists, err = repo.ExistsByEmail(ctx, "notexists@example.com")
+	if err != nil {
+		t.Fatalf("ExistsByEmail failed: %v", err)
+	}
+	
+	if exists {
+		t.Error("Expected email to not exist")
+	}
+}
+
+func TestUserRepository_IsFirstUser(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	
+	repo := NewUserRepository(db)
+	ctx := context.Background()
+	
+	// Should be true when no users
+	isFirst, err := repo.IsFirstUser(ctx)
+	if err != nil {
+		t.Fatalf("IsFirstUser failed: %v", err)
+	}
+	
+	if !isFirst {
+		t.Error("Expected IsFirstUser to be true when no users")
+	}
+	
+	// Create a user
+	user := &domain.User{
+		ID:           "first-user",
+		Email:        "first@example.com",
+		Username:     "first",
+		PasswordHash: "hashed",
+		Role:         domain.RoleAdmin,
+		IsActive:     true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	
+	_ = repo.Create(ctx, user)
+	
+	// Should be false after creating user
+	isFirst, err = repo.IsFirstUser(ctx)
+	if err != nil {
+		t.Fatalf("IsFirstUser failed: %v", err)
+	}
+	
+	if isFirst {
+		t.Error("Expected IsFirstUser to be false after creating user")
+	}
+}
+
+func TestUserRepository_Update(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	
+	repo := NewUserRepository(db)
+	ctx := context.Background()
+	
+	user := &domain.User{
+		ID:           "update-user",
+		Email:        "update@example.com",
+		Username:     "updateme",
+		PasswordHash: "hashed",
+		Role:         domain.RoleReader,
+		IsActive:     true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	
+	_ = repo.Create(ctx, user)
+	
+	// Update user
+	user.Role = domain.RoleAdmin
+	user.UpdatedAt = time.Now()
+	
+	err := repo.Update(ctx, user)
+	if err != nil {
+		t.Fatalf("Update failed: %v", err)
+	}
+	
+	// Verify update
+	found, err := repo.FindByID(ctx, user.ID)
+	if err != nil {
+		t.Fatalf("FindByID failed: %v", err)
+	}
+	
+	if found.Role != domain.RoleAdmin {
+		t.Errorf("Role not updated: got %v, want %v", found.Role, domain.RoleAdmin)
+	}
+}
+
+func TestUserRepository_List(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	
+	repo := NewUserRepository(db)
+	ctx := context.Background()
+	
+	// Create multiple users
+	for i := 0; i < 3; i++ {
+		user := &domain.User{
+			ID:           fmt.Sprintf("list-user-%d", i),
+			Email:        fmt.Sprintf("list%d@example.com", i),
+			Username:     fmt.Sprintf("listuser%d", i),
+			PasswordHash: "hashed",
+			Role:         domain.RoleReader,
+			IsActive:     true,
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		}
+		_ = repo.Create(ctx, user)
+	}
+	
+	users, err := repo.List(ctx, repositories.UserFilters{})
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+	
+	if len(users) < 3 {
+		t.Errorf("Expected at least 3 users, got %d", len(users))
+	}
+}

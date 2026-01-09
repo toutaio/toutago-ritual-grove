@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Database Repositories & Auth Handlers (Phase 1.3 completion)**
+  - **PostgreSQL Repositories**:
+    - `UserRepository` implementation with full CRUD operations
+    - `SessionRepository` implementation with token management
+    - Support for user queries by email, username, ID
+    - First-user detection for admin setup
+    - Session expiration handling
+  - **MySQL Repositories**:
+    - `UserRepository` implementation (MySQL parameter style)
+    - `SessionRepository` implementation (MySQL parameter style)
+    - Feature parity with PostgreSQL implementations
+  - **Auth Handlers**:
+    - `AuthHandler` with login, register, logout, setup methods
+    - HTTP-only cookie-based session management
+    - Auto-login after registration
+    - First-user admin setup flow
+    - Proper redirects based on authentication state
+    - Support for both SSR and Inertia.js frontends
+
 - **Blog Ritual: Authentication Integration (Phase 1.3)** (TDD)
   - **Domain Models**:
     - `User` domain model implementing Breitheamh auth interfaces

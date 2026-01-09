@@ -1,0 +1,167 @@
+package postgres
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	"[[ .module_path ]]/internal/domain"
+)
+
+type sessionRepository struct {
+	db *sql.DB
+}
+
+// NewSessionRepository creates a new PostgreSQL session repository
+func NewSessionRepository(db *sql.DB) *sessionRepository {
+	return &sessionRepository{db: db}
+}
+
+func (r *sessionRepository) Create(ctx context.Context, session *domain.Session) error {
+	query := `
+		INSERT INTO sessions (id, user_id, token, ip_address, user_agent, expires_at, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		session.ID,
+		session.UserID,
+		session.Token,
+		session.IPAddress,
+		session.UserAgent,
+		session.ExpiresAt,
+		session.CreatedAt,
+	)
+	return err
+}
+
+func (r *sessionRepository) Update(ctx context.Context, session *domain.Session) error {
+	query := `
+		UPDATE sessions 
+		SET user_id = $2, token = $3, ip_address = $4, user_agent = $5, expires_at = $6
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		session.ID,
+		session.UserID,
+		session.Token,
+		session.IPAddress,
+		session.UserAgent,
+		session.ExpiresAt,
+	)
+	return err
+}
+
+func (r *sessionRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM sessions WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+func (r *sessionRepository) DeleteByToken(ctx context.Context, token string) error {
+	query := `DELETE FROM sessions WHERE token = $1`
+	_, err := r.db.ExecContext(ctx, query, token)
+	return err
+}
+
+func (r *sessionRepository) DeleteByUserID(ctx context.Context, userID string) error {
+	query := `DELETE FROM sessions WHERE user_id = $1`
+	_, err := r.db.ExecContext(ctx, query, userID)
+	return err
+}
+
+func (r *sessionRepository) DeleteExpired(ctx context.Context) error {
+	query := `DELETE FROM sessions WHERE expires_at < NOW()`
+	_, err := r.db.ExecContext(ctx, query)
+	return err
+}
+
+func (r *sessionRepository) FindByID(ctx context.Context, id string) (*domain.Session, error) {
+	query := `
+		SELECT id, user_id, token, ip_address, user_agent, expires_at, created_at
+		FROM sessions
+		WHERE id = $1
+	`
+	session := &domain.Session{}
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&session.ID,
+		&session.UserID,
+		&session.Token,
+		&session.IPAddress,
+		&session.UserAgent,
+		&session.ExpiresAt,
+		&session.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("session not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return session, nil
+}
+
+func (r *sessionRepository) FindByToken(ctx context.Context, token string) (*domain.Session, error) {
+	query := `
+		SELECT id, user_id, token, ip_address, user_agent, expires_at, created_at
+		FROM sessions
+		WHERE token = $1 AND expires_at > NOW()
+	`
+	session := &domain.Session{}
+	err := r.db.QueryRowContext(ctx, query, token).Scan(
+		&session.ID,
+		&session.UserID,
+		&session.Token,
+		&session.IPAddress,
+		&session.UserAgent,
+		&session.ExpiresAt,
+		&session.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("session not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return session, nil
+}
+
+func (r *sessionRepository) FindByUserID(ctx context.Context, userID string) ([]*domain.Session, error) {
+	query := `
+		SELECT id, user_id, token, ip_address, user_agent, expires_at, created_at
+		FROM sessions
+		WHERE user_id = $1
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	sessions := []*domain.Session{}
+	for rows.Next() {
+		session := &domain.Session{}
+		err := rows.Scan(
+			&session.ID,
+			&session.UserID,
+			&session.Token,
+			&session.IPAddress,
+			&session.UserAgent,
+			&session.ExpiresAt,
+			&session.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, session)
+	}
+	
+	return sessions, rows.Err()
+}
+
+func (r *sessionRepository) Count(ctx context.Context) (int, error) {
+	query := `SELECT COUNT(*) FROM sessions WHERE expires_at > NOW()`
+	var count int
+	err := r.db.QueryRowContext(ctx, query).Scan(&count)
+	return count, err
+}

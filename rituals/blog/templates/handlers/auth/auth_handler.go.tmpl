@@ -1,0 +1,263 @@
+package auth
+
+import (
+	"net/http"
+	"time"
+
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/middleware"
+	"[[ .module_path ]]/internal/services"
+	
+	cosan "github.com/toutaio/toutago-cosan-router"
+[[- if eq .frontend_type "inertia-vue" ]]
+	"github.com/toutaio/toutago-inertia/pkg/inertia"
+[[- else ]]
+	fith "github.com/toutaio/toutago-fith-renderer"
+[[- end ]]
+)
+
+type AuthHandler struct {
+	authService services.AuthService
+[[- if eq .frontend_type "inertia-vue" ]]
+	inertia     *inertia.Inertia
+[[- else ]]
+	renderer    *fith.Engine
+[[- end ]]
+}
+
+// NewAuthHandler creates a new auth handler
+func NewAuthHandler(
+	authService services.AuthService,
+[[- if eq .frontend_type "inertia-vue" ]]
+	inertia *inertia.Inertia,
+[[- else ]]
+	renderer *fith.Engine,
+[[- end ]]
+) *AuthHandler {
+	return &AuthHandler{
+		authService: authService,
+[[- if eq .frontend_type "inertia-vue" ]]
+		inertia:     inertia,
+[[- else ]]
+		renderer:    renderer,
+[[- end ]]
+	}
+}
+
+// ShowLogin renders the login page
+func (h *AuthHandler) ShowLogin(c cosan.Context) error {
+[[- if eq .frontend_type "inertia-vue" ]]
+	return h.inertia.Render(c.Response(), c.Request(), "Auth/Login", map[string]interface{}{})
+[[- else ]]
+	return h.renderer.Render(c.Response(), "auth/login.html", map[string]interface{}{})
+[[- end ]]
+}
+
+// Login handles login POST request
+func (h *AuthHandler) Login(c cosan.Context) error {
+	var loginDTO dto.LoginDTO
+	
+	// Bind form data
+	if err := c.Bind(&loginDTO); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid form data",
+		})
+	}
+	
+	// Add request metadata
+	loginDTO.IPAddress = c.Request().RemoteAddr
+	loginDTO.UserAgent = c.Request().UserAgent()
+	
+	// Validate
+	if err := loginDTO.Validate(); err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	
+	// Attempt login
+	session, err := h.authService.Login(c.Request().Context(), loginDTO)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	
+	// Set HTTP-only cookie
+	http.SetCookie(c.Response(), &http.Cookie{
+		Name:     "session_token",
+		Value:    session.Token,
+		Path:     "/",
+		Expires:  session.ExpiresAt,
+		HttpOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: http.SameSiteLaxMode,
+	})
+	
+	// Redirect to dashboard
+	return c.Redirect(http.StatusFound, "/admin/dashboard")
+}
+
+// ShowRegister renders the register page
+func (h *AuthHandler) ShowRegister(c cosan.Context) error {
+[[- if eq .frontend_type "inertia-vue" ]]
+	return h.inertia.Render(c.Response(), c.Request(), "Auth/Register", map[string]interface{}{})
+[[- else ]]
+	return h.renderer.Render(c.Response(), "auth/register.html", map[string]interface{}{})
+[[- end ]]
+}
+
+// Register handles registration POST request
+func (h *AuthHandler) Register(c cosan.Context) error {
+	var registerDTO dto.RegisterDTO
+	
+	// Bind form data
+	if err := c.Bind(&registerDTO); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid form data",
+		})
+	}
+	
+	// Validate
+	if err := registerDTO.Validate(); err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	
+	// Register user
+	user, err := h.authService.Register(c.Request().Context(), registerDTO)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	
+	// Auto-login after registration
+	loginDTO := dto.LoginDTO{
+		Email:     registerDTO.Email,
+		Password:  registerDTO.Password,
+		IPAddress: c.Request().RemoteAddr,
+		UserAgent: c.Request().UserAgent(),
+	}
+	
+	session, err := h.authService.Login(c.Request().Context(), loginDTO)
+	if err != nil {
+		// Registration succeeded but login failed - redirect to login
+		return c.Redirect(http.StatusFound, "/login")
+	}
+	
+	// Set session cookie
+	http.SetCookie(c.Response(), &http.Cookie{
+		Name:     "session_token",
+		Value:    session.Token,
+		Path:     "/",
+		Expires:  session.ExpiresAt,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
+	
+	// Redirect based on role
+	if user.IsAdmin() {
+		return c.Redirect(http.StatusFound, "/admin/dashboard")
+	}
+	return c.Redirect(http.StatusFound, "/")
+}
+
+// Logout handles logout
+func (h *AuthHandler) Logout(c cosan.Context) error {
+	// Get session token from cookie
+	cookie, err := c.Request().Cookie("session_token")
+	if err == nil && cookie.Value != "" {
+		// Find and delete session
+		session, err := h.authService.VerifySession(c.Request().Context(), cookie.Value)
+		if err == nil {
+			// Get user to find session ID
+			user := c.Get(middleware.ContextKeyUser)
+			if user != nil {
+				// Delete all sessions for security
+				_ = h.authService.LogoutAll(c.Request().Context(), session.GetID())
+			}
+		}
+	}
+	
+	// Clear cookie
+	http.SetCookie(c.Response(), &http.Cookie{
+		Name:     "session_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
+	
+	return c.Redirect(http.StatusFound, "/login")
+}
+
+// ShowSetup renders the first-user setup page
+func (h *AuthHandler) ShowSetup(c cosan.Context) error {
+	// Check if already set up
+	isFirst, err := h.authService.IsFirstUser(c.Request().Context())
+	if err != nil || !isFirst {
+		return c.Redirect(http.StatusFound, "/")
+	}
+	
+[[- if eq .frontend_type "inertia-vue" ]]
+	return h.inertia.Render(c.Response(), c.Request(), "Auth/Setup", map[string]interface{}{})
+[[- else ]]
+	return h.renderer.Render(c.Response(), "auth/setup.html", map[string]interface{}{})
+[[- end ]]
+}
+
+// Setup handles first-user admin setup
+func (h *AuthHandler) Setup(c cosan.Context) error {
+	var registerDTO dto.RegisterDTO
+	
+	// Bind form data
+	if err := c.Bind(&registerDTO); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid form data",
+		})
+	}
+	
+	// Validate
+	if err := registerDTO.Validate(); err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	
+	// Create first admin
+	user, err := h.authService.SetupFirstAdmin(c.Request().Context(), registerDTO)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	
+	// Auto-login
+	loginDTO := dto.LoginDTO{
+		Email:     registerDTO.Email,
+		Password:  registerDTO.Password,
+		IPAddress: c.Request().RemoteAddr,
+		UserAgent: c.Request().UserAgent(),
+	}
+	
+	session, err := h.authService.Login(c.Request().Context(), loginDTO)
+	if err != nil {
+		return c.Redirect(http.StatusFound, "/login")
+	}
+	
+	// Set session cookie
+	http.SetCookie(c.Response(), &http.Cookie{
+		Name:     "session_token",
+		Value:    session.Token,
+		Path:     "/",
+		Expires:  session.ExpiresAt,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
+	
+	return c.Redirect(http.StatusFound, "/admin/dashboard")
+}
