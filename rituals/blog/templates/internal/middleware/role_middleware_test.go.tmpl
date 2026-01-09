@@ -1,0 +1,213 @@
+package middleware
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+func TestRoleMiddleware(t *testing.T) {
+	permService := services.NewPermissionService()
+
+	adminUser := &domain.User{
+		ID:   "admin1",
+		Role: domain.RoleAdmin,
+	}
+
+	editorUser := &domain.User{
+		ID:   "editor1",
+		Role: domain.RoleEditor,
+	}
+
+	authorUser := &domain.User{
+		ID:   "author1",
+		Role: domain.RoleAuthor,
+	}
+
+	readerUser := &domain.User{
+		ID:   "reader1",
+		Role: domain.RoleReader,
+	}
+
+	tests := []struct {
+		name           string
+		user           *domain.User
+		requiredRoles  []domain.Role
+		expectedStatus int
+	}{
+		{
+			name:           "admin with admin role required",
+			user:           adminUser,
+			requiredRoles:  []domain.Role{domain.RoleAdmin},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "editor with admin role required",
+			user:           editorUser,
+			requiredRoles:  []domain.Role{domain.RoleAdmin},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "editor with editor or admin role required",
+			user:           editorUser,
+			requiredRoles:  []domain.Role{domain.RoleAdmin, domain.RoleEditor},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "author with author role required",
+			user:           authorUser,
+			requiredRoles:  []domain.Role{domain.RoleAuthor},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "reader with admin role required",
+			user:           readerUser,
+			requiredRoles:  []domain.Role{domain.RoleAdmin},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "no user in context",
+			user:           nil,
+			requiredRoles:  []domain.Role{domain.RoleAdmin},
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := cosan.New()
+
+			middleware := RoleMiddleware(permService, tt.requiredRoles...)
+
+			router.GET("/test", middleware, func(c cosan.Context) error {
+				return c.JSON(http.StatusOK, map[string]string{"message": "success"})
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			rec := httptest.NewRecorder()
+
+			c := router.NewContext(req, rec)
+			if tt.user != nil {
+				c.Set("user", tt.user)
+			}
+
+			err := middleware(c)
+
+			if tt.expectedStatus == http.StatusOK {
+				if err != nil {
+					t.Errorf("Expected no error, got %v", err)
+				}
+			} else {
+				if rec.Code != tt.expectedStatus && rec.Code != 0 {
+					t.Errorf("Expected status %d, got %d", tt.expectedStatus, rec.Code)
+				}
+			}
+		})
+	}
+}
+
+func TestRequireAdmin(t *testing.T) {
+	permService := services.NewPermissionService()
+
+	adminUser := &domain.User{
+		ID:   "admin1",
+		Role: domain.RoleAdmin,
+	}
+
+	editorUser := &domain.User{
+		ID:   "editor1",
+		Role: domain.RoleEditor,
+	}
+
+	tests := []struct {
+		name           string
+		user           *domain.User
+		expectedStatus int
+	}{
+		{"admin passes", adminUser, http.StatusOK},
+		{"editor fails", editorUser, http.StatusForbidden},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := cosan.New()
+			middleware := RequireAdmin(permService)
+
+			router.GET("/test", middleware, func(c cosan.Context) error {
+				return c.JSON(http.StatusOK, map[string]string{"message": "success"})
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			rec := httptest.NewRecorder()
+
+			c := router.NewContext(req, rec)
+			c.Set("user", tt.user)
+
+			err := middleware(c)
+
+			if tt.expectedStatus == http.StatusOK {
+				if err != nil {
+					t.Errorf("Expected no error, got %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestRequireEditor(t *testing.T) {
+	permService := services.NewPermissionService()
+
+	adminUser := &domain.User{
+		ID:   "admin1",
+		Role: domain.RoleAdmin,
+	}
+
+	editorUser := &domain.User{
+		ID:   "editor1",
+		Role: domain.RoleEditor,
+	}
+
+	authorUser := &domain.User{
+		ID:   "author1",
+		Role: domain.RoleAuthor,
+	}
+
+	tests := []struct {
+		name           string
+		user           *domain.User
+		expectedStatus int
+	}{
+		{"admin passes", adminUser, http.StatusOK},
+		{"editor passes", editorUser, http.StatusOK},
+		{"author fails", authorUser, http.StatusForbidden},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := cosan.New()
+			middleware := RequireEditor(permService)
+
+			router.GET("/test", middleware, func(c cosan.Context) error {
+				return c.JSON(http.StatusOK, map[string]string{"message": "success"})
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			rec := httptest.NewRecorder()
+
+			c := router.NewContext(req, rec)
+			c.Set("user", tt.user)
+
+			err := middleware(c)
+
+			if tt.expectedStatus == http.StatusOK {
+				if err != nil {
+					t.Errorf("Expected no error, got %v", err)
+				}
+			}
+		})
+	}
+}

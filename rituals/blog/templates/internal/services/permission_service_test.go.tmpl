@@ -1,0 +1,257 @@
+package services
+
+import (
+	"testing"
+	"{{.ModulePath}}/internal/domain"
+)
+
+func TestPermissionService_Can(t *testing.T) {
+	ps := NewPermissionService()
+
+	adminUser := &domain.User{
+		ID:   "admin1",
+		Role: domain.RoleAdmin,
+	}
+
+	editorUser := &domain.User{
+		ID:   "editor1",
+		Role: domain.RoleEditor,
+	}
+
+	authorUser := &domain.User{
+		ID:   "author1",
+		Role: domain.RoleAuthor,
+	}
+
+	readerUser := &domain.User{
+		ID:   "reader1",
+		Role: domain.RoleReader,
+	}
+
+	post := &domain.Post{
+		ID:       "post1",
+		AuthorID: "author1",
+	}
+
+	tests := []struct {
+		name     string
+		user     *domain.User
+		action   string
+		resource interface{}
+		want     bool
+	}{
+		// Admin tests
+		{"admin can view posts", adminUser, "post.view", post, true},
+		{"admin can create posts", adminUser, "post.create", post, true},
+		{"admin can edit posts", adminUser, "post.edit", post, true},
+		{"admin can delete posts", adminUser, "post.delete", post, true},
+		{"admin can publish posts", adminUser, "post.publish", post, true},
+
+		// Editor tests
+		{"editor can view posts", editorUser, "post.view", post, true},
+		{"editor can create posts", editorUser, "post.create", post, true},
+		{"editor can edit posts", editorUser, "post.edit", post, true},
+		{"editor can delete posts", editorUser, "post.delete", post, true},
+		{"editor can publish posts", editorUser, "post.publish", post, true},
+
+		// Author tests - own post
+		{"author can view posts", authorUser, "post.view", post, true},
+		{"author can create posts", authorUser, "post.create", post, true},
+		{"author can edit own post", authorUser, "post.edit", post, true},
+		{"author can delete own post", authorUser, "post.delete", post, true},
+		{"author cannot publish posts", authorUser, "post.publish", post, false},
+
+		// Reader tests
+		{"reader can view posts", readerUser, "post.view", post, true},
+		{"reader cannot create posts", readerUser, "post.create", post, false},
+		{"reader cannot edit posts", readerUser, "post.edit", post, false},
+		{"reader cannot delete posts", readerUser, "post.delete", post, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ps.Can(tt.user, tt.action, tt.resource)
+			if got != tt.want {
+				t.Errorf("PermissionService.Can() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPermissionService_CanEditPost(t *testing.T) {
+	ps := NewPermissionService()
+
+	adminUser := &domain.User{ID: "admin1", Role: domain.RoleAdmin}
+	editorUser := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	authorUser := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+	anotherAuthor := &domain.User{ID: "author2", Role: domain.RoleAuthor}
+	readerUser := &domain.User{ID: "reader1", Role: domain.RoleReader}
+
+	ownPost := &domain.Post{ID: "post1", AuthorID: "author1"}
+	othersPost := &domain.Post{ID: "post2", AuthorID: "author2"}
+
+	tests := []struct {
+		name string
+		user *domain.User
+		post *domain.Post
+		want bool
+	}{
+		{"admin can edit any post", adminUser, othersPost, true},
+		{"editor can edit any post", editorUser, othersPost, true},
+		{"author can edit own post", authorUser, ownPost, true},
+		{"author cannot edit others post", authorUser, othersPost, false},
+		{"reader cannot edit any post", readerUser, ownPost, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ps.CanEditPost(tt.user, tt.post)
+			if got != tt.want {
+				t.Errorf("PermissionService.CanEditPost() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPermissionService_CanDeletePost(t *testing.T) {
+	ps := NewPermissionService()
+
+	adminUser := &domain.User{ID: "admin1", Role: domain.RoleAdmin}
+	editorUser := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	authorUser := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+
+	ownPost := &domain.Post{ID: "post1", AuthorID: "author1"}
+	othersPost := &domain.Post{ID: "post2", AuthorID: "author2"}
+
+	tests := []struct {
+		name string
+		user *domain.User
+		post *domain.Post
+		want bool
+	}{
+		{"admin can delete any post", adminUser, othersPost, true},
+		{"editor can delete any post", editorUser, othersPost, true},
+		{"author can delete own post", authorUser, ownPost, true},
+		{"author cannot delete others post", authorUser, othersPost, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ps.CanDeletePost(tt.user, tt.post)
+			if got != tt.want {
+				t.Errorf("PermissionService.CanDeletePost() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPermissionService_CanPublishPost(t *testing.T) {
+	ps := NewPermissionService()
+
+	adminUser := &domain.User{ID: "admin1", Role: domain.RoleAdmin}
+	editorUser := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	authorUser := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+
+	post := &domain.Post{ID: "post1", AuthorID: "author1"}
+
+	tests := []struct {
+		name string
+		user *domain.User
+		want bool
+	}{
+		{"admin can publish", adminUser, true},
+		{"editor can publish", editorUser, true},
+		{"author cannot publish", authorUser, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ps.CanPublishPost(tt.user, post)
+			if got != tt.want {
+				t.Errorf("PermissionService.CanPublishPost() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPermissionService_CanManageUsers(t *testing.T) {
+	ps := NewPermissionService()
+
+	adminUser := &domain.User{ID: "admin1", Role: domain.RoleAdmin}
+	editorUser := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	authorUser := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+
+	tests := []struct {
+		name string
+		user *domain.User
+		want bool
+	}{
+		{"admin can manage users", adminUser, true},
+		{"editor cannot manage users", editorUser, false},
+		{"author cannot manage users", authorUser, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ps.CanManageUsers(tt.user)
+			if got != tt.want {
+				t.Errorf("PermissionService.CanManageUsers() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPermissionService_CanManageCategories(t *testing.T) {
+	ps := NewPermissionService()
+
+	adminUser := &domain.User{ID: "admin1", Role: domain.RoleAdmin}
+	editorUser := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	authorUser := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+
+	tests := []struct {
+		name string
+		user *domain.User
+		want bool
+	}{
+		{"admin can manage categories", adminUser, true},
+		{"editor can manage categories", editorUser, true},
+		{"author cannot manage categories", authorUser, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ps.CanManageCategories(tt.user)
+			if got != tt.want {
+				t.Errorf("PermissionService.CanManageCategories() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPermissionService_HasRole(t *testing.T) {
+	ps := NewPermissionService()
+
+	adminUser := &domain.User{ID: "admin1", Role: domain.RoleAdmin}
+	editorUser := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+
+	tests := []struct {
+		name string
+		user *domain.User
+		role domain.Role
+		want bool
+	}{
+		{"admin has admin role", adminUser, domain.RoleAdmin, true},
+		{"admin doesn't have editor role", adminUser, domain.RoleEditor, false},
+		{"editor has editor role", editorUser, domain.RoleEditor, true},
+		{"editor doesn't have admin role", editorUser, domain.RoleAdmin, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ps.HasRole(tt.user, tt.role)
+			if got != tt.want {
+				t.Errorf("PermissionService.HasRole() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

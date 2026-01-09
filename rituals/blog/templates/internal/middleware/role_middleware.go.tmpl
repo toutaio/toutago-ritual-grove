@@ -1,0 +1,61 @@
+package middleware
+
+import (
+	"net/http"
+
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/services"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// RoleMiddleware creates middleware that checks if user has required role
+func RoleMiddleware(permService services.PermissionService, roles ...domain.Role) cosan.HandlerFunc {
+	return func(c cosan.Context) error {
+		// Get user from context (set by AuthMiddleware)
+		userVal := c.Get("user")
+		if userVal == nil {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "Access denied",
+			})
+		}
+
+		user, ok := userVal.(*domain.User)
+		if !ok {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "Access denied",
+			})
+		}
+
+		// Check if user has any of the required roles
+		hasRole := false
+		for _, role := range roles {
+			if permService.HasRole(user, role) {
+				hasRole = true
+				break
+			}
+		}
+
+		if !hasRole {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "Insufficient permissions",
+			})
+		}
+
+		return c.Next()
+	}
+}
+
+// RequireAdmin requires user to be admin
+func RequireAdmin(permService services.PermissionService) cosan.HandlerFunc {
+	return RoleMiddleware(permService, domain.RoleAdmin)
+}
+
+// RequireEditor requires user to be editor or admin
+func RequireEditor(permService services.PermissionService) cosan.HandlerFunc {
+	return RoleMiddleware(permService, domain.RoleAdmin, domain.RoleEditor)
+}
+
+// RequireAuthor requires user to be author, editor, or admin
+func RequireAuthor(permService services.PermissionService) cosan.HandlerFunc {
+	return RoleMiddleware(permService, domain.RoleAdmin, domain.RoleEditor, domain.RoleAuthor)
+}

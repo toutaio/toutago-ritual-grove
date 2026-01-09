@@ -1,0 +1,132 @@
+package services
+
+import "{{.ModulePath}}/internal/domain"
+
+// permissionService implements PermissionService
+type permissionService struct{}
+
+// NewPermissionService creates a new permission service
+func NewPermissionService() PermissionService {
+	return &permissionService{}
+}
+
+// Can checks if user can perform action on resource
+func (s *permissionService) Can(user *domain.User, action string, resource interface{}) bool {
+	if user == nil {
+		return false
+	}
+
+	// Admin can do anything
+	if user.IsAdmin() {
+		return true
+	}
+
+	// Route to specific checks based on resource type
+	switch r := resource.(type) {
+	case *domain.Post:
+		return s.canActOnPost(user, action, r)
+	case *domain.Category:
+		return s.canActOnCategory(user, action)
+	case *domain.User:
+		return s.canActOnUser(user, action)
+	default:
+		return false
+	}
+}
+
+// HasRole checks if user has specific role
+func (s *permissionService) HasRole(user *domain.User, role domain.Role) bool {
+	if user == nil {
+		return false
+	}
+	return user.HasRole(role)
+}
+
+// CanEditPost checks if user can edit specific post
+func (s *permissionService) CanEditPost(user *domain.User, post *domain.Post) bool {
+	if user == nil || post == nil {
+		return false
+	}
+	return post.CanBeEditedBy(user)
+}
+
+// CanDeletePost checks if user can delete specific post
+func (s *permissionService) CanDeletePost(user *domain.User, post *domain.Post) bool {
+	if user == nil || post == nil {
+		return false
+	}
+	return post.CanBeDeletedBy(user)
+}
+
+// CanPublishPost checks if user can publish a post
+func (s *permissionService) CanPublishPost(user *domain.User, post *domain.Post) bool {
+	if user == nil || post == nil {
+		return false
+	}
+	// Only admins and editors can publish
+	return user.IsAdmin() || user.IsEditor()
+}
+
+// CanManageUsers checks if user can manage other users
+func (s *permissionService) CanManageUsers(user *domain.User) bool {
+	if user == nil {
+		return false
+	}
+	// Only admins can manage users
+	return user.IsAdmin()
+}
+
+// CanManageCategories checks if user can manage categories
+func (s *permissionService) CanManageCategories(user *domain.User) bool {
+	if user == nil {
+		return false
+	}
+	// Admins and editors can manage categories
+	return user.IsAdmin() || user.IsEditor()
+}
+
+// canActOnPost checks post-specific actions
+func (s *permissionService) canActOnPost(user *domain.User, action string, post *domain.Post) bool {
+	switch action {
+	case "post.view":
+		// Everyone can view published posts
+		return true
+	case "post.create":
+		// Authors and above can create
+		return user.IsAdmin() || user.IsEditor() || user.IsAuthor()
+	case "post.edit":
+		return s.CanEditPost(user, post)
+	case "post.delete":
+		return s.CanDeletePost(user, post)
+	case "post.publish":
+		return s.CanPublishPost(user, post)
+	default:
+		return false
+	}
+}
+
+// canActOnCategory checks category-specific actions
+func (s *permissionService) canActOnCategory(user *domain.User, action string) bool {
+	switch action {
+	case "category.view":
+		// Everyone can view categories
+		return true
+	case "category.create", "category.edit", "category.delete":
+		return s.CanManageCategories(user)
+	default:
+		return false
+	}
+}
+
+// canActOnUser checks user-specific actions
+func (s *permissionService) canActOnUser(user *domain.User, action string) bool {
+	switch action {
+	case "user.view":
+		// Admins can view users
+		return user.IsAdmin()
+	case "user.create", "user.edit", "user.delete":
+		return s.CanManageUsers(user)
+	default:
+		return false
+	}
+}

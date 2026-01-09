@@ -1,0 +1,27 @@
+package services
+
+import "{{.ModulePath}}/internal/domain"
+
+// PermissionService handles authorization checks
+type PermissionService interface {
+	// Can checks if user can perform action on resource
+	Can(user *domain.User, action string, resource interface{}) bool
+
+	// HasRole checks if user has specific role
+	HasRole(user *domain.User, role domain.Role) bool
+
+	// CanEditPost checks if user can edit specific post
+	CanEditPost(user *domain.User, post *domain.Post) bool
+
+	// CanDeletePost checks if user can delete specific post
+	CanDeletePost(user *domain.User, post *domain.Post) bool
+
+	// CanPublishPost checks if user can publish a post
+	CanPublishPost(user *domain.User, post *domain.Post) bool
+
+	// CanManageUsers checks if user can manage other users
+	CanManageUsers(user *domain.User) bool
+
+	// CanManageCategories checks if user can manage categories
+	CanManageCategories(user *domain.User) bool
+}

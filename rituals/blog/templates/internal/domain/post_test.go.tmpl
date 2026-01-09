@@ -1,0 +1,303 @@
+package domain
+
+import (
+	"testing"
+	"time"
+)
+
+func TestPost_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		post    Post
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid post",
+			post: Post{
+				ID:       "123",
+				Title:    "Test Post",
+				Slug:     "test-post",
+				Content:  "This is test content",
+				AuthorID: "user123",
+				Status:   PostStatusDraft,
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing title",
+			post: Post{
+				Slug:     "test-post",
+				Content:  "This is test content",
+				AuthorID: "user123",
+				Status:   PostStatusDraft,
+			},
+			wantErr: true,
+			errMsg:  "title is required",
+		},
+		{
+			name: "title too long",
+			post: Post{
+				Title:    string(make([]byte, 256)),
+				Slug:     "test-post",
+				Content:  "This is test content",
+				AuthorID: "user123",
+				Status:   PostStatusDraft,
+			},
+			wantErr: true,
+			errMsg:  "title too long",
+		},
+		{
+			name: "missing slug",
+			post: Post{
+				Title:    "Test Post",
+				Content:  "This is test content",
+				AuthorID: "user123",
+				Status:   PostStatusDraft,
+			},
+			wantErr: true,
+			errMsg:  "slug is required",
+		},
+		{
+			name: "missing content",
+			post: Post{
+				Title:    "Test Post",
+				Slug:     "test-post",
+				AuthorID: "user123",
+				Status:   PostStatusDraft,
+			},
+			wantErr: true,
+			errMsg:  "content is required",
+		},
+		{
+			name: "missing author_id",
+			post: Post{
+				Title:   "Test Post",
+				Slug:    "test-post",
+				Content: "This is test content",
+				Status:  PostStatusDraft,
+			},
+			wantErr: true,
+			errMsg:  "author_id is required",
+		},
+		{
+			name: "invalid status",
+			post: Post{
+				Title:    "Test Post",
+				Slug:     "test-post",
+				Content:  "This is test content",
+				AuthorID: "user123",
+				Status:   "invalid",
+			},
+			wantErr: true,
+			errMsg:  "invalid status",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.post.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Post.Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && tt.errMsg != "" && err.Error() != tt.errMsg {
+				t.Errorf("Post.Validate() error = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestPost_IsPublished(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name string
+		post Post
+		want bool
+	}{
+		{
+			name: "published with published_at",
+			post: Post{
+				Status:      PostStatusPublished,
+				PublishedAt: &now,
+			},
+			want: true,
+		},
+		{
+			name: "published without published_at",
+			post: Post{
+				Status: PostStatusPublished,
+			},
+			want: false,
+		},
+		{
+			name: "draft",
+			post: Post{
+				Status: PostStatusDraft,
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.post.IsPublished(); got != tt.want {
+				t.Errorf("Post.IsPublished() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPost_CanBeEditedBy(t *testing.T) {
+	post := Post{
+		ID:       "post123",
+		AuthorID: "author123",
+	}
+
+	adminUser := &User{
+		ID:   "admin123",
+		Role: RoleAdmin,
+	}
+
+	editorUser := &User{
+		ID:   "editor123",
+		Role: RoleEditor,
+	}
+
+	authorUser := &User{
+		ID:   "author123",
+		Role: RoleAuthor,
+	}
+
+	differentAuthorUser := &User{
+		ID:   "author456",
+		Role: RoleAuthor,
+	}
+
+	readerUser := &User{
+		ID:   "reader123",
+		Role: RoleReader,
+	}
+
+	tests := []struct {
+		name string
+		user *User
+		want bool
+	}{
+		{"admin can edit", adminUser, true},
+		{"editor can edit", editorUser, true},
+		{"author can edit own post", authorUser, true},
+		{"author cannot edit other's post", differentAuthorUser, false},
+		{"reader cannot edit", readerUser, false},
+		{"nil user cannot edit", nil, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := post.CanBeEditedBy(tt.user); got != tt.want {
+				t.Errorf("Post.CanBeEditedBy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPost_CanBeDeletedBy(t *testing.T) {
+	post := Post{
+		ID:       "post123",
+		AuthorID: "author123",
+	}
+
+	adminUser := &User{
+		ID:   "admin123",
+		Role: RoleAdmin,
+	}
+
+	editorUser := &User{
+		ID:   "editor123",
+		Role: RoleEditor,
+	}
+
+	authorUser := &User{
+		ID:   "author123",
+		Role: RoleAuthor,
+	}
+
+	tests := []struct {
+		name string
+		user *User
+		want bool
+	}{
+		{"admin can delete", adminUser, true},
+		{"editor can delete", editorUser, true},
+		{"author can delete own post", authorUser, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := post.CanBeDeletedBy(tt.user); got != tt.want {
+				t.Errorf("Post.CanBeDeletedBy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCategory_Validate(t *testing.T) {
+	tests := []struct {
+		name     string
+		category Category
+		wantErr  bool
+		errMsg   string
+	}{
+		{
+			name: "valid category",
+			category: Category{
+				ID:        "123",
+				Name:      "Technology",
+				Slug:      "technology",
+				CreatedBy: "user123",
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing name",
+			category: Category{
+				Slug:      "technology",
+				CreatedBy: "user123",
+			},
+			wantErr: true,
+			errMsg:  "name is required",
+		},
+		{
+			name: "name too long",
+			category: Category{
+				Name:      string(make([]byte, 101)),
+				Slug:      "technology",
+				CreatedBy: "user123",
+			},
+			wantErr: true,
+			errMsg:  "name too long",
+		},
+		{
+			name: "missing slug",
+			category: Category{
+				Name:      "Technology",
+				CreatedBy: "user123",
+			},
+			wantErr: true,
+			errMsg:  "slug is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.category.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Category.Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && tt.errMsg != "" && err.Error() != tt.errMsg {
+				t.Errorf("Category.Validate() error = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}

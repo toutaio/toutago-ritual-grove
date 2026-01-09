@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Authorization & RBAC (Phase 2.1)** (TDD)
+  - **Domain Models**:
+    - `Post` entity with validation, status management, and ownership checks
+    - `Category` entity with validation
+    - Post status enums: draft, published, archived
+    - Domain methods: `CanBeEditedBy()`, `CanBeDeletedBy()`, `IsPublished()`
+  - **Permission Service**:
+    - `PermissionService` interface for authorization checks
+    - Complete implementation with role-based logic
+    - Fine-grained permission checks: `Can()`, `CanEditPost()`, `CanDeletePost()`, `CanPublishPost()`
+    - Category and user management permission checks
+    - Action-based permission system (post.view, post.edit, etc.)
+  - **Role Middleware**:
+    - `RoleMiddleware()` for dynamic role checking
+    - `RequireAdmin()`, `RequireEditor()`, `RequireAuthor()` helpers
+    - Proper error responses for unauthorized access
+  - **Comprehensive Testing**:
+    - Post domain tests (validation, status checks, ownership)
+    - Category domain tests
+    - Permission service tests (120+ test cases)
+    - Role middleware tests
+    - All tests follow TDD approach (tests written first)
+
 - **Blog Ritual: Auth UI Templates (Phase 1.4-1.5)**
   - **SSR Templates**:
     - Login page with form validation and error display
