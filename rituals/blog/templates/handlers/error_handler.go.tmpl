@@ -1,0 +1,126 @@
+package handlers
+
+import (
+	"net/http"
+	"strings"
+
+	router "github.com/toutaio/toutago-cosan-router"
+)
+
+// ErrorHandler handles error pages and responses
+type ErrorHandler struct{}
+
+// NewErrorHandler creates a new error handler
+func NewErrorHandler() *ErrorHandler {
+	return &ErrorHandler{}
+}
+
+// NotFound handles 404 errors
+func (h *ErrorHandler) NotFound(ctx *router.Context) {
+	if h.isJSONRequest(ctx) {
+		ctx.Status(http.StatusNotFound).JSON(map[string]interface{}{
+			"error":   "Not Found",
+			"message": h.getMessage(ctx, "The requested resource was not found"),
+			"code":    404,
+		})
+		return
+	}
+
+	data := map[string]interface{}{
+		"app_name": "Blog System",
+		"message":  h.getMessage(ctx, ""),
+	}
+
+	ctx.Status(http.StatusNotFound).Render("errors/404.html", data)
+}
+
+// Forbidden handles 403 errors
+func (h *ErrorHandler) Forbidden(ctx *router.Context) {
+	if h.isJSONRequest(ctx) {
+		ctx.Status(http.StatusForbidden).JSON(map[string]interface{}{
+			"error":   "Forbidden",
+			"message": h.getMessage(ctx, "You don't have permission to access this resource"),
+			"code":    403,
+		})
+		return
+	}
+
+	data := map[string]interface{}{
+		"app_name":      "Blog System",
+		"message":       h.getMessage(ctx, ""),
+		"current_user":  ctx.Get("user"),
+		"current_path":  ctx.Request.URL.Path,
+		"required_role": ctx.Get("required_role"),
+	}
+
+	ctx.Status(http.StatusForbidden).Render("errors/403.html", data)
+}
+
+// InternalError handles 500 errors
+func (h *ErrorHandler) InternalError(ctx *router.Context) {
+	if h.isJSONRequest(ctx) {
+		response := map[string]interface{}{
+			"error":   "Internal Server Error",
+			"message": "An unexpected error occurred",
+			"code":    500,
+		}
+
+		if errorID := ctx.Get("error_id"); errorID != nil {
+			response["error_id"] = errorID
+		}
+
+		ctx.Status(http.StatusInternalServerError).JSON(response)
+		return
+	}
+
+	data := map[string]interface{}{
+		"app_name":      "Blog System",
+		"error_details": ctx.Get("error_details"),
+		"error_id":      ctx.Get("error_id"),
+	}
+
+	ctx.Status(http.StatusInternalServerError).Render("errors/500.html", data)
+}
+
+// BadRequest handles 400 errors
+func (h *ErrorHandler) BadRequest(ctx *router.Context) {
+	if h.isJSONRequest(ctx) {
+		ctx.Status(http.StatusBadRequest).JSON(map[string]interface{}{
+			"error":   "Bad Request",
+			"message": h.getMessage(ctx, "Invalid request"),
+			"code":    400,
+		})
+		return
+	}
+
+	// For non-JSON requests, redirect back or show error page
+	ctx.Status(http.StatusBadRequest).JSON(map[string]interface{}{
+		"error":   "Bad Request",
+		"message": h.getMessage(ctx, "Invalid request"),
+	})
+}
+
+// isJSONRequest checks if the request expects JSON response
+func (h *ErrorHandler) isJSONRequest(ctx *router.Context) bool {
+	accept := ctx.Request.Header.Get("Accept")
+	contentType := ctx.Request.Header.Get("Content-Type")
+	
+	return strings.Contains(accept, "application/json") ||
+		strings.Contains(contentType, "application/json") ||
+		strings.HasPrefix(ctx.Request.URL.Path, "/api/")
+}
+
+// getMessage retrieves custom message or returns default
+func (h *ErrorHandler) getMessage(ctx *router.Context, defaultMsg string) string {
+	if msg := ctx.Get("message"); msg != nil {
+		if str, ok := msg.(string); ok {
+			return str
+		}
+	}
+	if err := ctx.Get("error"); err != nil {
+		if str, ok := err.(string); ok {
+			return str
+		}
+	}
+	return defaultMsg
+}

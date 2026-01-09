@@ -226,6 +226,21 @@ files:
       dest: views/errors/403.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
+    - src: views/errors/404.html.tmpl
+      dest: views/errors/404.html
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
+
+    - src: views/errors/500.html.tmpl
+      dest: views/errors/500.html
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
+
+    # Error handler
+    - src: handlers/error_handler.go.tmpl
+      dest: internal/handlers/error_handler.go
+
+    - src: handlers/error_handler_test.go.tmpl
+      dest: internal/handlers/error_handler_test.go
+
     # Admin views
     - src: views/admin/users/list.html.tmpl
       dest: views/admin/users/list.html

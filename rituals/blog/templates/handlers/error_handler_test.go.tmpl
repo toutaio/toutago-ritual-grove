@@ -1,0 +1,178 @@
+package handlers
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	router "github.com/toutaio/toutago-cosan-router"
+)
+
+func TestErrorHandler_NotFound(t *testing.T) {
+	handler := NewErrorHandler()
+
+	req := httptest.NewRequest("GET", "/nonexistent", nil)
+	w := httptest.NewRecorder()
+
+	ctx := &router.Context{
+		Request:  req,
+		Response: w,
+	}
+
+	handler.NotFound(ctx)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status %d, got %d", http.StatusNotFound, w.Code)
+	}
+
+	body := w.Body.String()
+	if len(body) == 0 {
+		t.Error("Expected response body, got empty")
+	}
+
+	// Should contain 404 error page elements
+	if !contains(body, "404") {
+		t.Error("Expected '404' in response body")
+	}
+}
+
+func TestErrorHandler_Forbidden(t *testing.T) {
+	handler := NewErrorHandler()
+
+	req := httptest.NewRequest("GET", "/admin/restricted", nil)
+	w := httptest.NewRecorder()
+
+	ctx := &router.Context{
+		Request:  req,
+		Response: w,
+	}
+	ctx.Set("message", "Admin access required")
+
+	handler.Forbidden(ctx)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Expected status %d, got %d", http.StatusForbidden, w.Code)
+	}
+
+	body := w.Body.String()
+	if len(body) == 0 {
+		t.Error("Expected response body, got empty")
+	}
+
+	// Should contain 403 error page elements
+	if !contains(body, "403") {
+		t.Error("Expected '403' in response body")
+	}
+}
+
+func TestErrorHandler_InternalError(t *testing.T) {
+	handler := NewErrorHandler()
+
+	req := httptest.NewRequest("GET", "/some-endpoint", nil)
+	w := httptest.NewRecorder()
+
+	ctx := &router.Context{
+		Request:  req,
+		Response: w,
+	}
+	ctx.Set("error", "Database connection failed")
+
+	handler.InternalError(ctx)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	body := w.Body.String()
+	if len(body) == 0 {
+		t.Error("Expected response body, got empty")
+	}
+
+	// Should contain 500 error page elements
+	if !contains(body, "500") {
+		t.Error("Expected '500' in response body")
+	}
+}
+
+func TestErrorHandler_InternalError_WithDetails(t *testing.T) {
+	handler := NewErrorHandler()
+
+	req := httptest.NewRequest("GET", "/some-endpoint", nil)
+	w := httptest.NewRecorder()
+
+	ctx := &router.Context{
+		Request:  req,
+		Response: w,
+	}
+	ctx.Set("error_details", "SQL: syntax error at line 42")
+	ctx.Set("error_id", "ERR-12345")
+
+	handler.InternalError(ctx)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	body := w.Body.String()
+	
+	// Should contain error details
+	if !contains(body, "ERR-12345") {
+		t.Error("Expected error ID in response body")
+	}
+}
+
+func TestErrorHandler_BadRequest(t *testing.T) {
+	handler := NewErrorHandler()
+
+	req := httptest.NewRequest("POST", "/api/posts", nil)
+	w := httptest.NewRecorder()
+
+	ctx := &router.Context{
+		Request:  req,
+		Response: w,
+	}
+	ctx.Set("error", "Invalid input data")
+
+	handler.BadRequest(ctx)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status %d, got %d", http.StatusBadRequest, w.Code)
+	}
+}
+
+func TestErrorHandler_JSONResponse(t *testing.T) {
+	handler := NewErrorHandler()
+
+	req := httptest.NewRequest("GET", "/api/users/999", nil)
+	req.Header.Set("Accept", "application/json")
+	w := httptest.NewRecorder()
+
+	ctx := &router.Context{
+		Request:  req,
+		Response: w,
+	}
+	ctx.Set("message", "User not found")
+
+	handler.NotFound(ctx)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status %d, got %d", http.StatusNotFound, w.Code)
+	}
+
+	contentType := w.Header().Get("Content-Type")
+	if contentType != "application/json" {
+		t.Errorf("Expected JSON content type, got %s", contentType)
+	}
+
+	body := w.Body.String()
+	if !contains(body, "error") {
+		t.Error("Expected JSON error response")
+	}
+}
+
+// Helper function
+func contains(s, substr string) bool {
+	return len(s) > 0 && len(substr) > 0 && 
+		(s == substr || len(s) >= len(substr) && 
+		(s[0:len(substr)] == substr || contains(s[1:], substr)))
+}
