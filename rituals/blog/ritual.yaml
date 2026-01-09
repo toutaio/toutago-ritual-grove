@@ -183,8 +183,20 @@ files:
     - src: handlers/post_handler_test.go.tmpl
       dest: internal/handlers/post_handler_test.go
 
+    # Template helpers
+    - src: internal/helpers/template_helpers.go.tmpl
+      dest: internal/helpers/template_helpers.go
+
+    - src: internal/helpers/template_helpers_test.go.tmpl
+      dest: internal/helpers/template_helpers_test.go
+
     - src: internal/inertia_adapter.go.tmpl
       dest: internal/inertia_adapter.go
+
+    # Error pages
+    - src: views/errors/403.html.tmpl
+      dest: views/errors/403.html
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     # Admin views
     - src: views/admin/users/list.html.tmpl

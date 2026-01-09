@@ -1,0 +1,270 @@
+package helpers
+
+import (
+	"testing"
+
+	"[[.module_path]]/internal/domain"
+)
+
+func TestCan(t *testing.T) {
+	tests := []struct {
+		name     string
+		user     *domain.User
+		action   string
+		resource string
+		want     bool
+	}{
+		{
+			name:     "nil user cannot do anything",
+			user:     nil,
+			action:   "create",
+			resource: "posts",
+			want:     false,
+		},
+		{
+			name:     "admin can manage users",
+			user:     &domain.User{Role: domain.RoleAdmin},
+			action:   "manage",
+			resource: "users",
+			want:     true,
+		},
+		{
+			name:     "editor cannot manage users",
+			user:     &domain.User{Role: domain.RoleEditor},
+			action:   "manage",
+			resource: "users",
+			want:     false,
+		},
+		{
+			name:     "editor can manage categories",
+			user:     &domain.User{Role: domain.RoleEditor},
+			action:   "manage",
+			resource: "categories",
+			want:     true,
+		},
+		{
+			name:     "author can create posts",
+			user:     &domain.User{Role: domain.RoleAuthor},
+			action:   "create",
+			resource: "posts",
+			want:     true,
+		},
+		{
+			name:     "reader cannot create posts",
+			user:     &domain.User{Role: domain.RoleReader},
+			action:   "create",
+			resource: "posts",
+			want:     false,
+		},
+		{
+			name:     "author can publish posts",
+			user:     &domain.User{Role: domain.RoleAuthor},
+			action:   "publish",
+			resource: "posts",
+			want:     true,
+		},
+		{
+			name:     "reader cannot manage comments",
+			user:     &domain.User{Role: domain.RoleReader},
+			action:   "create",
+			resource: "comments",
+			want:     false,
+		},
+		{
+			name:     "author can manage comments",
+			user:     &domain.User{Role: domain.RoleAuthor},
+			action:   "create",
+			resource: "comments",
+			want:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Can(tt.user, tt.action, tt.resource); got != tt.want {
+				t.Errorf("Can() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCanEdit(t *testing.T) {
+	tests := []struct {
+		name     string
+		user     *domain.User
+		resource string
+		authorID int64
+		want     bool
+	}{
+		{
+			name:     "nil user cannot edit",
+			user:     nil,
+			resource: "posts",
+			authorID: 1,
+			want:     false,
+		},
+		{
+			name:     "admin can edit any post",
+			user:     &domain.User{ID: 1, Role: domain.RoleAdmin},
+			resource: "posts",
+			authorID: 2,
+			want:     true,
+		},
+		{
+			name:     "editor can edit any post",
+			user:     &domain.User{ID: 1, Role: domain.RoleEditor},
+			resource: "posts",
+			authorID: 2,
+			want:     true,
+		},
+		{
+			name:     "author can edit own post",
+			user:     &domain.User{ID: 1, Role: domain.RoleAuthor},
+			resource: "posts",
+			authorID: 1,
+			want:     true,
+		},
+		{
+			name:     "author cannot edit others' posts",
+			user:     &domain.User{ID: 1, Role: domain.RoleAuthor},
+			resource: "posts",
+			authorID: 2,
+			want:     false,
+		},
+		{
+			name:     "reader cannot edit any post",
+			user:     &domain.User{ID: 1, Role: domain.RoleReader},
+			resource: "posts",
+			authorID: 1,
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CanEdit(tt.user, tt.resource, tt.authorID); got != tt.want {
+				t.Errorf("CanEdit() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCanDelete(t *testing.T) {
+	tests := []struct {
+		name     string
+		user     *domain.User
+		resource string
+		authorID int64
+		want     bool
+	}{
+		{
+			name:     "admin can delete any post",
+			user:     &domain.User{ID: 1, Role: domain.RoleAdmin},
+			resource: "posts",
+			authorID: 2,
+			want:     true,
+		},
+		{
+			name:     "editor can delete any post",
+			user:     &domain.User{ID: 1, Role: domain.RoleEditor},
+			resource: "posts",
+			authorID: 2,
+			want:     true,
+		},
+		{
+			name:     "author can delete own post",
+			user:     &domain.User{ID: 1, Role: domain.RoleAuthor},
+			resource: "posts",
+			authorID: 1,
+			want:     true,
+		},
+		{
+			name:     "author cannot delete others' posts",
+			user:     &domain.User{ID: 1, Role: domain.RoleAuthor},
+			resource: "posts",
+			authorID: 2,
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CanDelete(tt.user, tt.resource, tt.authorID); got != tt.want {
+				t.Errorf("CanDelete() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRoleChecks(t *testing.T) {
+	admin := &domain.User{Role: domain.RoleAdmin}
+	editor := &domain.User{Role: domain.RoleEditor}
+	author := &domain.User{Role: domain.RoleAuthor}
+	reader := &domain.User{Role: domain.RoleReader}
+
+	// IsAdmin
+	if !IsAdmin(admin) {
+		t.Error("Expected admin to be admin")
+	}
+	if IsAdmin(editor) {
+		t.Error("Expected editor not to be admin")
+	}
+
+	// IsEditor
+	if !IsEditor(admin) {
+		t.Error("Expected admin to be editor")
+	}
+	if !IsEditor(editor) {
+		t.Error("Expected editor to be editor")
+	}
+	if IsEditor(author) {
+		t.Error("Expected author not to be editor")
+	}
+
+	// IsAuthor
+	if !IsAuthor(admin) {
+		t.Error("Expected admin to be author")
+	}
+	if !IsAuthor(editor) {
+		t.Error("Expected editor to be author")
+	}
+	if !IsAuthor(author) {
+		t.Error("Expected author to be author")
+	}
+	if IsAuthor(reader) {
+		t.Error("Expected reader not to be author")
+	}
+}
+
+func TestMathHelpers(t *testing.T) {
+	if Add(2, 3) != 5 {
+		t.Error("Add(2, 3) should be 5")
+	}
+	if Sub(5, 3) != 2 {
+		t.Error("Sub(5, 3) should be 2")
+	}
+}
+
+func TestComparisonHelpers(t *testing.T) {
+	if !Eq(5, 5) {
+		t.Error("Eq(5, 5) should be true")
+	}
+	if Eq(5, 3) {
+		t.Error("Eq(5, 3) should be false")
+	}
+	if !Ne(5, 3) {
+		t.Error("Ne(5, 3) should be true")
+	}
+	if Gt(3, 5) {
+		t.Error("Gt(3, 5) should be false")
+	}
+	if !Gt(5, 3) {
+		t.Error("Gt(5, 3) should be true")
+	}
+	if Lt(5, 3) {
+		t.Error("Lt(5, 3) should be false")
+	}
+	if !Lt(3, 5) {
+		t.Error("Lt(3, 5) should be true")
+	}
+}

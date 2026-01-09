@@ -9,6 +9,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Role-Based UI Hiding (Phase 2.4)** (TDD)
+  - **Template Helper Functions**:
+    - `Can()` - Permission checking for actions on resources
+    - `CanEdit()` - Ownership-based edit permission check
+    - `CanDelete()` - Ownership-based delete permission check
+    - `IsAdmin()`, `IsEditor()`, `IsAuthor()` - Role checking helpers
+    - Math and comparison helpers (add, sub, eq, ne, gt, lt)
+  - **Updated Templates**:
+    - Layout with role-based navigation and user dropdown
+    - Post list with conditional edit/delete buttons
+    - Post detail with conditional actions (edit, delete, publish)
+    - Admin navigation only visible to authorized users
+    - Role badges in user menu
+  - **Error Handling**:
+    - 403 Forbidden error page with helpful messaging
+    - Login redirect for unauthorized access
+    - Context-aware error details
+  - **Comprehensive Testing**:
+    - Template helper tests (30+ test cases)
+    - Permission check coverage
+    - Role-based UI element tests
+
+- **Blog Ritual: Admin User Management UI (Phase 2.2)** (TDD)
+  - **Admin User Handler**:
+    - `List()` - Paginated user listing with role filters
+    - `GetByID()` - User details endpoint
+    - `Update()` - Update user info and role
+    - `Delete()` - Delete user with self-protection
+    - `ChangeRole()` - Role assignment endpoint
+  - **Admin Templates**:
+    - User list page with search and filter
+    - User edit form with role assignment
+    - User delete confirmation
+    - Role-based UI elements
+  - **Post Handler Updates (Phase 2.3)**:
+    - Complete CRUD implementation with permission checks
+    - `List()` with filtering, pagination, and status-based access
+    - `Show()` supporting both ID and slug lookups
+    - `Create()` with author assignment and validation
+    - `Update()` with ownership verification
+    - `Delete()` with permission enforcement
+    - `Publish()` for draft → published transitions
+  - **Comprehensive Testing**:
+    - Full test suite for admin user handler (11 tests)
+    - Post handler test suite with permission scenarios (15+ tests)
+    - Mock service implementations for unit testing
+    - Edge case coverage (validation, permissions, errors)
+
 - **Blog Ritual: Post Management Service (Phase 2.3)** (TDD)
   - **PostService Interface & Implementation**:
     - Full CRUD operations with permission checks

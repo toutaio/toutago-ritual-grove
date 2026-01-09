@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 - Forbidden - [[.app_name]]</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            text-align: center;
+            padding: 2rem;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: bold;
+            color: #dc3545;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        .error-message {
+            font-size: 1.125rem;
+            color: #6c757d;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .details {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        .details h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .details ul {
+            margin: 0.5rem 0 0 1.5rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="icon">🚫</div>
+        <div class="error-code">403</div>
+        <h1 class="error-title">Access Forbidden</h1>
+        <p class="error-message">
+            {{if .message}}
+                {{.message}}
+            {{else}}
+                You don't have permission to access this resource.
+            {{end}}
+        </p>
+
+        {{if .required_role}}
+        <div class="details">
+            <h4>Access Requirements</h4>
+            <ul>
+                <li>Required role: <strong>{{.required_role}}</strong></li>
+                {{if .current_user}}
+                <li>Your role: <strong>{{.current_user.Role}}</strong></li>
+                {{else}}
+                <li>You are not logged in</li>
+                {{end}}
+            </ul>
+        </div>
+        {{end}}
+
+        <div class="error-actions">
+            {{if not .current_user}}
+            <a href="/auth/login?redirect={{.current_path}}" class="btn btn-primary">Login</a>
+            {{end}}
+            <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+            <a href="/" class="btn btn-secondary">Go Home</a>
+        </div>
+
+        {{if .current_user}}
+        <p style="margin-top: 2rem; color: #6c757d; font-size: 0.875rem;">
+            If you believe you should have access to this resource, please contact an administrator.
+        </p>
+        {{end}}
+    </div>
+</body>
+</html>

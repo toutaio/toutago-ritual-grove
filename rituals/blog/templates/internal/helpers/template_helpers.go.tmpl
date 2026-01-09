@@ -1,0 +1,137 @@
+package helpers
+
+import (
+	"html/template"
+
+	"[[.module_path]]/internal/domain"
+)
+
+// TemplateFuncs returns template helper functions for views
+func TemplateFuncs() template.FuncMap {
+	return template.FuncMap{
+		"can":       Can,
+		"canEdit":   CanEdit,
+		"canDelete": CanDelete,
+		"isAdmin":   IsAdmin,
+		"isEditor":  IsEditor,
+		"isAuthor":  IsAuthor,
+		"add":       Add,
+		"sub":       Sub,
+		"eq":        Eq,
+		"ne":        Ne,
+		"gt":        Gt,
+		"lt":        Lt,
+	}
+}
+
+// Can checks if user has permission for action on resource
+func Can(user *domain.User, action, resource string) bool {
+	if user == nil {
+		return false
+	}
+
+	// Admin can do everything
+	if user.Role == domain.RoleAdmin {
+		return true
+	}
+
+	// Check specific permissions based on role and action
+	switch resource {
+	case "users":
+		return user.Role == domain.RoleAdmin
+	case "categories":
+		return user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor
+	case "posts":
+		switch action {
+		case "create", "read":
+			return user.Role == domain.RoleAuthor || user.Role == domain.RoleEditor || user.Role == domain.RoleAdmin
+		case "update", "delete":
+			// For posts, also need to check ownership (done at handler level)
+			return user.Role == domain.RoleAuthor || user.Role == domain.RoleEditor || user.Role == domain.RoleAdmin
+		case "publish":
+			return user.Role == domain.RoleAuthor || user.Role == domain.RoleEditor || user.Role == domain.RoleAdmin
+		}
+	case "comments":
+		return user.Role != domain.RoleReader
+	}
+
+	return false
+}
+
+// CanEdit checks if user can edit the resource
+func CanEdit(user *domain.User, resource string, authorID int64) bool {
+	if user == nil {
+		return false
+	}
+
+	if user.Role == domain.RoleAdmin || user.Role == domain.RoleEditor {
+		return true
+	}
+
+	if user.Role == domain.RoleAuthor && user.ID == authorID {
+		return true
+	}
+
+	return false
+}
+
+// CanDelete checks if user can delete the resource
+func CanDelete(user *domain.User, resource string, authorID int64) bool {
+	if user == nil {
+		return false
+	}
+
+	if user.Role == domain.RoleAdmin {
+		return true
+	}
+
+	if user.Role == domain.RoleEditor {
+		return true
+	}
+
+	if user.Role == domain.RoleAuthor && user.ID == authorID {
+		return true
+	}
+
+	return false
+}
+
+// IsAdmin checks if user is an admin
+func IsAdmin(user *domain.User) bool {
+	return user != nil && user.Role == domain.RoleAdmin
+}
+
+// IsEditor checks if user is an editor or admin
+func IsEditor(user *domain.User) bool {
+	return user != nil && (user.Role == domain.RoleEditor || user.Role == domain.RoleAdmin)
+}
+
+// IsAuthor checks if user is an author, editor, or admin
+func IsAuthor(user *domain.User) bool {
+	return user != nil && (user.Role == domain.RoleAuthor || user.Role == domain.RoleEditor || user.Role == domain.RoleAdmin)
+}
+
+// Math and comparison helpers
+func Add(a, b int) int {
+	return a + b
+}
+
+func Sub(a, b int) int {
+	return a - b
+}
+
+func Eq(a, b interface{}) bool {
+	return a == b
+}
+
+func Ne(a, b interface{}) bool {
+	return a != b
+}
+
+func Gt(a, b int) bool {
+	return a > b
+}
+
+func Lt(a, b int) bool {
+	return a < b
+}
