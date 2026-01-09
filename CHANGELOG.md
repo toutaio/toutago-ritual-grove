@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: User Management Service (Phase 2.2)** (TDD)
+  - **UserService Interface**:
+    - CRUD operations for user management
+    - Role-based authorization for all operations
+    - Methods: `GetByID()`, `GetByEmail()`, `List()`, `Update()`, `Delete()`, `ChangeRole()`, `ToggleActive()`
+  - **UserService Implementation**:
+    - Permission checks using PermissionService
+    - Prevent self-deletion and self-role-change
+    - Email and username uniqueness validation
+    - Support for user filtering and pagination
+  - **User DTOs**:
+    - `UpdateUserDTO` with validation
+    - `UserFilters` for querying users
+  - **Comprehensive Testing**:
+    - Mock repository for isolated testing
+    - Test cases for all CRUD operations
+    - Permission enforcement tests
+    - Edge case coverage (self-deletion, role changes)
+
 - **Blog Ritual: Authorization & RBAC (Phase 2.1)** (TDD)
   - **Domain Models**:
     - `Post` entity with validation, status management, and ownership checks

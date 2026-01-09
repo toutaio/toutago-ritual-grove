@@ -1,0 +1,75 @@
+package repositories
+
+import (
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/dto"
+)
+
+// PostRepository handles post data access
+type PostRepository interface {
+	// Create creates a new post
+	Create(post *domain.Post) error
+
+	// Update updates an existing post
+	Update(post *domain.Post) error
+
+	// Delete deletes a post
+	Delete(id string) error
+
+	// FindByID finds a post by ID
+	FindByID(id string) (*domain.Post, error)
+
+	// FindBySlug finds a post by slug
+	FindBySlug(slug string) (*domain.Post, error)
+
+	// List retrieves posts based on filters
+	List(filters dto.PostFilters) ([]*domain.Post, error)
+
+	// ListByAuthor retrieves posts by a specific author
+	ListByAuthor(authorID string, filters dto.PostFilters) ([]*domain.Post, error)
+
+	// ListByCategory retrieves posts in a specific category
+	ListByCategory(categoryID string, filters dto.PostFilters) ([]*domain.Post, error)
+
+	// ListPublished retrieves only published posts
+	ListPublished(filters dto.PostFilters) ([]*domain.Post, error)
+
+	// ExistsBySlug checks if a post with the given slug exists
+	ExistsBySlug(slug string) (bool, error)
+
+	// Count returns total number of posts
+	Count() (int, error)
+
+	// CountByAuthor returns number of posts by author
+	CountByAuthor(authorID string) (int, error)
+
+	// CountByStatus returns number of posts by status
+	CountByStatus(status domain.PostStatus) (int, error)
+}
+
+// CategoryRepository handles category data access
+type CategoryRepository interface {
+	// Create creates a new category
+	Create(category *domain.Category) error
+
+	// Update updates an existing category
+	Update(category *domain.Category) error
+
+	// Delete deletes a category
+	Delete(id string) error
+
+	// FindByID finds a category by ID
+	FindByID(id string) (*domain.Category, error)
+
+	// FindBySlug finds a category by slug
+	FindBySlug(slug string) (*domain.Category, error)
+
+	// List retrieves all categories
+	List() ([]*domain.Category, error)
+
+	// ExistsBySlug checks if a category with the given slug exists
+	ExistsBySlug(slug string) (bool, error)
+
+	// Count returns total number of categories
+	Count() (int, error)
+}

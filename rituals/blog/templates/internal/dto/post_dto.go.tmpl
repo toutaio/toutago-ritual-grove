@@ -1,0 +1,97 @@
+package dto
+
+import (
+	"errors"
+	"{{.ModulePath}}/internal/domain"
+)
+
+// CreatePostDTO represents data for creating a post
+type CreatePostDTO struct {
+	Title         string  `json:"title" validate:"required,min=1,max=255"`
+	Content       string  `json:"content" validate:"required"`
+	Excerpt       string  `json:"excerpt" validate:"max=500"`
+	FeaturedImage string  `json:"featured_image,omitempty"`
+	CategoryID    *string `json:"category_id,omitempty"`
+	Status        string  `json:"status" validate:"required,oneof=draft published"`
+}
+
+// Validate validates the create post DTO
+func (dto *CreatePostDTO) Validate() error {
+	if dto.Title == "" {
+		return errors.New("title is required")
+	}
+	if len(dto.Title) > 255 {
+		return errors.New("title too long (max 255 characters)")
+	}
+	if dto.Content == "" {
+		return errors.New("content is required")
+	}
+	if dto.Status != "draft" && dto.Status != "published" {
+		return errors.New("status must be either 'draft' or 'published'")
+	}
+	return nil
+}
+
+// UpdatePostDTO represents data for updating a post
+type UpdatePostDTO struct {
+	Title         string  `json:"title" validate:"omitempty,min=1,max=255"`
+	Content       string  `json:"content" validate:"omitempty"`
+	Excerpt       string  `json:"excerpt" validate:"omitempty,max=500"`
+	FeaturedImage string  `json:"featured_image,omitempty"`
+	CategoryID    *string `json:"category_id,omitempty"`
+	Status        string  `json:"status" validate:"omitempty,oneof=draft published archived"`
+}
+
+// Validate validates the update post DTO
+func (dto *UpdatePostDTO) Validate() error {
+	if dto.Title != "" && len(dto.Title) > 255 {
+		return errors.New("title too long (max 255 characters)")
+	}
+	if dto.Status != "" && dto.Status != "draft" && dto.Status != "published" && dto.Status != "archived" {
+		return errors.New("invalid status")
+	}
+	return nil
+}
+
+// PostFilters represents filters for querying posts
+type PostFilters struct {
+	AuthorID   *string             `json:"author_id,omitempty"`
+	CategoryID *string             `json:"category_id,omitempty"`
+	Status     *domain.PostStatus  `json:"status,omitempty"`
+	Search     string              `json:"search,omitempty"` // Search by title or content
+	Limit      int                 `json:"limit,omitempty"`
+	Offset     int                 `json:"offset,omitempty"`
+	OrderBy    string              `json:"order_by,omitempty"` // created_at, updated_at, title
+	OrderDir   string              `json:"order_dir,omitempty"` // asc, desc
+}
+
+// CreateCategoryDTO represents data for creating a category
+type CreateCategoryDTO struct {
+	Name        string `json:"name" validate:"required,min=1,max=100"`
+	Description string `json:"description" validate:"max=500"`
+}
+
+// Validate validates the create category DTO
+func (dto *CreateCategoryDTO) Validate() error {
+	if dto.Name == "" {
+		return errors.New("name is required")
+	}
+	if len(dto.Name) > 100 {
+		return errors.New("name too long (max 100 characters)")
+	}
+	return nil
+}
+
+// UpdateCategoryDTO represents data for updating a category
+type UpdateCategoryDTO struct {
+	Name        string `json:"name" validate:"omitempty,min=1,max=100"`
+	Description string `json:"description" validate:"omitempty,max=500"`
+}
+
+// Validate validates the update category DTO
+func (dto *UpdateCategoryDTO) Validate() error {
+	if dto.Name != "" && len(dto.Name) > 100 {
+		return errors.New("name too long (max 100 characters)")
+	}
+	return nil
+}

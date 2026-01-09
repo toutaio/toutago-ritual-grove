@@ -1,0 +1,45 @@
+package services
+
+import (
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/dto"
+)
+
+// PostService handles post management operations
+type PostService interface {
+	// Create creates a new post
+	Create(author *domain.User, dto dto.CreatePostDTO) (*domain.Post, error)
+
+	// Update updates an existing post
+	Update(id string, dto dto.UpdatePostDTO, user *domain.User) error
+
+	// Delete deletes a post
+	Delete(id string, user *domain.User) error
+
+	// Publish publishes a draft post
+	Publish(id string, user *domain.User) error
+
+	// Archive archives a post
+	Archive(id string, user *domain.User) error
+
+	// GetByID retrieves a post by ID
+	GetByID(id string) (*domain.Post, error)
+
+	// GetBySlug retrieves a post by slug
+	GetBySlug(slug string) (*domain.Post, error)
+
+	// List retrieves posts based on filters
+	List(filters dto.PostFilters) ([]*domain.Post, error)
+
+	// ListByAuthor retrieves posts by a specific author
+	ListByAuthor(authorID string, user *domain.User, filters dto.PostFilters) ([]*domain.Post, error)
+
+	// ListPublished retrieves only published posts
+	ListPublished(filters dto.PostFilters) ([]*domain.Post, error)
+
+	// Count returns total number of posts
+	Count() (int, error)
+
+	// CountByAuthor returns number of posts by author
+	CountByAuthor(authorID string) (int, error)
+}

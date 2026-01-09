@@ -1,0 +1,259 @@
+package services
+
+import (
+	"errors"
+	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/dto"
+	"{{.ModulePath}}/internal/repositories"
+)
+
+// Slugger generates URL-friendly slugs
+type Slugger interface {
+	Slugify(text string) string
+}
+
+// simpleSlugger is a simple slug generator
+type simpleSlugger struct{}
+
+func NewSlugger() Slugger {
+	return &simpleSlugger{}
+}
+
+func (s *simpleSlugger) Slugify(text string) string {
+	// Convert to lowercase
+	slug := strings.ToLower(text)
+	
+	// Remove special characters, keep alphanumeric and spaces
+	reg := regexp.MustCompile(`[^a-z0-9\s-]`)
+	slug = reg.ReplaceAllString(slug, "")
+	
+	// Replace spaces with hyphens
+	slug = strings.ReplaceAll(slug, " ", "-")
+	
+	// Remove multiple hyphens
+	reg = regexp.MustCompile(`-+`)
+	slug = reg.ReplaceAllString(slug, "-")
+	
+	// Trim hyphens from start and end
+	slug = strings.Trim(slug, "-")
+	
+	return slug
+}
+
+// postService implements PostService
+type postService struct {
+	postRepo    repositories.PostRepository
+	permService PermissionService
+	slugger     Slugger
+}
+
+// NewPostService creates a new post service
+func NewPostService(postRepo repositories.PostRepository, permService PermissionService) PostService {
+	return &postService{
+		postRepo:    postRepo,
+		permService: permService,
+		slugger:     NewSlugger(),
+	}
+}
+
+// Create creates a new post
+func (s *postService) Create(author *domain.User, createDTO dto.CreatePostDTO) (*domain.Post, error) {
+	// Validate DTO
+	if err := createDTO.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Generate slug
+	slug := s.slugger.Slugify(createDTO.Title)
+	
+	// Ensure unique slug
+	exists, err := s.postRepo.ExistsBySlug(slug)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		// Append timestamp to make it unique
+		slug = fmt.Sprintf("%s-%d", slug, time.Now().Unix())
+	}
+
+	// Create post
+	now := time.Now()
+	post := &domain.Post{
+		ID:            fmt.Sprintf("post-%d", time.Now().UnixNano()),
+		Title:         createDTO.Title,
+		Slug:          slug,
+		Content:       createDTO.Content,
+		Excerpt:       createDTO.Excerpt,
+		FeaturedImage: createDTO.FeaturedImage,
+		AuthorID:      author.ID,
+		CategoryID:    createDTO.CategoryID,
+		Status:        domain.PostStatus(createDTO.Status),
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	// If creating as published, set published_at
+	if createDTO.Status == "published" {
+		post.PublishedAt = &now
+	}
+
+	if err := s.postRepo.Create(post); err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+// Update updates an existing post
+func (s *postService) Update(id string, updateDTO dto.UpdatePostDTO, user *domain.User) error {
+	// Validate DTO
+	if err := updateDTO.Validate(); err != nil {
+		return err
+	}
+
+	// Get existing post
+	post, err := s.postRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Check permissions
+	if !s.permService.CanEditPost(user, post) {
+		return errors.New("permission denied: cannot edit this post")
+	}
+
+	// Update fields
+	if updateDTO.Title != "" {
+		post.Title = updateDTO.Title
+		// Regenerate slug if title changed
+		post.Slug = s.slugger.Slugify(updateDTO.Title)
+	}
+
+	if updateDTO.Content != "" {
+		post.Content = updateDTO.Content
+	}
+
+	if updateDTO.Excerpt != "" {
+		post.Excerpt = updateDTO.Excerpt
+	}
+
+	if updateDTO.FeaturedImage != "" {
+		post.FeaturedImage = updateDTO.FeaturedImage
+	}
+
+	if updateDTO.CategoryID != nil {
+		post.CategoryID = updateDTO.CategoryID
+	}
+
+	if updateDTO.Status != "" {
+		post.Status = domain.PostStatus(updateDTO.Status)
+	}
+
+	post.UpdatedAt = time.Now()
+
+	return s.postRepo.Update(post)
+}
+
+// Delete deletes a post
+func (s *postService) Delete(id string, user *domain.User) error {
+	// Get post
+	post, err := s.postRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Check permissions
+	if !s.permService.CanDeletePost(user, post) {
+		return errors.New("permission denied: cannot delete this post")
+	}
+
+	return s.postRepo.Delete(id)
+}
+
+// Publish publishes a draft post
+func (s *postService) Publish(id string, user *domain.User) error {
+	// Get post
+	post, err := s.postRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Check permissions
+	if !s.permService.CanPublishPost(user, post) {
+		return errors.New("permission denied: only editors and admins can publish posts")
+	}
+
+	// Update status and published_at
+	post.Status = domain.PostStatusPublished
+	now := time.Now()
+	post.PublishedAt = &now
+	post.UpdatedAt = now
+
+	return s.postRepo.Update(post)
+}
+
+// Archive archives a post
+func (s *postService) Archive(id string, user *domain.User) error {
+	// Get post
+	post, err := s.postRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Check permissions
+	if !s.permService.CanEditPost(user, post) {
+		return errors.New("permission denied: cannot archive this post")
+	}
+
+	// Update status
+	post.Status = domain.PostStatusArchived
+	post.UpdatedAt = time.Now()
+
+	return s.postRepo.Update(post)
+}
+
+// GetByID retrieves a post by ID
+func (s *postService) GetByID(id string) (*domain.Post, error) {
+	return s.postRepo.FindByID(id)
+}
+
+// GetBySlug retrieves a post by slug
+func (s *postService) GetBySlug(slug string) (*domain.Post, error) {
+	return s.postRepo.FindBySlug(slug)
+}
+
+// List retrieves posts based on filters
+func (s *postService) List(filters dto.PostFilters) ([]*domain.Post, error) {
+	return s.postRepo.List(filters)
+}
+
+// ListByAuthor retrieves posts by a specific author
+func (s *postService) ListByAuthor(authorID string, user *domain.User, filters dto.PostFilters) ([]*domain.Post, error) {
+	// Users can only see their own drafts
+	// Admins and editors can see all posts
+	if !user.IsAdmin() && !user.IsEditor() && authorID != user.ID {
+		return nil, errors.New("permission denied: cannot view other author's posts")
+	}
+
+	return s.postRepo.ListByAuthor(authorID, filters)
+}
+
+// ListPublished retrieves only published posts
+func (s *postService) ListPublished(filters dto.PostFilters) ([]*domain.Post, error) {
+	return s.postRepo.ListPublished(filters)
+}
+
+// Count returns total number of posts
+func (s *postService) Count() (int, error) {
+	return s.postRepo.Count()
+}
+
+// CountByAuthor returns number of posts by author
+func (s *postService) CountByAuthor(authorID string) (int, error) {
+	return s.postRepo.CountByAuthor(authorID)
+}

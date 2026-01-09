@@ -1,0 +1,365 @@
+package services
+
+import (
+	"errors"
+	"testing"
+	"time"
+
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/dto"
+)
+
+// MockPostRepository is a mock implementation for testing
+type MockPostRepository struct {
+	posts       map[string]*domain.Post
+	createError error
+	updateError error
+	deleteError error
+	findError   error
+	listError   error
+}
+
+func NewMockPostRepository() *MockPostRepository {
+	return &MockPostRepository{
+		posts: make(map[string]*domain.Post),
+	}
+}
+
+func (m *MockPostRepository) Create(post *domain.Post) error {
+	if m.createError != nil {
+		return m.createError
+	}
+	m.posts[post.ID] = post
+	return nil
+}
+
+func (m *MockPostRepository) Update(post *domain.Post) error {
+	if m.updateError != nil {
+		return m.updateError
+	}
+	if _, exists := m.posts[post.ID]; !exists {
+		return errors.New("post not found")
+	}
+	m.posts[post.ID] = post
+	return nil
+}
+
+func (m *MockPostRepository) Delete(id string) error {
+	if m.deleteError != nil {
+		return m.deleteError
+	}
+	if _, exists := m.posts[id]; !exists {
+		return errors.New("post not found")
+	}
+	delete(m.posts, id)
+	return nil
+}
+
+func (m *MockPostRepository) FindByID(id string) (*domain.Post, error) {
+	if m.findError != nil {
+		return nil, m.findError
+	}
+	post, exists := m.posts[id]
+	if !exists {
+		return nil, errors.New("post not found")
+	}
+	return post, nil
+}
+
+func (m *MockPostRepository) FindBySlug(slug string) (*domain.Post, error) {
+	for _, post := range m.posts {
+		if post.Slug == slug {
+			return post, nil
+		}
+	}
+	return nil, errors.New("post not found")
+}
+
+func (m *MockPostRepository) List(filters dto.PostFilters) ([]*domain.Post, error) {
+	if m.listError != nil {
+		return nil, m.listError
+	}
+	posts := make([]*domain.Post, 0, len(m.posts))
+	for _, post := range m.posts {
+		posts = append(posts, post)
+	}
+	return posts, nil
+}
+
+func (m *MockPostRepository) ListByAuthor(authorID string, filters dto.PostFilters) ([]*domain.Post, error) {
+	posts := make([]*domain.Post, 0)
+	for _, post := range m.posts {
+		if post.AuthorID == authorID {
+			posts = append(posts, post)
+		}
+	}
+	return posts, nil
+}
+
+func (m *MockPostRepository) ListByCategory(categoryID string, filters dto.PostFilters) ([]*domain.Post, error) {
+	posts := make([]*domain.Post, 0)
+	for _, post := range m.posts {
+		if post.CategoryID != nil && *post.CategoryID == categoryID {
+			posts = append(posts, post)
+		}
+	}
+	return posts, nil
+}
+
+func (m *MockPostRepository) ListPublished(filters dto.PostFilters) ([]*domain.Post, error) {
+	posts := make([]*domain.Post, 0)
+	for _, post := range m.posts {
+		if post.Status == domain.PostStatusPublished {
+			posts = append(posts, post)
+		}
+	}
+	return posts, nil
+}
+
+func (m *MockPostRepository) ExistsBySlug(slug string) (bool, error) {
+	for _, post := range m.posts {
+		if post.Slug == slug {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (m *MockPostRepository) Count() (int, error) {
+	return len(m.posts), nil
+}
+
+func (m *MockPostRepository) CountByAuthor(authorID string) (int, error) {
+	count := 0
+	for _, post := range m.posts {
+		if post.AuthorID == authorID {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *MockPostRepository) CountByStatus(status domain.PostStatus) (int, error) {
+	count := 0
+	for _, post := range m.posts {
+		if post.Status == status {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func TestPostService_Create(t *testing.T) {
+	repo := NewMockPostRepository()
+	permService := NewPermissionService()
+	postService := NewPostService(repo, permService)
+
+	author := &domain.User{
+		ID:       "author1",
+		Username: "author",
+		Role:     domain.RoleAuthor,
+	}
+
+	createDTO := dto.CreatePostDTO{
+		Title:   "Test Post",
+		Content: "This is test content",
+		Status:  "draft",
+	}
+
+	post, err := postService.Create(author, createDTO)
+	if err != nil {
+		t.Fatalf("PostService.Create() error = %v", err)
+	}
+
+	if post.Title != createDTO.Title {
+		t.Errorf("Created post title = %v, want %v", post.Title, createDTO.Title)
+	}
+	if post.AuthorID != author.ID {
+		t.Errorf("Created post author_id = %v, want %v", post.AuthorID, author.ID)
+	}
+}
+
+func TestPostService_Update(t *testing.T) {
+	repo := NewMockPostRepository()
+	permService := NewPermissionService()
+	postService := NewPostService(repo, permService)
+
+	author := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+	editor := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	otherAuthor := &domain.User{ID: "author2", Role: domain.RoleAuthor}
+
+	post := &domain.Post{
+		ID:       "post1",
+		Title:    "Original Title",
+		Slug:     "original-title",
+		Content:  "Original content",
+		AuthorID: "author1",
+		Status:   domain.PostStatusDraft,
+	}
+	repo.Create(post)
+
+	updateDTO := dto.UpdatePostDTO{
+		Title:   "Updated Title",
+		Content: "Updated content",
+	}
+
+	tests := []struct {
+		name    string
+		user    *domain.User
+		wantErr bool
+	}{
+		{"author can update own post", author, false},
+		{"editor can update any post", editor, false},
+		{"other author cannot update", otherAuthor, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := postService.Update("post1", updateDTO, tt.user)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PostService.Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPostService_Delete(t *testing.T) {
+	repo := NewMockPostRepository()
+	permService := NewPermissionService()
+	postService := NewPostService(repo, permService)
+
+	author := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+	editor := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	otherAuthor := &domain.User{ID: "author2", Role: domain.RoleAuthor}
+
+	tests := []struct {
+		name    string
+		user    *domain.User
+		wantErr bool
+	}{
+		{"author can delete own post", author, false},
+		{"editor can delete any post", editor, false},
+		{"other author cannot delete", otherAuthor, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create fresh post for each test
+			post := &domain.Post{
+				ID:       "post1",
+				Title:    "Test Post",
+				Slug:     "test-post",
+				Content:  "Content",
+				AuthorID: "author1",
+				Status:   domain.PostStatusDraft,
+			}
+			repo.posts = make(map[string]*domain.Post)
+			repo.Create(post)
+
+			err := postService.Delete("post1", tt.user)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PostService.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPostService_Publish(t *testing.T) {
+	repo := NewMockPostRepository()
+	permService := NewPermissionService()
+	postService := NewPostService(repo, permService)
+
+	admin := &domain.User{ID: "admin1", Role: domain.RoleAdmin}
+	editor := &domain.User{ID: "editor1", Role: domain.RoleEditor}
+	author := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+
+	post := &domain.Post{
+		ID:       "post1",
+		Title:    "Test Post",
+		Slug:     "test-post",
+		Content:  "Content",
+		AuthorID: "author1",
+		Status:   domain.PostStatusDraft,
+	}
+	repo.Create(post)
+
+	tests := []struct {
+		name    string
+		user    *domain.User
+		wantErr bool
+	}{
+		{"admin can publish", admin, false},
+		{"editor can publish", editor, false},
+		{"author cannot publish", author, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset post status
+			post.Status = domain.PostStatusDraft
+			post.PublishedAt = nil
+			
+			err := postService.Publish("post1", tt.user)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PostService.Publish() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			
+			if !tt.wantErr {
+				updatedPost, _ := repo.FindByID("post1")
+				if updatedPost.Status != domain.PostStatusPublished {
+					t.Errorf("Post status = %v, want %v", updatedPost.Status, domain.PostStatusPublished)
+				}
+				if updatedPost.PublishedAt == nil {
+					t.Error("PublishedAt should be set")
+				}
+			}
+		})
+	}
+}
+
+func TestPostService_GetByID(t *testing.T) {
+	repo := NewMockPostRepository()
+	permService := NewPermissionService()
+	postService := NewPostService(repo, permService)
+
+	post := &domain.Post{
+		ID:       "post1",
+		Title:    "Test Post",
+		Slug:     "test-post",
+		Content:  "Content",
+		AuthorID: "author1",
+		Status:   domain.PostStatusPublished,
+	}
+	repo.Create(post)
+
+	retrieved, err := postService.GetByID("post1")
+	if err != nil {
+		t.Fatalf("PostService.GetByID() error = %v", err)
+	}
+
+	if retrieved.ID != post.ID {
+		t.Errorf("Retrieved post ID = %v, want %v", retrieved.ID, post.ID)
+	}
+}
+
+func TestPostService_ListByAuthor(t *testing.T) {
+	repo := NewMockPostRepository()
+	permService := NewPermissionService()
+	postService := NewPostService(repo, permService)
+
+	author := &domain.User{ID: "author1", Role: domain.RoleAuthor}
+
+	// Create posts
+	repo.Create(&domain.Post{ID: "1", Title: "Post 1", Slug: "post-1", Content: "C", AuthorID: "author1", Status: domain.PostStatusDraft, CreatedAt: time.Now()})
+	repo.Create(&domain.Post{ID: "2", Title: "Post 2", Slug: "post-2", Content: "C", AuthorID: "author1", Status: domain.PostStatusDraft, CreatedAt: time.Now()})
+	repo.Create(&domain.Post{ID: "3", Title: "Post 3", Slug: "post-3", Content: "C", AuthorID: "author2", Status: domain.PostStatusDraft, CreatedAt: time.Now()})
+
+	posts, err := postService.ListByAuthor("author1", author, dto.PostFilters{})
+	if err != nil {
+		t.Fatalf("PostService.ListByAuthor() error = %v", err)
+	}
+
+	if len(posts) != 2 {
+		t.Errorf("ListByAuthor() returned %d posts, want 2", len(posts))
+	}
+}
