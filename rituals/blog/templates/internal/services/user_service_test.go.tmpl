@@ -1,0 +1,306 @@
+package services
+
+import (
+	"errors"
+	"testing"
+
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/dto"
+)
+
+// MockUserRepository is a mock implementation for testing
+type MockUserRepository struct {
+	users         map[string]*domain.User
+	createError   error
+	updateError   error
+	deleteError   error
+	findError     error
+	existsError   error
+	listError     error
+}
+
+func NewMockUserRepository() *MockUserRepository {
+	return &MockUserRepository{
+		users: make(map[string]*domain.User),
+	}
+}
+
+func (m *MockUserRepository) Create(user *domain.User) error {
+	if m.createError != nil {
+		return m.createError
+	}
+	m.users[user.ID] = user
+	return nil
+}
+
+func (m *MockUserRepository) Update(user *domain.User) error {
+	if m.updateError != nil {
+		return m.updateError
+	}
+	if _, exists := m.users[user.ID]; !exists {
+		return errors.New("user not found")
+	}
+	m.users[user.ID] = user
+	return nil
+}
+
+func (m *MockUserRepository) Delete(id string) error {
+	if m.deleteError != nil {
+		return m.deleteError
+	}
+	if _, exists := m.users[id]; !exists {
+		return errors.New("user not found")
+	}
+	delete(m.users, id)
+	return nil
+}
+
+func (m *MockUserRepository) FindByID(id string) (*domain.User, error) {
+	if m.findError != nil {
+		return nil, m.findError
+	}
+	user, exists := m.users[id]
+	if !exists {
+		return nil, errors.New("user not found")
+	}
+	return user, nil
+}
+
+func (m *MockUserRepository) FindByEmail(email string) (*domain.User, error) {
+	if m.findError != nil {
+		return nil, m.findError
+	}
+	for _, user := range m.users {
+		if user.Email == email {
+			return user, nil
+		}
+	}
+	return nil, errors.New("user not found")
+}
+
+func (m *MockUserRepository) FindByUsername(username string) (*domain.User, error) {
+	if m.findError != nil {
+		return nil, m.findError
+	}
+	for _, user := range m.users {
+		if user.Username == username {
+			return user, nil
+		}
+	}
+	return nil, errors.New("user not found")
+}
+
+func (m *MockUserRepository) List(filters dto.UserFilters) ([]*domain.User, error) {
+	if m.listError != nil {
+		return nil, m.listError
+	}
+	users := make([]*domain.User, 0, len(m.users))
+	for _, user := range m.users {
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+func (m *MockUserRepository) ExistsByEmail(email string) (bool, error) {
+	if m.existsError != nil {
+		return false, m.existsError
+	}
+	for _, user := range m.users {
+		if user.Email == email {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (m *MockUserRepository) ExistsByUsername(username string) (bool, error) {
+	if m.existsError != nil {
+		return false, m.existsError
+	}
+	for _, user := range m.users {
+		if user.Username == username {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (m *MockUserRepository) Count() (int, error) {
+	return len(m.users), nil
+}
+
+func TestUserService_GetByID(t *testing.T) {
+	repo := NewMockUserRepository()
+	permService := NewPermissionService()
+	userService := NewUserService(repo, permService)
+
+	// Create test user
+	testUser := &domain.User{
+		ID:       "user123",
+		Email:    "test@example.com",
+		Username: "testuser",
+		Role:     domain.RoleAuthor,
+	}
+	repo.Create(testUser)
+
+	tests := []struct {
+		name    string
+		id      string
+		wantErr bool
+	}{
+		{"existing user", "user123", false},
+		{"non-existing user", "unknown", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			user, err := userService.GetByID(tt.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UserService.GetByID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && user.ID != tt.id {
+				t.Errorf("UserService.GetByID() got user ID = %v, want %v", user.ID, tt.id)
+			}
+		})
+	}
+}
+
+func TestUserService_List(t *testing.T) {
+	repo := NewMockUserRepository()
+	permService := NewPermissionService()
+	userService := NewUserService(repo, permService)
+
+	// Create test users
+	repo.Create(&domain.User{ID: "1", Email: "user1@example.com", Username: "user1"})
+	repo.Create(&domain.User{ID: "2", Email: "user2@example.com", Username: "user2"})
+
+	users, err := userService.List(dto.UserFilters{})
+	if err != nil {
+		t.Fatalf("UserService.List() error = %v", err)
+	}
+
+	if len(users) != 2 {
+		t.Errorf("UserService.List() got %d users, want 2", len(users))
+	}
+}
+
+func TestUserService_Update(t *testing.T) {
+	repo := NewMockUserRepository()
+	permService := NewPermissionService()
+	userService := NewUserService(repo, permService)
+
+	adminUser := &domain.User{ID: "admin1", Email: "admin@example.com", Role: domain.RoleAdmin}
+	targetUser := &domain.User{ID: "user1", Email: "user@example.com", Username: "user1", Role: domain.RoleReader}
+	
+	repo.Create(adminUser)
+	repo.Create(targetUser)
+
+	tests := []struct {
+		name    string
+		actor   *domain.User
+		userID  string
+		dto     dto.UpdateUserDTO
+		wantErr bool
+	}{
+		{
+			name:   "admin can update user",
+			actor:  adminUser,
+			userID: "user1",
+			dto: dto.UpdateUserDTO{
+				Email:    "newemail@example.com",
+				Username: "newusername",
+			},
+			wantErr: false,
+		},
+		{
+			name:   "non-admin cannot update",
+			actor:  targetUser,
+			userID: "user1",
+			dto: dto.UpdateUserDTO{
+				Email:    "newemail@example.com",
+				Username: "newusername",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := userService.Update(tt.userID, tt.dto, tt.actor)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UserService.Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUserService_Delete(t *testing.T) {
+	repo := NewMockUserRepository()
+	permService := NewPermissionService()
+	userService := NewUserService(repo, permService)
+
+	adminUser := &domain.User{ID: "admin1", Email: "admin@example.com", Role: domain.RoleAdmin}
+	targetUser := &domain.User{ID: "user1", Email: "user@example.com", Role: domain.RoleReader}
+	
+	repo.Create(adminUser)
+	repo.Create(targetUser)
+
+	tests := []struct {
+		name    string
+		actor   *domain.User
+		userID  string
+		wantErr bool
+	}{
+		{"admin can delete", adminUser, "user1", false},
+		{"non-admin cannot delete", targetUser, "admin1", true},
+		{"cannot delete self", adminUser, "admin1", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset for each test
+			repo.users = make(map[string]*domain.User)
+			repo.Create(adminUser)
+			repo.Create(targetUser)
+
+			err := userService.Delete(tt.userID, tt.actor)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UserService.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUserService_ChangeRole(t *testing.T) {
+	repo := NewMockUserRepository()
+	permService := NewPermissionService()
+	userService := NewUserService(repo, permService)
+
+	adminUser := &domain.User{ID: "admin1", Email: "admin@example.com", Role: domain.RoleAdmin}
+	targetUser := &domain.User{ID: "user1", Email: "user@example.com", Role: domain.RoleReader}
+	
+	repo.Create(adminUser)
+	repo.Create(targetUser)
+
+	tests := []struct {
+		name    string
+		actor   *domain.User
+		userID  string
+		newRole domain.Role
+		wantErr bool
+	}{
+		{"admin can change role", adminUser, "user1", domain.RoleEditor, false},
+		{"non-admin cannot change role", targetUser, "user1", domain.RoleEditor, true},
+		{"cannot change own role", adminUser, "admin1", domain.RoleReader, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := userService.ChangeRole(tt.userID, tt.newRole, tt.actor)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UserService.ChangeRole() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

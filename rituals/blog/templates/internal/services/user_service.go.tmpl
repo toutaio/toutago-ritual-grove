@@ -1,0 +1,36 @@
+package services
+
+import (
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/dto"
+)
+
+// UserService handles user management operations
+type UserService interface {
+	// GetByID retrieves a user by ID
+	GetByID(id string) (*domain.User, error)
+
+	// GetByEmail retrieves a user by email
+	GetByEmail(email string) (*domain.User, error)
+
+	// GetByUsername retrieves a user by username
+	GetByUsername(username string) (*domain.User, error)
+
+	// List retrieves users based on filters
+	List(filters dto.UserFilters) ([]*domain.User, error)
+
+	// Update updates a user's information (admin only)
+	Update(id string, dto dto.UpdateUserDTO, actor *domain.User) error
+
+	// Delete deletes a user (admin only, cannot delete self)
+	Delete(id string, actor *domain.User) error
+
+	// ChangeRole changes a user's role (admin only, cannot change own role)
+	ChangeRole(userID string, newRole domain.Role, actor *domain.User) error
+
+	// ToggleActive activates or deactivates a user (admin only)
+	ToggleActive(userID string, actor *domain.User) error
+
+	// Count returns total number of users
+	Count() (int, error)
+}

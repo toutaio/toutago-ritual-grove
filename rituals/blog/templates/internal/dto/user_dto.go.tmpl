@@ -1,0 +1,39 @@
+package dto
+
+import "{{.ModulePath}}/internal/domain"
+
+// UpdateUserDTO represents data for updating a user
+type UpdateUserDTO struct {
+	Email    string `json:"email" validate:"omitempty,email"`
+	Username string `json:"username" validate:"omitempty,min=3,max=50"`
+	IsActive *bool  `json:"is_active,omitempty"`
+}
+
+// Validate validates the update user DTO
+func (dto *UpdateUserDTO) Validate() error {
+	// Email validation if provided
+	if dto.Email != "" {
+		// Basic email validation will be done by validator
+	}
+	
+	// Username validation if provided
+	if dto.Username != "" {
+		if len(dto.Username) < 3 {
+			return ErrUsernameTooShort
+		}
+		if len(dto.Username) > 50 {
+			return ErrUsernameTooLong
+		}
+	}
+	
+	return nil
+}
+
+// UserFilters represents filters for querying users
+type UserFilters struct {
+	Role     *domain.Role `json:"role,omitempty"`
+	IsActive *bool        `json:"is_active,omitempty"`
+	Search   string       `json:"search,omitempty"` // Search by email or username
+	Limit    int          `json:"limit,omitempty"`
+	Offset   int          `json:"offset,omitempty"`
+}

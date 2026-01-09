@@ -1,0 +1,174 @@
+package services
+
+import (
+	"errors"
+	"time"
+
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/dto"
+	"{{.ModulePath}}/internal/repositories"
+)
+
+// userService implements UserService
+type userService struct {
+	userRepo    repositories.UserRepository
+	permService PermissionService
+}
+
+// NewUserService creates a new user service
+func NewUserService(userRepo repositories.UserRepository, permService PermissionService) UserService {
+	return &userService{
+		userRepo:    userRepo,
+		permService: permService,
+	}
+}
+
+// GetByID retrieves a user by ID
+func (s *userService) GetByID(id string) (*domain.User, error) {
+	return s.userRepo.FindByID(id)
+}
+
+// GetByEmail retrieves a user by email
+func (s *userService) GetByEmail(email string) (*domain.User, error) {
+	return s.userRepo.FindByEmail(email)
+}
+
+// GetByUsername retrieves a user by username
+func (s *userService) GetByUsername(username string) (*domain.User, error) {
+	return s.userRepo.FindByUsername(username)
+}
+
+// List retrieves users based on filters
+func (s *userService) List(filters dto.UserFilters) ([]*domain.User, error) {
+	return s.userRepo.List(filters)
+}
+
+// Update updates a user's information
+func (s *userService) Update(id string, updateDTO dto.UpdateUserDTO, actor *domain.User) error {
+	// Check permissions
+	if !s.permService.CanManageUsers(actor) {
+		return errors.New("permission denied: only admins can update users")
+	}
+
+	// Validate DTO
+	if err := updateDTO.Validate(); err != nil {
+		return err
+	}
+
+	// Get existing user
+	user, err := s.userRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Update fields
+	if updateDTO.Email != "" && updateDTO.Email != user.Email {
+		// Check if email is already in use
+		exists, err := s.userRepo.ExistsByEmail(updateDTO.Email)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return errors.New("email already in use")
+		}
+		user.Email = updateDTO.Email
+	}
+
+	if updateDTO.Username != "" && updateDTO.Username != user.Username {
+		// Check if username is already in use
+		exists, err := s.userRepo.ExistsByUsername(updateDTO.Username)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return errors.New("username already in use")
+		}
+		user.Username = updateDTO.Username
+	}
+
+	if updateDTO.IsActive != nil {
+		user.IsActive = *updateDTO.IsActive
+	}
+
+	user.UpdatedAt = time.Now()
+
+	// Update in repository
+	return s.userRepo.Update(user)
+}
+
+// Delete deletes a user
+func (s *userService) Delete(id string, actor *domain.User) error {
+	// Check permissions
+	if !s.permService.CanManageUsers(actor) {
+		return errors.New("permission denied: only admins can delete users")
+	}
+
+	// Prevent self-deletion
+	if id == actor.ID {
+		return errors.New("cannot delete your own account")
+	}
+
+	// Delete user
+	return s.userRepo.Delete(id)
+}
+
+// ChangeRole changes a user's role
+func (s *userService) ChangeRole(userID string, newRole domain.Role, actor *domain.User) error {
+	// Check permissions
+	if !s.permService.CanManageUsers(actor) {
+		return errors.New("permission denied: only admins can change roles")
+	}
+
+	// Prevent changing own role
+	if userID == actor.ID {
+		return errors.New("cannot change your own role")
+	}
+
+	// Validate role
+	validRoles := map[domain.Role]bool{
+		domain.RoleAdmin:  true,
+		domain.RoleEditor: true,
+		domain.RoleAuthor: true,
+		domain.RoleReader: true,
+	}
+	if !validRoles[newRole] {
+		return errors.New("invalid role")
+	}
+
+	// Get user
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return err
+	}
+
+	// Update role
+	user.Role = newRole
+	user.UpdatedAt = time.Now()
+
+	return s.userRepo.Update(user)
+}
+
+// ToggleActive activates or deactivates a user
+func (s *userService) ToggleActive(userID string, actor *domain.User) error {
+	// Check permissions
+	if !s.permService.CanManageUsers(actor) {
+		return errors.New("permission denied: only admins can toggle user status")
+	}
+
+	// Get user
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return err
+	}
+
+	// Toggle active status
+	user.IsActive = !user.IsActive
+	user.UpdatedAt = time.Now()
+
+	return s.userRepo.Update(user)
+}
+
+// Count returns total number of users
+func (s *userService) Count() (int, error) {
+	return s.userRepo.Count()
+}
