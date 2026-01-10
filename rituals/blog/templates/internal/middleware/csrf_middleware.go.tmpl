@@ -1,0 +1,76 @@
+package middleware
+
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"net/http"
+
+	"github.com/gorilla/sessions"
+)
+
+// CSRFMiddleware protects against Cross-Site Request Forgery attacks
+func CSRFMiddleware(store sessions.Store) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session, err := store.Get(r, "session")
+			if err != nil {
+				http.Error(w, "Session error", http.StatusInternalServerError)
+				return
+			}
+
+			// Generate token if not exists
+			if session.Values["csrf_token"] == nil {
+				token := generateCSRFToken()
+				session.Values["csrf_token"] = token
+				session.Save(r, w)
+			}
+
+			// Safe methods don't need CSRF protection
+			if r.Method == "GET" || r.Method == "HEAD" || r.Method == "OPTIONS" || r.Method == "TRACE" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Check CSRF token for unsafe methods
+			sessionToken := session.Values["csrf_token"].(string)
+			
+			// Check header first
+			requestToken := r.Header.Get("X-CSRF-Token")
+			
+			// If not in header, check form data
+			if requestToken == "" {
+				requestToken = r.FormValue("csrf_token")
+			}
+
+			if requestToken == "" || requestToken != sessionToken {
+				http.Error(w, "CSRF token validation failed", http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// GetCSRFToken retrieves or generates a CSRF token for the current session
+func GetCSRFToken(w http.ResponseWriter, r *http.Request, store sessions.Store) string {
+	session, err := store.Get(r, "session")
+	if err != nil {
+		return ""
+	}
+
+	token, ok := session.Values["csrf_token"].(string)
+	if !ok || token == "" {
+		token = generateCSRFToken()
+		session.Values["csrf_token"] = token
+		session.Save(r, w)
+	}
+
+	return token
+}
+
+func generateCSRFToken() string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	return base64.URLEncoding.EncodeToString(b)
+}

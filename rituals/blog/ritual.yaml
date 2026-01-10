@@ -218,6 +218,31 @@ files:
     - src: internal/helpers/template_helpers_test.go.tmpl
       dest: internal/helpers/template_helpers_test.go
 
+    - src: internal/helpers/xss_prevention.go.tmpl
+      dest: internal/helpers/xss_prevention.go
+
+    - src: internal/helpers/xss_prevention_test.go.tmpl
+      dest: internal/helpers/xss_prevention_test.go
+
+    - src: internal/helpers/password_strength.go.tmpl
+      dest: internal/helpers/password_strength.go
+
+    - src: internal/helpers/password_strength_test.go.tmpl
+      dest: internal/helpers/password_strength_test.go
+
+    # Middleware
+    - src: internal/middleware/csrf_middleware.go.tmpl
+      dest: internal/middleware/csrf_middleware.go
+
+    - src: internal/middleware/csrf_middleware_test.go.tmpl
+      dest: internal/middleware/csrf_middleware_test.go
+
+    - src: internal/middleware/rate_limit_middleware.go.tmpl
+      dest: internal/middleware/rate_limit_middleware.go
+
+    - src: internal/middleware/rate_limit_middleware_test.go.tmpl
+      dest: internal/middleware/rate_limit_middleware_test.go
+
     - src: internal/inertia_adapter.go.tmpl
       dest: internal/inertia_adapter.go
 

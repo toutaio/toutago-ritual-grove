@@ -1,0 +1,115 @@
+package middleware
+
+import (
+	"fmt"
+	"net"
+	"net/http"
+	"sync"
+	"time"
+)
+
+type rateLimiter struct {
+	requests    map[string][]time.Time
+	mu          sync.RWMutex
+	maxRequests int
+	window      time.Duration
+}
+
+func newRateLimiter(maxRequests int, window time.Duration) *rateLimiter {
+	rl := &rateLimiter{
+		requests:    make(map[string][]time.Time),
+		maxRequests: maxRequests,
+		window:      window,
+	}
+
+	// Cleanup goroutine
+	go rl.cleanup()
+
+	return rl
+}
+
+func (rl *rateLimiter) cleanup() {
+	ticker := time.NewTicker(rl.window)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		rl.mu.Lock()
+		now := time.Now()
+		for ip, timestamps := range rl.requests {
+			// Remove expired timestamps
+			valid := make([]time.Time, 0)
+			for _, ts := range timestamps {
+				if now.Sub(ts) < rl.window {
+					valid = append(valid, ts)
+				}
+			}
+
+			if len(valid) == 0 {
+				delete(rl.requests, ip)
+			} else {
+				rl.requests[ip] = valid
+			}
+		}
+		rl.mu.Unlock()
+	}
+}
+
+func (rl *rateLimiter) allow(ip string) (bool, int) {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	now := time.Now()
+	timestamps := rl.requests[ip]
+
+	// Remove old timestamps
+	valid := make([]time.Time, 0)
+	for _, ts := range timestamps {
+		if now.Sub(ts) < rl.window {
+			valid = append(valid, ts)
+		}
+	}
+
+	remaining := rl.maxRequests - len(valid)
+
+	// Check if limit exceeded
+	if len(valid) >= rl.maxRequests {
+		rl.requests[ip] = valid
+		return false, 0
+	}
+
+	// Add new timestamp
+	valid = append(valid, now)
+	rl.requests[ip] = valid
+
+	return true, remaining - 1
+}
+
+// RateLimitMiddleware limits the number of requests per IP address
+func RateLimitMiddleware(maxRequests int, window time.Duration) func(http.Handler) http.Handler {
+	limiter := newRateLimiter(maxRequests, window)
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Extract IP address
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				ip = r.RemoteAddr // Fallback if no port
+			}
+
+			// Check rate limit
+			allowed, remaining := limiter.allow(ip)
+
+			// Set rate limit headers
+			w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", maxRequests))
+			w.Header().Set("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+
+			if !allowed {
+				w.Header().Set("Retry-After", fmt.Sprintf("%d", int(window.Seconds())))
+				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}

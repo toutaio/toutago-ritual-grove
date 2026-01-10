@@ -1,0 +1,292 @@
+package helpers
+
+import (
+	"testing"
+)
+
+func TestSanitizeHTML_BasicTags(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Script tag removed",
+			input:    `Hello <script>alert('xss')</script> World`,
+			expected: "Hello  World",
+		},
+		{
+			name:     "Onclick attribute removed",
+			input:    `<div onclick="alert('xss')">Click me</div>`,
+			expected: "<div>Click me</div>",
+		},
+		{
+			name:     "JavaScript URL removed",
+			input:    `<a href="javascript:alert('xss')">Link</a>`,
+			expected: `<a>Link</a>`,
+		},
+		{
+			name:     "Safe HTML preserved",
+			input:    `<p>Hello <strong>World</strong></p>`,
+			expected: `<p>Hello <strong>World</strong></p>`,
+		},
+		{
+			name:     "Img with safe src",
+			input:    `<img src="/image.jpg" alt="test">`,
+			expected: `<img src="/image.jpg" alt="test"/>`,
+		},
+		{
+			name:     "Img with data URL removed",
+			input:    `<img src="data:image/png;base64,abc">`,
+			expected: `<img/>`,
+		},
+		{
+			name:     "Multiple script tags",
+			input:    `<script>bad()</script>Text<script>worse()</script>`,
+			expected: "Text",
+		},
+		{
+			name:     "Iframe removed",
+			input:    `<iframe src="evil.com"></iframe>`,
+			expected: "",
+		},
+		{
+			name:     "Object and embed removed",
+			input:    `<object data="flash.swf"></object><embed src="flash.swf">`,
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SanitizeHTML(tt.input)
+			if result != tt.expected {
+				t.Errorf("SanitizeHTML() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSanitizeHTML_EventHandlers(t *testing.T) {
+	eventHandlers := []string{
+		"onclick", "onload", "onerror", "onmouseover",
+		"onfocus", "onblur", "onchange", "onsubmit",
+	}
+
+	for _, handler := range eventHandlers {
+		input := `<div ` + handler + `="alert('xss')">Test</div>`
+		result := SanitizeHTML(input)
+		
+		if result == input {
+			t.Errorf("Event handler %s was not removed", handler)
+		}
+		
+		// Should not contain the handler
+		if contains(result, handler) {
+			t.Errorf("Result still contains %s: %s", handler, result)
+		}
+	}
+}
+
+func TestEscapeString_SpecialChars(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Less than and greater than",
+			input:    `<script>`,
+			expected: "&lt;script&gt;",
+		},
+		{
+			name:     "Ampersand",
+			input:    `Tom & Jerry`,
+			expected: "Tom &amp; Jerry",
+		},
+		{
+			name:     "Double quotes",
+			input:    `He said "Hello"`,
+			expected: `He said &#34;Hello&#34;`,
+		},
+		{
+			name:     "Single quotes",
+			input:    `It's working`,
+			expected: `It&#39;s working`,
+		},
+		{
+			name:     "All special chars",
+			input:    `<>&"'`,
+			expected: `&lt;&gt;&amp;&#34;&#39;`,
+		},
+		{
+			name:     "Normal text",
+			input:    "Hello World",
+			expected: "Hello World",
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := EscapeString(tt.input)
+			if result != tt.expected {
+				t.Errorf("EscapeString() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestStripTags_RemovesAllHTML(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Simple tags",
+			input:    "<p>Hello</p>",
+			expected: "Hello",
+		},
+		{
+			name:     "Nested tags",
+			input:    "<div><p>Hello <strong>World</strong></p></div>",
+			expected: "Hello World",
+		},
+		{
+			name:     "Self-closing tags",
+			input:    "Text<br/>More<hr/>End",
+			expected: "TextMoreEnd",
+		},
+		{
+			name:     "Tags with attributes",
+			input:    `<a href="url" class="link">Click</a>`,
+			expected: "Click",
+		},
+		{
+			name:     "Script and style content",
+			input:    "<script>alert('xss')</script>Text<style>.class{}</style>",
+			expected: "alert('xss')Text.class{}",
+		},
+		{
+			name:     "No HTML",
+			input:    "Plain text",
+			expected: "Plain text",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := StripTags(tt.input)
+			if result != tt.expected {
+				t.Errorf("StripTags() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSanitizeMarkdown_AllowsSafeMarkdown(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Headers preserved",
+			input:    "# Title\n## Subtitle",
+			expected: "# Title\n## Subtitle",
+		},
+		{
+			name:     "Bold and italic preserved",
+			input:    "**bold** and *italic*",
+			expected: "**bold** and *italic*",
+		},
+		{
+			name:     "Links preserved",
+			input:    "[Link](https://example.com)",
+			expected: "[Link](https://example.com)",
+		},
+		{
+			name:     "Code blocks preserved",
+			input:    "```go\ncode\n```",
+			expected: "```go\ncode\n```",
+		},
+		{
+			name:     "HTML script removed",
+			input:    "Text <script>alert('xss')</script> more",
+			expected: "Text  more",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SanitizeMarkdown(tt.input)
+			if result != tt.expected {
+				t.Errorf("SanitizeMarkdown() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSanitizeFilename(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Path traversal attempts",
+			input:    "../../../etc/passwd",
+			expected: "etcpasswd",
+		},
+		{
+			name:     "Special characters",
+			input:    "file<>:\"|?*.txt",
+			expected: "file.txt",
+		},
+		{
+			name:     "Spaces to underscores",
+			input:    "my file name.txt",
+			expected: "my_file_name.txt",
+		},
+		{
+			name:     "Safe filename",
+			input:    "document_2024.pdf",
+			expected: "document_2024.pdf",
+		},
+		{
+			name:     "Mixed unsafe chars",
+			input:    "file//\\name:?.jpg",
+			expected: "filename.jpg",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SanitizeFilename(tt.input)
+			if result != tt.expected {
+				t.Errorf("SanitizeFilename() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Helper function
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && 
+		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
+			containsMiddle(s, substr)))
+}
+
+func containsMiddle(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

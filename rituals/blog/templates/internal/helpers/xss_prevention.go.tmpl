@@ -1,0 +1,86 @@
+package helpers
+
+import (
+	"html"
+	"regexp"
+	"strings"
+
+	"github.com/microcosm-cc/bluemonday"
+)
+
+var (
+	// Sanitizer for HTML content (allows safe HTML tags)
+	htmlPolicy = bluemonday.UGCPolicy()
+	
+	// Strict sanitizer (strips all HTML)
+	strictPolicy = bluemonday.StrictPolicy()
+	
+	// Tag regex for basic stripping
+	tagRegex = regexp.MustCompile(`<[^>]*>`)
+	
+	// Filename unsafe characters
+	unsafeFilenameChars = regexp.MustCompile(`[<>:"/\\|?*\x00-\x1f]`)
+)
+
+// SanitizeHTML sanitizes HTML content, allowing safe tags and removing dangerous ones
+func SanitizeHTML(input string) string {
+	return htmlPolicy.Sanitize(input)
+}
+
+// EscapeString escapes HTML special characters
+func EscapeString(input string) string {
+	return html.EscapeString(input)
+}
+
+// StripTags removes all HTML tags from a string
+func StripTags(input string) string {
+	return strictPolicy.Sanitize(input)
+}
+
+// SanitizeMarkdown sanitizes markdown content (removes HTML but preserves markdown)
+func SanitizeMarkdown(input string) string {
+	// Remove HTML tags but preserve markdown syntax
+	// Use bluemonday to remove dangerous HTML while keeping the text
+	return htmlPolicy.Sanitize(input)
+}
+
+// SanitizeFilename sanitizes a filename to prevent path traversal and other attacks
+func SanitizeFilename(filename string) string {
+	// Remove path separators
+	filename = strings.ReplaceAll(filename, "/", "")
+	filename = strings.ReplaceAll(filename, "\\", "")
+	filename = strings.ReplaceAll(filename, "..", "")
+	
+	// Remove unsafe characters
+	filename = unsafeFilenameChars.ReplaceAllString(filename, "")
+	
+	// Replace spaces with underscores
+	filename = strings.ReplaceAll(filename, " ", "_")
+	
+	// Trim dots from start/end (hidden files, directory references)
+	filename = strings.Trim(filename, ".")
+	
+	return filename
+}
+
+// SanitizeURL ensures URL is safe (no javascript:, data:, etc.)
+func SanitizeURL(url string) string {
+	url = strings.TrimSpace(url)
+	lower := strings.ToLower(url)
+	
+	// Block dangerous URL schemes
+	dangerousSchemes := []string{
+		"javascript:",
+		"data:",
+		"vbscript:",
+		"file:",
+	}
+	
+	for _, scheme := range dangerousSchemes {
+		if strings.HasPrefix(lower, scheme) {
+			return ""
+		}
+	}
+	
+	return url
+}

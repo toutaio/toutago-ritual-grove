@@ -9,6 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Security Hardening (Phase 6.2)** (TDD)
+  - **CSRF Protection**:
+    - CSRF middleware with token generation
+    - Support for header and form-based tokens
+    - Safe method exemption (GET, HEAD, OPTIONS, TRACE)
+    - Session-based token storage
+    - 8+ comprehensive tests
+  - **Rate Limiting**:
+    - IP-based rate limiting middleware
+    - Configurable request limits and time windows
+    - Automatic cleanup of expired entries
+    - Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining)
+    - IPv4 and IPv6 support
+    - 7+ comprehensive tests
+  - **XSS Prevention**:
+    - HTML sanitization with bluemonday
+    - String escaping for output
+    - Tag stripping utilities
+    - Markdown sanitization
+    - Filename sanitization (path traversal prevention)
+    - URL sanitization (dangerous schemes blocked)
+    - 30+ comprehensive tests covering all edge cases
+  - **Password Strength Validation**:
+    - Minimum 8 characters requirement
+    - Uppercase, lowercase, digit, special char requirements
+    - Common password blacklist
+    - Password strength scoring (0-5)
+    - 20+ comprehensive tests
+
+- **Blog Ritual: Comprehensive Documentation (Phase 6.5)**
+  - **README Updates**:
+    - Complete feature list with status
+    - Quick start installation guide
+    - User roles & permissions table
+    - Project structure overview
+    - Usage examples for all features
+    - Development guide
+    - Architecture diagrams
+    - Troubleshooting section
+  - **Developer Guides**:
+    - Customization instructions
+    - Extension points
+    - Testing guide
+    - Code quality tools
+
 - **Blog Ritual: Error Pages & Validation (Phase 6.1)** (TDD)
   - **Error Pages**:
     - Modern 404 page with gradient design

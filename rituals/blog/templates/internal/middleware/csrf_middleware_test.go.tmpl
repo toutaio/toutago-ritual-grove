@@ -1,0 +1,175 @@
+package middleware
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/gorilla/sessions"
+)
+
+func TestCSRFMiddleware_ValidToken(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test-secret-key"))
+	middleware := CSRFMiddleware(store)
+
+	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("success"))
+	}))
+
+	// First request to get token
+	req1 := httptest.NewRequest("GET", "/test", nil)
+	rr1 := httptest.NewRecorder()
+	handler.ServeHTTP(rr1, req1)
+
+	// Extract session cookie
+	cookies := rr1.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("No session cookie set")
+	}
+
+	// Get session to extract CSRF token
+	session, _ := store.Get(req1, "session")
+	token, ok := session.Values["csrf_token"].(string)
+	if !ok || token == "" {
+		t.Fatal("No CSRF token in session")
+	}
+
+	// POST request with valid token
+	req2 := httptest.NewRequest("POST", "/test", strings.NewReader("data"))
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req2.Header.Set("X-CSRF-Token", token)
+	for _, cookie := range cookies {
+		req2.AddCookie(cookie)
+	}
+
+	rr2 := httptest.NewRecorder()
+	handler.ServeHTTP(rr2, req2)
+
+	if rr2.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rr2.Code)
+	}
+}
+
+func TestCSRFMiddleware_MissingToken(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test-secret-key"))
+	middleware := CSRFMiddleware(store)
+
+	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/test", nil)
+	rr := httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("Expected status 403, got %d", rr.Code)
+	}
+}
+
+func TestCSRFMiddleware_InvalidToken(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test-secret-key"))
+	middleware := CSRFMiddleware(store)
+
+	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	// First request to set up session
+	req1 := httptest.NewRequest("GET", "/test", nil)
+	rr1 := httptest.NewRecorder()
+	handler.ServeHTTP(rr1, req1)
+
+	cookies := rr1.Result().Cookies()
+
+	// POST with invalid token
+	req2 := httptest.NewRequest("POST", "/test", nil)
+	req2.Header.Set("X-CSRF-Token", "invalid-token")
+	for _, cookie := range cookies {
+		req2.AddCookie(cookie)
+	}
+
+	rr2 := httptest.NewRecorder()
+	handler.ServeHTTP(rr2, req2)
+
+	if rr2.Code != http.StatusForbidden {
+		t.Errorf("Expected status 403, got %d", rr2.Code)
+	}
+}
+
+func TestCSRFMiddleware_SafeMethods(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test-secret-key"))
+	middleware := CSRFMiddleware(store)
+
+	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	safeMethods := []string{"GET", "HEAD", "OPTIONS", "TRACE"}
+
+	for _, method := range safeMethods {
+		req := httptest.NewRequest(method, "/test", nil)
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("Method %s: expected status 200, got %d", method, rr.Code)
+		}
+	}
+}
+
+func TestCSRFMiddleware_FormToken(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test-secret-key"))
+	middleware := CSRFMiddleware(store)
+
+	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	// Get session and token
+	req1 := httptest.NewRequest("GET", "/test", nil)
+	rr1 := httptest.NewRecorder()
+	handler.ServeHTTP(rr1, req1)
+
+	cookies := rr1.Result().Cookies()
+	session, _ := store.Get(req1, "session")
+	token := session.Values["csrf_token"].(string)
+
+	// POST with token in form data
+	formData := "csrf_token=" + token + "&other=data"
+	req2 := httptest.NewRequest("POST", "/test", strings.NewReader(formData))
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	for _, cookie := range cookies {
+		req2.AddCookie(cookie)
+	}
+
+	rr2 := httptest.NewRecorder()
+	handler.ServeHTTP(rr2, req2)
+
+	if rr2.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rr2.Code)
+	}
+}
+
+func TestGetCSRFToken(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test-secret-key"))
+	
+	req := httptest.NewRequest("GET", "/test", nil)
+	rr := httptest.NewRecorder()
+
+	token := GetCSRFToken(rr, req, store)
+
+	if token == "" {
+		t.Error("Expected non-empty CSRF token")
+	}
+
+	// Calling again should return same token
+	token2 := GetCSRFToken(rr, req, store)
+	if token != token2 {
+		t.Error("Expected same token on subsequent calls")
+	}
+}
