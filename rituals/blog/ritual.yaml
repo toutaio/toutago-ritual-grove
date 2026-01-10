@@ -303,6 +303,13 @@ files:
     - src: internal/services/media_service_test.go.tmpl
       dest: internal/services/media_service_test.go
 
+    # Storage providers
+    - src: internal/storage/local_storage.go.tmpl
+      dest: internal/storage/local_storage.go
+
+    - src: internal/storage/local_storage_test.go.tmpl
+      dest: internal/storage/local_storage_test.go
+
     # Middleware
     - src: internal/middleware/csrf_middleware.go.tmpl
       dest: internal/middleware/csrf_middleware.go

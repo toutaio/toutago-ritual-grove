@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Local Storage Provider** (TDD)
+  - **Local File System Storage**:
+    - `LocalStorage` implementation of `StorageProvider` interface
+    - File upload to local directory
+    - File deletion with error handling
+    - URL generation for uploaded files
+    - 20+ comprehensive test cases
+  - **Security Features**:
+    - Path traversal attack prevention
+    - Absolute path blocking
+    - Input validation
+    - Safe path cleaning
+  - **Features**:
+    - Automatic directory creation
+    - Nested directory support
+    - Idempotent deletion (no error on missing files)
+    - Configurable base path and URL
+  - **Test Coverage**:
+    - Upload success scenarios
+    - Directory creation tests
+    - Security/path traversal tests
+    - Delete operations
+    - URL generation tests
+
 - **Blog Ritual: Media Handler & Admin UI** (TDD)
   - **Media Handler**:
     - `List()` - Display media with statistics and filters
