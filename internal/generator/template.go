@@ -3,9 +3,9 @@ package generator
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -19,7 +19,7 @@ type TemplateEngine interface {
 
 // GoTemplateEngine implements TemplateEngine using Go's text/template
 type GoTemplateEngine struct {
-	funcMap   template.FuncMap
+	funcMap    template.FuncMap
 	leftDelim  string
 	rightDelim string
 }
@@ -33,22 +33,22 @@ func NewGoTemplateEngine() *GoTemplateEngine {
 func NewGoTemplateEngineWithDelimiters(left, right string) *GoTemplateEngine {
 	caser := cases.Title(language.English)
 	funcMap := template.FuncMap{
-		"upper":  strings.ToUpper,
-		"lower":  strings.ToLower,
-		"title":  caser.String,
-		"pascal": toPascalCase,
-		"camel":  toCamelCase,
-		"snake":  toSnakeCase,
-		"kebab":  toKebabCase,
+		"upper":   strings.ToUpper,
+		"lower":   strings.ToLower,
+		"title":   caser.String,
+		"pascal":  toPascalCase,
+		"camel":   toCamelCase,
+		"snake":   toSnakeCase,
+		"kebab":   toKebabCase,
 		"slugify": slugify,
-		
+
 		// Docker helpers
-		"dockerImage":  DockerImage,
-		"dockerPort":   DockerPort,
-		"healthCheck":  HealthCheck,
-		"hasFrontend":  HasFrontend,
-		"dbUser":       DBUser,
-		"dbName":       DBName,
+		"dockerImage": DockerImage,
+		"dockerPort":  DockerPort,
+		"healthCheck": HealthCheck,
+		"hasFrontend": HasFrontend,
+		"dbUser":      DBUser,
+		"dbName":      DBName,
 	}
 
 	return &GoTemplateEngine{
