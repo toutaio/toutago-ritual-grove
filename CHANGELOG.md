@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Media Management Service** (TDD)
+  - **Media DTOs**:
+    - `UploadMediaDTO` with comprehensive validation
+    - File size limit (10MB max)
+    - Content validation
+    - 10+ DTO validation test cases
+  - **Media Repository Interface**:
+    - Full CRUD operations
+    - Filter by type, uploader, search
+    - Count by type statistics
+    - Paginated queries
+  - **Storage Provider Interface**:
+    - Abstract storage layer (supports S3, local, cloud)
+    - Upload, delete, get URL operations
+    - Pluggable storage backends
+  - **Media Service**:
+    - Upload with automatic type detection
+    - Permission-based delete (owner or admin)
+    - Unique filename generation (UUID-based)
+    - Automatic cleanup on failures
+    - MIME type to media type mapping
+    - 25+ service test cases with mock storage/repository
+  - **Features**:
+    - Automatic media type detection (image, video, document, other)
+    - Storage and database transaction safety
+    - Owner-based permissions
+    - Admin override for all operations
+  - **Test Coverage**:
+    - Mock storage provider for isolated testing
+    - Mock repository for service tests
+    - Upload success and failure scenarios
+    - Permission enforcement tests
+    - MIME type detection tests (10 types)
+
 - **Blog Ritual: Media Management Foundation** (TDD)
   - **Media Domain Model**:
     - `Media` entity with comprehensive validation

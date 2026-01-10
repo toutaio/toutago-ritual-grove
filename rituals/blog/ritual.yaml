@@ -269,6 +269,34 @@ files:
     - src: internal/repositories/tag_repository.go.tmpl
       dest: internal/repositories/tag_repository.go
 
+    # Media repository
+    - src: internal/repositories/media_repository.go.tmpl
+      dest: internal/repositories/media_repository.go
+
+    # Media DTOs
+    - src: internal/dto/media_dto.go.tmpl
+      dest: internal/dto/media_dto.go
+
+    - src: internal/dto/media_dto_test.go.tmpl
+      dest: internal/dto/media_dto_test.go
+
+    # Domain models (media)
+    - src: internal/domain/media.go.tmpl
+      dest: internal/domain/media.go
+
+    - src: internal/domain/media_test.go.tmpl
+      dest: internal/domain/media_test.go
+
+    # Media service
+    - src: internal/services/media_service.go.tmpl
+      dest: internal/services/media_service.go
+
+    - src: internal/services/media_service_impl.go.tmpl
+      dest: internal/services/media_service_impl.go
+
+    - src: internal/services/media_service_test.go.tmpl
+      dest: internal/services/media_service_test.go
+
     # Middleware
     - src: internal/middleware/csrf_middleware.go.tmpl
       dest: internal/middleware/csrf_middleware.go
