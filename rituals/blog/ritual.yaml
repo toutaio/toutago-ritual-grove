@@ -230,6 +230,12 @@ files:
     - src: internal/helpers/password_strength_test.go.tmpl
       dest: internal/helpers/password_strength_test.go
 
+    - src: internal/helpers/pagination.go.tmpl
+      dest: internal/helpers/pagination.go
+
+    - src: internal/helpers/pagination_test.go.tmpl
+      dest: internal/helpers/pagination_test.go
+
     # Middleware
     - src: internal/middleware/csrf_middleware.go.tmpl
       dest: internal/middleware/csrf_middleware.go
@@ -252,6 +258,10 @@ files:
 
     - src: internal/dto/user_dto_test.go.tmpl
       dest: internal/dto/user_dto_test.go
+
+    # Integration tests
+    - src: tests/integration_test.go.tmpl
+      dest: tests/integration_test.go
 
     # Error pages
     - src: views/errors/403.html.tmpl

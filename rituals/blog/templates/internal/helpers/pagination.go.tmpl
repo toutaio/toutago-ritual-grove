@@ -1,0 +1,124 @@
+package helpers
+
+// Pagination holds pagination metadata
+type Pagination struct {
+	CurrentPage int
+	TotalPages  int
+	PerPage     int
+	TotalItems  int
+	Offset      int
+	Limit       int
+	HasNext     bool
+	HasPrev     bool
+}
+
+// CalculatePagination calculates pagination metadata
+func CalculatePagination(total, page, perPage int) Pagination {
+	// Validate and set defaults
+	if page < 1 {
+		page = 1
+	}
+	perPage = ValidatePerPage(perPage)
+
+	// Calculate total pages
+	totalPages := 0
+	if total > 0 {
+		totalPages = (total + perPage - 1) / perPage
+	}
+
+	// Clamp page to valid range
+	if page > totalPages && totalPages > 0 {
+		page = totalPages
+	}
+
+	// Calculate offset and limit
+	offset := (page - 1) * perPage
+	if offset < 0 {
+		offset = 0
+	}
+
+	return Pagination{
+		CurrentPage: page,
+		TotalPages:  totalPages,
+		PerPage:     perPage,
+		TotalItems:  total,
+		Offset:      offset,
+		Limit:       perPage,
+		HasNext:     page < totalPages,
+		HasPrev:     page > 1,
+	}
+}
+
+// GetPageNumbers returns a slice of page numbers to display in pagination UI
+// Returns current page and surrounding pages (e.g., [1, 2, 3, 4, 5])
+func GetPageNumbers(total, current, perPage int) []int {
+	pagination := CalculatePagination(total, current, perPage)
+
+	if pagination.TotalPages == 0 {
+		return []int{}
+	}
+
+	// For small number of pages, show all
+	if pagination.TotalPages <= 7 {
+		pages := make([]int, pagination.TotalPages)
+		for i := 0; i < pagination.TotalPages; i++ {
+			pages[i] = i + 1
+		}
+		return pages
+	}
+
+	// For large number of pages, show current and surrounding
+	pages := []int{}
+
+	// Always show first page
+	pages = append(pages, 1)
+
+	// Calculate range around current page
+	start := max(2, current-2)
+	end := min(pagination.TotalPages-1, current+2)
+
+	// Add ellipsis if needed
+	if start > 2 {
+		pages = append(pages, -1) // -1 represents ellipsis
+	}
+
+	// Add surrounding pages
+	for i := start; i <= end; i++ {
+		pages = append(pages, i)
+	}
+
+	// Add ellipsis if needed
+	if end < pagination.TotalPages-1 {
+		pages = append(pages, -1) // -1 represents ellipsis
+	}
+
+	// Always show last page
+	pages = append(pages, pagination.TotalPages)
+
+	return pages
+}
+
+// ValidatePerPage ensures perPage is within valid range (1-100)
+func ValidatePerPage(perPage int) int {
+	if perPage < 1 {
+		return 10 // default
+	}
+	if perPage > 100 {
+		return 100 // max
+	}
+	return perPage
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}

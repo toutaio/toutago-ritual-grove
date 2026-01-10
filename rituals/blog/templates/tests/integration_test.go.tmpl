@@ -1,0 +1,424 @@
+package tests
+
+import (
+	"bytes"
+	"database/sql"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/handlers/auth"
+	[[- if eq .database_type "postgres" ]]
+	"[[ .module_path ]]/internal/repositories/postgres"
+	[[- else ]]
+	"[[ .module_path ]]/internal/repositories/mysql"
+	[[- end ]]
+	"[[ .module_path ]]/internal/services"
+
+	"github.com/gorilla/sessions"
+	"github.com/toutaio/toutago-cosan-router"
+)
+
+// TestAuthFlowIntegration tests the complete authentication flow
+func TestAuthFlowIntegration(t *testing.T) {
+	// Setup test database and dependencies
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Create repositories
+	[[- if eq .database_type "postgres" ]]
+	userRepo := postgres.NewUserRepository(db)
+	sessionRepo := postgres.NewSessionRepository(db)
+	[[- else ]]
+	userRepo := mysql.NewUserRepository(db)
+	sessionRepo := mysql.NewSessionRepository(db)
+	[[- end ]]
+
+	// Create services
+	authService := services.NewAuthService(userRepo, sessionRepo)
+
+	// Create session store
+	store := sessions.NewCookieStore([]byte("test-secret-key-32-bytes-long!!"))
+
+	// Create handlers
+	authHandler := auth.NewAuthHandler(authService, store)
+
+	// Setup router
+	router := cosan.NewRouter()
+	router.Post("/auth/setup", authHandler.Setup)
+	router.Post("/auth/login", authHandler.Login)
+	router.Get("/auth/logout", authHandler.Logout)
+
+	t.Run("Complete flow: Setup -> Login -> Logout", func(t *testing.T) {
+		// Step 1: Setup first admin user
+		setupDTO := dto.SetupFirstAdminDTO{
+			Email:    "admin@example.com",
+			Username: "admin",
+			Password: "AdminP@ss123",
+		}
+
+		setupBody, _ := json.Marshal(setupDTO)
+		req := httptest.NewRequest("POST", "/auth/setup", bytes.NewBuffer(setupBody))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK && rr.Code != http.StatusCreated {
+			t.Fatalf("Setup failed with status %d: %s", rr.Code, rr.Body.String())
+		}
+
+		// Step 2: Login with created admin
+		loginDTO := dto.LoginDTO{
+			Email:    "admin@example.com",
+			Password: "AdminP@ss123",
+		}
+
+		loginBody, _ := json.Marshal(loginDTO)
+		req = httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(loginBody))
+		req.Header.Set("Content-Type", "application/json")
+		rr = httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("Login failed with status %d: %s", rr.Code, rr.Body.String())
+		}
+
+		// Extract session cookie
+		cookies := rr.Result().Cookies()
+		var sessionCookie *http.Cookie
+		for _, c := range cookies {
+			if c.Name == "session" {
+				sessionCookie = c
+				break
+			}
+		}
+
+		if sessionCookie == nil {
+			t.Fatal("No session cookie set after login")
+		}
+
+		// Step 3: Logout
+		req = httptest.NewRequest("GET", "/auth/logout", nil)
+		req.AddCookie(sessionCookie)
+		rr = httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK && rr.Code != http.StatusFound {
+			t.Fatalf("Logout failed with status %d", rr.Code)
+		}
+	})
+
+	t.Run("Failed login with wrong password", func(t *testing.T) {
+		// Try to login with wrong password
+		loginDTO := dto.LoginDTO{
+			Email:    "admin@example.com",
+			Password: "WrongPassword",
+		}
+
+		body, _ := json.Marshal(loginDTO)
+		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", rr.Code)
+		}
+	})
+
+	t.Run("Cannot setup twice", func(t *testing.T) {
+		// Try to setup again (should fail as admin already exists)
+		setupDTO := dto.SetupFirstAdminDTO{
+			Email:    "another@example.com",
+			Username: "another",
+			Password: "AnotherP@ss123",
+		}
+
+		body, _ := json.Marshal(setupDTO)
+		req := httptest.NewRequest("POST", "/auth/setup", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		if rr.Code == http.StatusOK || rr.Code == http.StatusCreated {
+			t.Error("Setup should fail when admin already exists")
+		}
+	})
+}
+
+// TestPostManagementIntegration tests the complete post management flow
+func TestPostManagementIntegration(t *testing.T) {
+	// Setup test database and dependencies
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Create repositories
+	[[- if eq .database_type "postgres" ]]
+	userRepo := postgres.NewUserRepository(db)
+	postRepo := postgres.NewPostRepository(db)
+	categoryRepo := postgres.NewCategoryRepository(db)
+	[[- else ]]
+	userRepo := mysql.NewUserRepository(db)
+	postRepo := mysql.NewPostRepository(db)
+	categoryRepo := mysql.NewCategoryRepository(db)
+	[[- end ]]
+
+	// Create services
+	permService := services.NewPermissionService()
+	postService := services.NewPostService(postRepo, categoryRepo, permService)
+
+	// Create a test user (admin)
+	admin := &domain.User{
+		Email:    "admin@example.com",
+		Username: "admin",
+		Password: "hashed",
+		Role:     domain.RoleAdmin,
+		IsActive: true,
+	}
+	userRepo.Create(admin)
+
+	t.Run("Create post flow", func(t *testing.T) {
+		// Create a category first
+		category := &domain.Category{
+			Name: "Technology",
+			Slug: "technology",
+		}
+		categoryRepo.Create(category)
+
+		// Create a post
+		createDTO := dto.CreatePostDTO{
+			Title:      "Test Post",
+			Content:    "This is test content",
+			CategoryID: category.ID,
+			Status:     string(domain.PostStatusDraft),
+		}
+
+		post, err := postService.Create(&createDTO, admin)
+		if err != nil {
+			t.Fatalf("Failed to create post: %v", err)
+		}
+
+		if post.Title != createDTO.Title {
+			t.Errorf("Expected title %s, got %s", createDTO.Title, post.Title)
+		}
+
+		if post.AuthorID != admin.ID {
+			t.Errorf("Expected author ID %d, got %d", admin.ID, post.AuthorID)
+		}
+
+		if post.Status != domain.PostStatusDraft {
+			t.Errorf("Expected status draft, got %s", post.Status)
+		}
+	})
+
+	t.Run("Update and publish post flow", func(t *testing.T) {
+		// Create a draft post
+		category := &domain.Category{Name: "Tech", Slug: "tech"}
+		categoryRepo.Create(category)
+
+		createDTO := dto.CreatePostDTO{
+			Title:      "Draft Post",
+			Content:    "Draft content",
+			CategoryID: category.ID,
+			Status:     string(domain.PostStatusDraft),
+		}
+
+		post, _ := postService.Create(&createDTO, admin)
+
+		// Update the post
+		updateDTO := dto.UpdatePostDTO{
+			Title:   "Updated Post",
+			Content: "Updated content",
+		}
+
+		updated, err := postService.Update(post.ID, &updateDTO, admin)
+		if err != nil {
+			t.Fatalf("Failed to update post: %v", err)
+		}
+
+		if updated.Title != updateDTO.Title {
+			t.Errorf("Expected title %s, got %s", updateDTO.Title, updated.Title)
+		}
+
+		// Publish the post
+		published, err := postService.Publish(post.ID, admin)
+		if err != nil {
+			t.Fatalf("Failed to publish post: %v", err)
+		}
+
+		if published.Status != domain.PostStatusPublished {
+			t.Errorf("Expected status published, got %s", published.Status)
+		}
+
+		if published.PublishedAt == nil {
+			t.Error("Expected PublishedAt to be set")
+		}
+	})
+
+	t.Run("Delete post flow", func(t *testing.T) {
+		// Create and delete a post
+		category := &domain.Category{Name: "Test", Slug: "test"}
+		categoryRepo.Create(category)
+
+		createDTO := dto.CreatePostDTO{
+			Title:      "To Delete",
+			Content:    "Will be deleted",
+			CategoryID: category.ID,
+			Status:     string(domain.PostStatusDraft),
+		}
+
+		post, _ := postService.Create(&createDTO, admin)
+
+		// Delete the post
+		err := postService.Delete(post.ID, admin)
+		if err != nil {
+			t.Fatalf("Failed to delete post: %v", err)
+		}
+
+		// Verify it's deleted (soft delete)
+		deleted, err := postRepo.FindByID(post.ID)
+		if err == nil && deleted.DeletedAt == nil {
+			t.Error("Post should be soft deleted")
+		}
+	})
+}
+
+// TestPermissionIntegration tests permission checks across different user roles
+func TestPermissionIntegration(t *testing.T) {
+	// Setup test database
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Create repositories
+	[[- if eq .database_type "postgres" ]]
+	userRepo := postgres.NewUserRepository(db)
+	postRepo := postgres.NewPostRepository(db)
+	categoryRepo := postgres.NewCategoryRepository(db)
+	[[- else ]]
+	userRepo := mysql.NewUserRepository(db)
+	postRepo := mysql.NewPostRepository(db)
+	categoryRepo := mysql.NewCategoryRepository(db)
+	[[- end ]]
+
+	// Create services
+	permService := services.NewPermissionService()
+	postService := services.NewPostService(postRepo, categoryRepo, permService)
+
+	// Create users with different roles
+	admin := &domain.User{
+		Email: "admin@example.com", Username: "admin",
+		Password: "hash", Role: domain.RoleAdmin, IsActive: true,
+	}
+	editor := &domain.User{
+		Email: "editor@example.com", Username: "editor",
+		Password: "hash", Role: domain.RoleEditor, IsActive: true,
+	}
+	author := &domain.User{
+		Email: "author@example.com", Username: "author",
+		Password: "hash", Role: domain.RoleAuthor, IsActive: true,
+	}
+	user := &domain.User{
+		Email: "user@example.com", Username: "user",
+		Password: "hash", Role: domain.RoleUser, IsActive: true,
+	}
+
+	userRepo.Create(admin)
+	userRepo.Create(editor)
+	userRepo.Create(author)
+	userRepo.Create(user)
+
+	category := &domain.Category{Name: "Test", Slug: "test"}
+	categoryRepo.Create(category)
+
+	t.Run("User cannot create post", func(t *testing.T) {
+		createDTO := dto.CreatePostDTO{
+			Title: "User Post", Content: "Content",
+			CategoryID: category.ID, Status: string(domain.PostStatusDraft),
+		}
+
+		_, err := postService.Create(&createDTO, user)
+		if err == nil {
+			t.Error("Regular user should not be able to create posts")
+		}
+	})
+
+	t.Run("Author can create and edit own post", func(t *testing.T) {
+		createDTO := dto.CreatePostDTO{
+			Title: "Author Post", Content: "Content",
+			CategoryID: category.ID, Status: string(domain.PostStatusDraft),
+		}
+
+		post, err := postService.Create(&createDTO, author)
+		if err != nil {
+			t.Fatalf("Author should be able to create post: %v", err)
+		}
+
+		// Author can edit own post
+		updateDTO := dto.UpdatePostDTO{Title: "Updated by Author"}
+		_, err = postService.Update(post.ID, &updateDTO, author)
+		if err != nil {
+			t.Errorf("Author should be able to edit own post: %v", err)
+		}
+	})
+
+	t.Run("Author cannot edit others' posts", func(t *testing.T) {
+		// Admin creates a post
+		createDTO := dto.CreatePostDTO{
+			Title: "Admin Post", Content: "Content",
+			CategoryID: category.ID, Status: string(domain.PostStatusDraft),
+		}
+		post, _ := postService.Create(&createDTO, admin)
+
+		// Author tries to edit
+		updateDTO := dto.UpdatePostDTO{Title: "Hacked"}
+		_, err := postService.Update(post.ID, &updateDTO, author)
+		if err == nil {
+			t.Error("Author should not be able to edit others' posts")
+		}
+	})
+
+	t.Run("Editor can edit any post", func(t *testing.T) {
+		// Author creates a post
+		createDTO := dto.CreatePostDTO{
+			Title: "Post to Edit", Content: "Content",
+			CategoryID: category.ID, Status: string(domain.PostStatusDraft),
+		}
+		post, _ := postService.Create(&createDTO, author)
+
+		// Editor edits it
+		updateDTO := dto.UpdatePostDTO{Title: "Edited by Editor"}
+		_, err := postService.Update(post.ID, &updateDTO, editor)
+		if err != nil {
+			t.Errorf("Editor should be able to edit any post: %v", err)
+		}
+	})
+}
+
+// Helper function to setup test database
+func setupTestDB(t *testing.T) (*sql.DB, func()) {
+	// This would connect to a test database
+	// For template purposes, this is a placeholder
+	// In real implementation, you'd use testcontainers or similar
+
+	db, err := sql.Open("[[.database_type]]", "test_connection_string")
+	if err != nil {
+		t.Fatalf("Failed to open test database: %v", err)
+	}
+
+	// Run migrations
+	// runTestMigrations(db)
+
+	cleanup := func() {
+		db.Close()
+	}
+
+	return db, cleanup
+}

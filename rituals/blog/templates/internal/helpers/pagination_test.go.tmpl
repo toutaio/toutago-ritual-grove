@@ -1,0 +1,201 @@
+package helpers
+
+import (
+	"testing"
+)
+
+func TestCalculatePagination_FirstPage(t *testing.T) {
+	total := 100
+	page := 1
+	perPage := 10
+
+	pagination := CalculatePagination(total, page, perPage)
+
+	if pagination.CurrentPage != 1 {
+		t.Errorf("Expected current page 1, got %d", pagination.CurrentPage)
+	}
+	if pagination.TotalPages != 10 {
+		t.Errorf("Expected 10 total pages, got %d", pagination.TotalPages)
+	}
+	if pagination.HasNext != true {
+		t.Error("Expected HasNext to be true")
+	}
+	if pagination.HasPrev != false {
+		t.Error("Expected HasPrev to be false")
+	}
+	if pagination.Offset != 0 {
+		t.Errorf("Expected offset 0, got %d", pagination.Offset)
+	}
+	if pagination.Limit != 10 {
+		t.Errorf("Expected limit 10, got %d", pagination.Limit)
+	}
+}
+
+func TestCalculatePagination_MiddlePage(t *testing.T) {
+	total := 100
+	page := 5
+	perPage := 10
+
+	pagination := CalculatePagination(total, page, perPage)
+
+	if pagination.CurrentPage != 5 {
+		t.Errorf("Expected current page 5, got %d", pagination.CurrentPage)
+	}
+	if pagination.HasNext != true {
+		t.Error("Expected HasNext to be true")
+	}
+	if pagination.HasPrev != true {
+		t.Error("Expected HasPrev to be true")
+	}
+	if pagination.Offset != 40 {
+		t.Errorf("Expected offset 40, got %d", pagination.Offset)
+	}
+}
+
+func TestCalculatePagination_LastPage(t *testing.T) {
+	total := 100
+	page := 10
+	perPage := 10
+
+	pagination := CalculatePagination(total, page, perPage)
+
+	if pagination.CurrentPage != 10 {
+		t.Errorf("Expected current page 10, got %d", pagination.CurrentPage)
+	}
+	if pagination.HasNext != false {
+		t.Error("Expected HasNext to be false")
+	}
+	if pagination.HasPrev != true {
+		t.Error("Expected HasPrev to be true")
+	}
+}
+
+func TestCalculatePagination_PartialLastPage(t *testing.T) {
+	total := 95
+	page := 10
+	perPage := 10
+
+	pagination := CalculatePagination(total, page, perPage)
+
+	if pagination.TotalPages != 10 {
+		t.Errorf("Expected 10 total pages, got %d", pagination.TotalPages)
+	}
+}
+
+func TestCalculatePagination_EmptyResults(t *testing.T) {
+	total := 0
+	page := 1
+	perPage := 10
+
+	pagination := CalculatePagination(total, page, perPage)
+
+	if pagination.TotalPages != 0 {
+		t.Errorf("Expected 0 total pages, got %d", pagination.TotalPages)
+	}
+	if pagination.HasNext != false {
+		t.Error("Expected HasNext to be false")
+	}
+	if pagination.HasPrev != false {
+		t.Error("Expected HasPrev to be false")
+	}
+}
+
+func TestCalculatePagination_InvalidPage(t *testing.T) {
+	total := 100
+	page := 0
+	perPage := 10
+
+	pagination := CalculatePagination(total, page, perPage)
+
+	// Should default to page 1
+	if pagination.CurrentPage != 1 {
+		t.Errorf("Expected current page 1 (default), got %d", pagination.CurrentPage)
+	}
+}
+
+func TestCalculatePagination_PageBeyondTotal(t *testing.T) {
+	total := 100
+	page := 20
+	perPage := 10
+
+	pagination := CalculatePagination(total, page, perPage)
+
+	// Should clamp to last page
+	if pagination.CurrentPage > pagination.TotalPages {
+		t.Error("Current page should not exceed total pages")
+	}
+}
+
+func TestGetPageNumbers_SmallSet(t *testing.T) {
+	total := 30
+	current := 2
+	perPage := 10
+
+	pages := GetPageNumbers(total, current, perPage)
+
+	expected := []int{1, 2, 3}
+	if len(pages) != len(expected) {
+		t.Errorf("Expected %d pages, got %d", len(expected), len(pages))
+	}
+
+	for i, p := range pages {
+		if p != expected[i] {
+			t.Errorf("Expected page %d at index %d, got %d", expected[i], i, p)
+		}
+	}
+}
+
+func TestGetPageNumbers_LargeSet(t *testing.T) {
+	total := 1000
+	current := 50
+	perPage := 10
+
+	pages := GetPageNumbers(total, current, perPage)
+
+	// Should return current page and surrounding pages
+	if len(pages) == 0 {
+		t.Error("Expected some page numbers")
+	}
+
+	// Current page should be in the list
+	found := false
+	for _, p := range pages {
+		if p == current {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Current page should be in page numbers")
+	}
+}
+
+func TestValidatePerPage_Valid(t *testing.T) {
+	tests := []int{10, 20, 50, 100}
+
+	for _, perPage := range tests {
+		result := ValidatePerPage(perPage)
+		if result != perPage {
+			t.Errorf("Expected %d, got %d", perPage, result)
+		}
+	}
+}
+
+func TestValidatePerPage_TooSmall(t *testing.T) {
+	result := ValidatePerPage(0)
+	if result != 10 {
+		t.Errorf("Expected default 10, got %d", result)
+	}
+
+	result = ValidatePerPage(-5)
+	if result != 10 {
+		t.Errorf("Expected default 10, got %d", result)
+	}
+}
+
+func TestValidatePerPage_TooLarge(t *testing.T) {
+	result := ValidatePerPage(500)
+	if result != 100 {
+		t.Errorf("Expected max 100, got %d", result)
+	}
+}

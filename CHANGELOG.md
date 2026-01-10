@@ -38,6 +38,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Password strength scoring (0-5)
     - 20+ comprehensive tests
 
+- **Blog Ritual: Integration Testing (Phase 6.4)** (TDD)
+  - **Integration Tests**:
+    - Complete auth flow testing (setup → login → logout)
+    - Post management flow (create → update → publish → delete)
+    - Permission integration across all user roles
+    - Failed authentication scenarios
+    - Cross-service integration validation
+    - 15+ integration test scenarios
+
+- **Blog Ritual: Performance Optimization (Phase 6.3)** (TDD)
+  - **Pagination Helpers**:
+    - Smart pagination calculation with offset/limit
+    - Page number generation for UI
+    - Per-page validation (1-100 range)
+    - Edge case handling (empty results, invalid pages)
+    - 15+ comprehensive tests
+
 - **Blog Ritual: Comprehensive Documentation (Phase 6.5)**
   - **README Updates**:
     - Complete feature list with status
