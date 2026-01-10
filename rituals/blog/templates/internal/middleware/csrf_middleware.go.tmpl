@@ -33,10 +33,10 @@ func CSRFMiddleware(store sessions.Store) func(http.Handler) http.Handler {
 
 			// Check CSRF token for unsafe methods
 			sessionToken := session.Values["csrf_token"].(string)
-			
+
 			// Check header first
 			requestToken := r.Header.Get("X-CSRF-Token")
-			
+
 			// If not in header, check form data
 			if requestToken == "" {
 				requestToken = r.FormValue("csrf_token")

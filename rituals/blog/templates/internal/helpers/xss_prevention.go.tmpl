@@ -11,13 +11,13 @@ import (
 var (
 	// Sanitizer for HTML content (allows safe HTML tags)
 	htmlPolicy = bluemonday.UGCPolicy()
-	
+
 	// Strict sanitizer (strips all HTML)
 	strictPolicy = bluemonday.StrictPolicy()
-	
+
 	// Tag regex for basic stripping
 	tagRegex = regexp.MustCompile(`<[^>]*>`)
-	
+
 	// Filename unsafe characters
 	unsafeFilenameChars = regexp.MustCompile(`[<>:"/\\|?*\x00-\x1f]`)
 )
@@ -50,16 +50,16 @@ func SanitizeFilename(filename string) string {
 	filename = strings.ReplaceAll(filename, "/", "")
 	filename = strings.ReplaceAll(filename, "\\", "")
 	filename = strings.ReplaceAll(filename, "..", "")
-	
+
 	// Remove unsafe characters
 	filename = unsafeFilenameChars.ReplaceAllString(filename, "")
-	
+
 	// Replace spaces with underscores
 	filename = strings.ReplaceAll(filename, " ", "_")
-	
+
 	// Trim dots from start/end (hidden files, directory references)
 	filename = strings.Trim(filename, ".")
-	
+
 	return filename
 }
 
@@ -67,7 +67,7 @@ func SanitizeFilename(filename string) string {
 func SanitizeURL(url string) string {
 	url = strings.TrimSpace(url)
 	lower := strings.ToLower(url)
-	
+
 	// Block dangerous URL schemes
 	dangerousSchemes := []string{
 		"javascript:",
@@ -75,12 +75,12 @@ func SanitizeURL(url string) string {
 		"vbscript:",
 		"file:",
 	}
-	
+
 	for _, scheme := range dangerousSchemes {
 		if strings.HasPrefix(lower, scheme) {
 			return ""
 		}
 	}
-	
+
 	return url
 }

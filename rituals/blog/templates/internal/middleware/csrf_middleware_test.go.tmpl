@@ -157,7 +157,7 @@ func TestCSRFMiddleware_FormToken(t *testing.T) {
 
 func TestGetCSRFToken(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test-secret-key"))
-	
+
 	req := httptest.NewRequest("GET", "/test", nil)
 	rr := httptest.NewRecorder()
 

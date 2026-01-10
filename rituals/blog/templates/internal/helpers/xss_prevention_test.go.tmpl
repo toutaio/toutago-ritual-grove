@@ -76,11 +76,11 @@ func TestSanitizeHTML_EventHandlers(t *testing.T) {
 	for _, handler := range eventHandlers {
 		input := `<div ` + handler + `="alert('xss')">Test</div>`
 		result := SanitizeHTML(input)
-		
+
 		if result == input {
 			t.Errorf("Event handler %s was not removed", handler)
 		}
-		
+
 		// Should not contain the handler
 		if contains(result, handler) {
 			t.Errorf("Result still contains %s: %s", handler, result)
@@ -277,8 +277,8 @@ func TestSanitizeFilename(t *testing.T) {
 
 // Helper function
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && 
-		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
+		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
 			containsMiddle(s, substr)))
 }
 
