@@ -40,9 +40,9 @@ func TestMkdirTask(t *testing.T) {
 func TestTemplateRenderTask(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Create template file.
+	// Create template file with custom delimiters.
 	templatePath := filepath.Join(tmpDir, "test.tmpl")
-	templateContent := "Hello, {{ .Name }}!"
+	templateContent := "Hello, [[ .Name ]]!"
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
 		t.Fatalf("Failed to create template: %v", err)
 	}

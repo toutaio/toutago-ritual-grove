@@ -306,13 +306,22 @@ func TestEnvExampleTemplate(t *testing.T) {
 func TestConditionalFrontendService(t *testing.T) {
 	tmplPath := filepath.Join("..", "..", "rituals", "_shared", "docker", "docker-compose.yml.tmpl")
 	
-	tmpl, err := template.ParseFiles(tmplPath)
+	// Create template with custom delimiters and functions
+	tmpl := template.New(filepath.Base(tmplPath)).Delims("[[", "]]").Funcs(template.FuncMap{
+		"slugify": func(s string) string {
+			return strings.ReplaceAll(strings.ToLower(s), " ", "-")
+		},
+	})
+	
+	tmpl, err := tmpl.ParseFiles(tmplPath)
 	require.NoError(t, err)
 
 	// Test with frontend
 	t.Run("with frontend", func(t *testing.T) {
 		data := map[string]interface{}{
 			"has_frontend": true,
+			"app_name":     "test-app",
+			"port":         8080,
 		}
 
 		var result strings.Builder
@@ -328,6 +337,8 @@ func TestConditionalFrontendService(t *testing.T) {
 	t.Run("without frontend", func(t *testing.T) {
 		data := map[string]interface{}{
 			"has_frontend": false,
+			"app_name":     "test-app",
+			"port":         8080,
 		}
 
 		var result strings.Builder
