@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Blog Ritual: Tag Management System** (TDD)
+  - **Tag Domain Model**:
+    - `Tag` entity with validation (name, slug, timestamps)
+    - `PostTag` relationship model for many-to-many associations
+    - Comprehensive validation (name required, max 50 chars, slug max 100 chars)
+    - 6+ domain model test cases
+  - **Tag DTOs**:
+    - `CreateTagDTO` and `UpdateTagDTO` with validation
+    - `TagFilters` for querying and pagination
+    - 9+ DTO validation test cases
+  - **Tag Repository Interface**:
+    - Full CRUD operations
+    - Slug and name-based lookups
+    - Post-tag relationship management (attach, detach, sync)
+    - Existence checks for name and slug uniqueness
+  - **Tag Service**:
+    - Create, Update, Delete, GetByID, GetBySlug, List, Count
+    - `GetOrCreateByName` for easy tag creation
+    - `GetOrCreateMultipleByName` for bulk operations
+    - `SyncTagsForPost` for updating post tags
+    - Automatic slug generation from tag names
+    - Slug uniqueness enforcement
+    - 8+ service test cases with mock repository
+  - **Admin Tag Handler**:
+    - `List` - Display all tags with permission checks
+    - `Store` - Create new tags (admin/editor only)
+    - `Update` - Update existing tags with validation
+    - `Destroy` - Delete tags with permission enforcement
+    - 15+ handler test cases covering all CRUD operations and permissions
+  - **Admin Tag UI**:
+    - Tag management interface with grid layout
+    - Create tag form with inline validation
+    - Edit/delete actions with AJAX
+    - Permission-based access control
+    - Empty state messaging
+  - **Test Coverage**:
+    - 38+ test functions across 4 test files
+    - Full TDD approach (tests written first)
+    - Mock implementations for isolated testing
+    - Permission scenarios covered
+
 ## [0.6.1] - 2026-01-10
 
 ### Added

@@ -1,0 +1,42 @@
+package dto
+
+import "errors"
+
+// CreateTagDTO represents data for creating a new tag
+type CreateTagDTO struct {
+	Name string `json:"name" form:"name"`
+}
+
+// Validate validates the CreateTagDTO
+func (dto *CreateTagDTO) Validate() error {
+	if dto.Name == "" {
+		return errors.New("tag name is required")
+	}
+	if len(dto.Name) > 50 {
+		return errors.New("tag name too long (max 50 characters)")
+	}
+	return nil
+}
+
+// UpdateTagDTO represents data for updating a tag
+type UpdateTagDTO struct {
+	Name string `json:"name" form:"name"`
+}
+
+// Validate validates the UpdateTagDTO
+func (dto *UpdateTagDTO) Validate() error {
+	if dto.Name == "" {
+		return errors.New("tag name is required")
+	}
+	if len(dto.Name) > 50 {
+		return errors.New("tag name too long (max 50 characters)")
+	}
+	return nil
+}
+
+// TagFilters represents filtering options for querying tags
+type TagFilters struct {
+	Search string
+	Limit  int
+	Offset int
+}

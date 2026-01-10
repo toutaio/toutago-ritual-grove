@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Tags - [[ .app_name ]] Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tags-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .tag-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tags</h1>
+    <form method="POST" action="/admin/tags">
+        <input type="text" name="name" required maxlength="50" placeholder="Tag name">
+        <button type="submit">Create Tag</button>
+    </form>
+    
+    [[ if .tags ]]
+    <div class="tags-grid">
+        [[ range .tags ]]
+        <div class="tag-card">
+            <h3>[[ .Name ]]</h3>
+            <p>[[ .Slug ]]</p>
+        </div>
+        [[ end ]]
+    </div>
+    [[ end ]]
+</body>
+</html>

@@ -197,6 +197,12 @@ files:
     - src: handlers/admin/dashboard_handler_test.go.tmpl
       dest: internal/handlers/admin/dashboard_handler_test.go
 
+    - src: handlers/admin/tag_handler.go.tmpl
+      dest: internal/handlers/admin/tag_handler.go
+
+    - src: handlers/admin/tag_handler_test.go.tmpl
+      dest: internal/handlers/admin/tag_handler_test.go
+
     # Services
     - src: internal/services/dashboard_service.go.tmpl
       dest: internal/services/dashboard_service.go
@@ -206,6 +212,15 @@ files:
 
     - src: internal/services/dashboard_service_test.go.tmpl
       dest: internal/services/dashboard_service_test.go
+
+    - src: internal/services/tag_service.go.tmpl
+      dest: internal/services/tag_service.go
+
+    - src: internal/services/tag_service_impl.go.tmpl
+      dest: internal/services/tag_service_impl.go
+
+    - src: internal/services/tag_service_test.go.tmpl
+      dest: internal/services/tag_service_test.go
 
     # Post handler with tests
     - src: handlers/post_handler_test.go.tmpl
@@ -235,6 +250,24 @@ files:
 
     - src: internal/helpers/pagination_test.go.tmpl
       dest: internal/helpers/pagination_test.go
+
+    # Domain models
+    - src: internal/domain/tag.go.tmpl
+      dest: internal/domain/tag.go
+
+    - src: internal/domain/tag_test.go.tmpl
+      dest: internal/domain/tag_test.go
+
+    # Tag DTOs
+    - src: internal/dto/tag_dto.go.tmpl
+      dest: internal/dto/tag_dto.go
+
+    - src: internal/dto/tag_dto_test.go.tmpl
+      dest: internal/dto/tag_dto_test.go
+
+    # Tag repository
+    - src: internal/repositories/tag_repository.go.tmpl
+      dest: internal/repositories/tag_repository.go
 
     # Middleware
     - src: internal/middleware/csrf_middleware.go.tmpl
@@ -302,6 +335,10 @@ files:
 
     - src: views/admin/categories/list.html.tmpl
       dest: views/admin/categories/list.html
+      condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
+
+    - src: views/admin/tags/list.html.tmpl
+      dest: views/admin/tags/list.html
       condition: "[[ ne .frontend_type \"inertia-vue\" ]]"
 
     - src: views/admin/dashboard/index.html.tmpl

@@ -1,0 +1,168 @@
+package admin
+
+import (
+	"net/http"
+
+	"github.com/toutaio/toutago-cosan-router"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/services"
+)
+
+// TagHandler handles HTTP requests for tag management
+type TagHandler struct {
+	tagService  services.TagService
+	permService services.PermissionService
+}
+
+// NewTagHandler creates a new tag handler
+func NewTagHandler(tagService services.TagService, permService services.PermissionService) *TagHandler {
+	return &TagHandler{
+		tagService:  tagService,
+		permService: permService,
+	}
+}
+
+// List displays all tags with pagination
+func (h *TagHandler) List(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Check permission - only admins and editors can manage tags
+	if !h.permService.CanManageCategories(user) {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "Permission denied"})
+	}
+
+	// Get tags
+	tags, err := h.tagService.List(dto.TagFilters{Limit: 100})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve tags"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"tags": tags,
+	})
+}
+
+// Store creates a new tag
+func (h *TagHandler) Store(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Check permission
+	if !h.permService.CanManageCategories(user) {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "Permission denied"})
+	}
+
+	// Bind request data
+	var createDTO dto.CreateTagDTO
+	if err := c.Bind(&createDTO); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request data"})
+	}
+
+	// Create tag
+	tag, err := h.tagService.Create(createDTO)
+	if err != nil {
+		if err.Error() == "tag name is required" || err.Error() == "tag name too long (max 50 characters)" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create tag"})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"tag":     tag,
+		"message": "Tag created successfully",
+	})
+}
+
+// Update updates an existing tag
+func (h *TagHandler) Update(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Check permission
+	if !h.permService.CanManageCategories(user) {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "Permission denied"})
+	}
+
+	// Get tag ID from URL
+	tagID := c.Param("id")
+	if tagID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Tag ID is required"})
+	}
+
+	// Bind request data
+	var updateDTO dto.UpdateTagDTO
+	if err := c.Bind(&updateDTO); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request data"})
+	}
+
+	// Update tag
+	err = h.tagService.Update(tagID, updateDTO)
+	if err != nil {
+		if err == services.ErrNotFound {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Tag not found"})
+		}
+		if err.Error() == "tag name is required" || err.Error() == "tag name too long (max 50 characters)" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update tag"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Tag updated successfully",
+	})
+}
+
+// Destroy deletes a tag
+func (h *TagHandler) Destroy(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Check permission
+	if !h.permService.CanManageCategories(user) {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "Permission denied"})
+	}
+
+	// Get tag ID from URL
+	tagID := c.Param("id")
+	if tagID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Tag ID is required"})
+	}
+
+	// Delete tag
+	err = h.tagService.Delete(tagID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to delete tag"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Tag deleted successfully",
+	})
+}
+
+// getUserFromContext extracts the authenticated user from context
+func getUserFromContext(c cosan.Context) (*domain.User, error) {
+	userVal := c.Get("user")
+	if userVal == nil {
+		return nil, services.ErrUnauthorized
+	}
+	user, ok := userVal.(*domain.User)
+	if !ok {
+		return nil, services.ErrUnauthorized
+	}
+	return user, nil
+}

@@ -1,0 +1,51 @@
+package repositories
+
+import (
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// TagRepository defines methods for tag data access
+type TagRepository interface {
+	// Create creates a new tag
+	Create(tag *domain.Tag) error
+
+	// Update updates an existing tag
+	Update(tag *domain.Tag) error
+
+	// Delete deletes a tag by ID
+	Delete(id string) error
+
+	// FindByID finds a tag by ID
+	FindByID(id string) (*domain.Tag, error)
+
+	// FindBySlug finds a tag by slug
+	FindBySlug(slug string) (*domain.Tag, error)
+
+	// List returns tags based on filters
+	List(filters dto.TagFilters) ([]*domain.Tag, error)
+
+	// Count returns total number of tags
+	Count() (int, error)
+
+	// ExistsByName checks if a tag with the given name exists
+	ExistsByName(name string) (bool, error)
+
+	// ExistsBySlug checks if a tag with the given slug exists
+	ExistsBySlug(slug string) (bool, error)
+
+	// GetTagsForPost returns all tags for a specific post
+	GetTagsForPost(postID string) ([]*domain.Tag, error)
+
+	// AttachTagToPost attaches a tag to a post
+	AttachTagToPost(postID, tagID string) error
+
+	// DetachTagFromPost removes a tag from a post
+	DetachTagFromPost(postID, tagID string) error
+
+	// DetachAllTagsFromPost removes all tags from a post
+	DetachAllTagsFromPost(postID string) error
+
+	// GetPostsByTag returns all post IDs for a specific tag
+	GetPostsByTag(tagID string) ([]string, error)
+}

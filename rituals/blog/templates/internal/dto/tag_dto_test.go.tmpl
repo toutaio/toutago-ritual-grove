@@ -1,0 +1,99 @@
+package dto
+
+import "testing"
+
+func TestCreateTagDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     CreateTagDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "valid tag",
+			dto:     CreateTagDTO{Name: "Technology"},
+			wantErr: false,
+		},
+		{
+			name:    "empty name",
+			dto:     CreateTagDTO{Name: ""},
+			wantErr: true,
+			errMsg:  "tag name is required",
+		},
+		{
+			name:    "name too long",
+			dto:     CreateTagDTO{Name: "ThisIsAVeryLongTagNameThatExceedsTheMaximumAllowedLengthOfFiftyCharacters"},
+			wantErr: true,
+			errMsg:  "tag name too long (max 50 characters)",
+		},
+		{
+			name:    "exactly 50 characters",
+			dto:     CreateTagDTO{Name: "12345678901234567890123456789012345678901234567890"},
+			wantErr: false,
+		},
+		{
+			name:    "51 characters",
+			dto:     CreateTagDTO{Name: "123456789012345678901234567890123456789012345678901"},
+			wantErr: true,
+			errMsg:  "tag name too long (max 50 characters)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Errorf("Validate() error message = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestUpdateTagDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     UpdateTagDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "valid tag",
+			dto:     UpdateTagDTO{Name: "Updated Tag"},
+			wantErr: false,
+		},
+		{
+			name:    "empty name",
+			dto:     UpdateTagDTO{Name: ""},
+			wantErr: true,
+			errMsg:  "tag name is required",
+		},
+		{
+			name:    "name too long",
+			dto:     UpdateTagDTO{Name: "ThisIsAVeryLongTagNameThatExceedsTheMaximumAllowedLengthOfFiftyCharacters"},
+			wantErr: true,
+			errMsg:  "tag name too long (max 50 characters)",
+		},
+		{
+			name:    "single character",
+			dto:     UpdateTagDTO{Name: "A"},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Errorf("Validate() error message = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}

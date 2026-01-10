@@ -1,0 +1,197 @@
+package services
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/repositories"
+)
+
+// tagService implements TagService
+type tagService struct {
+	repo repositories.TagRepository
+}
+
+// NewTagService creates a new tag service
+func NewTagService(repo repositories.TagRepository) TagService {
+	return &tagService{
+		repo: repo,
+	}
+}
+
+// Create creates a new tag
+func (s *tagService) Create(createDTO dto.CreateTagDTO) (*domain.Tag, error) {
+	// Validate DTO
+	if err := createDTO.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Check if tag with this name already exists
+	exists, err := s.repo.ExistsByName(createDTO.Name)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, fmt.Errorf("tag with this name already exists")
+	}
+
+	// Generate slug from name
+	slug := slugify(createDTO.Name)
+
+	// Ensure unique slug
+	slugExists, err := s.repo.ExistsBySlug(slug)
+	if err != nil {
+		return nil, err
+	}
+	if slugExists {
+		slug = fmt.Sprintf("%s-%s", slug, uuid.New().String()[:8])
+	}
+
+	// Create tag
+	tag := &domain.Tag{
+		ID:        uuid.New().String(),
+		Name:      createDTO.Name,
+		Slug:      slug,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	// Validate domain entity
+	if err := tag.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Save to repository
+	if err := s.repo.Create(tag); err != nil {
+		return nil, err
+	}
+
+	return tag, nil
+}
+
+// Update updates an existing tag
+func (s *tagService) Update(id string, updateDTO dto.UpdateTagDTO) error {
+	// Validate DTO
+	if err := updateDTO.Validate(); err != nil {
+		return err
+	}
+
+	// Get existing tag
+	tag, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Update fields
+	tag.Name = updateDTO.Name
+	tag.Slug = slugify(updateDTO.Name)
+	tag.UpdatedAt = time.Now()
+
+	// Validate domain entity
+	if err := tag.Validate(); err != nil {
+		return err
+	}
+
+	// Save to repository
+	return s.repo.Update(tag)
+}
+
+// Delete deletes a tag
+func (s *tagService) Delete(id string) error {
+	return s.repo.Delete(id)
+}
+
+// GetByID retrieves a tag by ID
+func (s *tagService) GetByID(id string) (*domain.Tag, error) {
+	return s.repo.FindByID(id)
+}
+
+// GetBySlug retrieves a tag by slug
+func (s *tagService) GetBySlug(slug string) (*domain.Tag, error) {
+	return s.repo.FindBySlug(slug)
+}
+
+// List retrieves tags based on filters
+func (s *tagService) List(filters dto.TagFilters) ([]*domain.Tag, error) {
+	return s.repo.List(filters)
+}
+
+// Count returns total number of tags
+func (s *tagService) Count() (int, error) {
+	return s.repo.Count()
+}
+
+// GetTagsForPost retrieves all tags for a specific post
+func (s *tagService) GetTagsForPost(postID string) ([]*domain.Tag, error) {
+	return s.repo.GetTagsForPost(postID)
+}
+
+// SyncTagsForPost syncs tags for a post (adds new, removes old)
+func (s *tagService) SyncTagsForPost(postID string, tagIDs []string) error {
+	// Remove all existing tags
+	if err := s.repo.DetachAllTagsFromPost(postID); err != nil {
+		return err
+	}
+
+	// Attach new tags
+	for _, tagID := range tagIDs {
+		if err := s.repo.AttachTagToPost(postID, tagID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GetOrCreateByName gets a tag by name or creates it if it doesn't exist
+func (s *tagService) GetOrCreateByName(name string) (*domain.Tag, error) {
+	// Try to find by exact name match
+	tags, err := s.repo.List(dto.TagFilters{Search: name, Limit: 100})
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if any tag matches exactly
+	for _, tag := range tags {
+		if tag.Name == name {
+			return tag, nil
+		}
+	}
+
+	// Create new tag
+	return s.Create(dto.CreateTagDTO{Name: name})
+}
+
+// GetOrCreateMultipleByName gets or creates multiple tags by name
+func (s *tagService) GetOrCreateMultipleByName(names []string) ([]*domain.Tag, error) {
+	var tags []*domain.Tag
+
+	for _, name := range names {
+		tag, err := s.GetOrCreateByName(name)
+		if err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
+
+// slugify converts a string to a URL-friendly slug
+func slugify(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "-")
+	// Remove special characters (keep only alphanumeric and hyphens)
+	var result strings.Builder
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}

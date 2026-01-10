@@ -1,0 +1,42 @@
+package services
+
+import (
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// TagService defines methods for tag business logic
+type TagService interface {
+	// Create creates a new tag
+	Create(dto dto.CreateTagDTO) (*domain.Tag, error)
+
+	// Update updates an existing tag
+	Update(id string, dto dto.UpdateTagDTO) error
+
+	// Delete deletes a tag
+	Delete(id string) error
+
+	// GetByID retrieves a tag by ID
+	GetByID(id string) (*domain.Tag, error)
+
+	// GetBySlug retrieves a tag by slug
+	GetBySlug(slug string) (*domain.Tag, error)
+
+	// List retrieves tags based on filters
+	List(filters dto.TagFilters) ([]*domain.Tag, error)
+
+	// Count returns total number of tags
+	Count() (int, error)
+
+	// GetTagsForPost retrieves all tags for a specific post
+	GetTagsForPost(postID string) ([]*domain.Tag, error)
+
+	// SyncTagsForPost syncs tags for a post (adds new, removes old)
+	SyncTagsForPost(postID string, tagIDs []string) error
+
+	// GetOrCreateByName gets a tag by name or creates it if it doesn't exist
+	GetOrCreateByName(name string) (*domain.Tag, error)
+
+	// GetOrCreateMultipleByName gets or creates multiple tags by name
+	GetOrCreateMultipleByName(names []string) ([]*domain.Tag, error)
+}

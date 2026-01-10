@@ -1,0 +1,402 @@
+package admin
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/toutaio/toutago-cosan-router"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/services"
+)
+
+// MockTagService is a mock implementation of TagService for testing
+type MockTagService struct {
+	tags      map[string]*domain.Tag
+	createErr error
+	updateErr error
+	deleteErr error
+	getErr    error
+}
+
+func NewMockTagService() *MockTagService {
+	return &MockTagService{
+		tags: make(map[string]*domain.Tag),
+	}
+}
+
+func (m *MockTagService) Create(createDTO dto.CreateTagDTO) (*domain.Tag, error) {
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	tag := &domain.Tag{
+		ID:        "new-id",
+		Name:      createDTO.Name,
+		Slug:      strings.ToLower(strings.ReplaceAll(createDTO.Name, " ", "-")),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	m.tags[tag.ID] = tag
+	return tag, nil
+}
+
+func (m *MockTagService) Update(id string, updateDTO dto.UpdateTagDTO) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
+	if tag, exists := m.tags[id]; exists {
+		tag.Name = updateDTO.Name
+		tag.Slug = strings.ToLower(strings.ReplaceAll(updateDTO.Name, " ", "-"))
+		tag.UpdatedAt = time.Now()
+		return nil
+	}
+	return services.ErrNotFound
+}
+
+func (m *MockTagService) Delete(id string) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	delete(m.tags, id)
+	return nil
+}
+
+func (m *MockTagService) GetByID(id string) (*domain.Tag, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	tag, exists := m.tags[id]
+	if !exists {
+		return nil, services.ErrNotFound
+	}
+	return tag, nil
+}
+
+func (m *MockTagService) GetBySlug(slug string) (*domain.Tag, error) {
+	for _, tag := range m.tags {
+		if tag.Slug == slug {
+			return tag, nil
+		}
+	}
+	return nil, services.ErrNotFound
+}
+
+func (m *MockTagService) List(filters dto.TagFilters) ([]*domain.Tag, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	var tags []*domain.Tag
+	for _, tag := range m.tags {
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+func (m *MockTagService) Count() (int, error) {
+	return len(m.tags), nil
+}
+
+func (m *MockTagService) GetTagsForPost(postID string) ([]*domain.Tag, error) {
+	return []*domain.Tag{}, nil
+}
+
+func (m *MockTagService) SyncTagsForPost(postID string, tagIDs []string) error {
+	return nil
+}
+
+func (m *MockTagService) GetOrCreateByName(name string) (*domain.Tag, error) {
+	return m.Create(dto.CreateTagDTO{Name: name})
+}
+
+func (m *MockTagService) GetOrCreateMultipleByName(names []string) ([]*domain.Tag, error) {
+	var tags []*domain.Tag
+	for _, name := range names {
+		tag, _ := m.Create(dto.CreateTagDTO{Name: name})
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+func TestTagHandler_List(t *testing.T) {
+	mockTagService := NewMockTagService()
+	mockPermService := NewMockPermissionService()
+	
+	// Create some test tags
+	mockTagService.Create(dto.CreateTagDTO{Name: "Technology"})
+	mockTagService.Create(dto.CreateTagDTO{Name: "Programming"})
+
+	handler := NewTagHandler(mockTagService, mockPermService)
+
+	tests := []struct {
+		name       string
+		user       *domain.User
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name:       "admin can list tags",
+			user:       &domain.User{ID: "1", Role: domain.RoleAdmin},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:       "editor can list tags",
+			user:       &domain.User{ID: "2", Role: domain.RoleEditor},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:       "author cannot list tags",
+			user:       &domain.User{ID: "3", Role: domain.RoleAuthor},
+			wantStatus: http.StatusForbidden,
+			wantErr:    true,
+		},
+		{
+			name:       "unauthenticated user",
+			user:       nil,
+			wantStatus: http.StatusUnauthorized,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/admin/tags", nil)
+			w := httptest.NewRecorder()
+			
+			ctx := cosan.NewContext(w, req)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err := handler.List(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !tt.wantErr && w.Code != tt.wantStatus {
+				t.Errorf("List() status = %v, want %v", w.Code, tt.wantStatus)
+			}
+		})
+	}
+}
+
+func TestTagHandler_Store(t *testing.T) {
+	mockTagService := NewMockTagService()
+	mockPermService := NewMockPermissionService()
+	handler := NewTagHandler(mockTagService, mockPermService)
+
+	tests := []struct {
+		name       string
+		user       *domain.User
+		formData   url.Values
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name: "admin can create tag",
+			user: &domain.User{ID: "1", Role: domain.RoleAdmin},
+			formData: url.Values{
+				"name": {"NewTag"},
+			},
+			wantStatus: http.StatusCreated,
+			wantErr:    false,
+		},
+		{
+			name: "editor can create tag",
+			user: &domain.User{ID: "2", Role: domain.RoleEditor},
+			formData: url.Values{
+				"name": {"EditorTag"},
+			},
+			wantStatus: http.StatusCreated,
+			wantErr:    false,
+		},
+		{
+			name: "author cannot create tag",
+			user: &domain.User{ID: "3", Role: domain.RoleAuthor},
+			formData: url.Values{
+				"name": {"AuthorTag"},
+			},
+			wantStatus: http.StatusForbidden,
+			wantErr:    true,
+		},
+		{
+			name: "invalid data",
+			user: &domain.User{ID: "1", Role: domain.RoleAdmin},
+			formData: url.Values{
+				"name": {""},
+			},
+			wantStatus: http.StatusBadRequest,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/admin/tags", strings.NewReader(tt.formData.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			w := httptest.NewRecorder()
+			
+			ctx := cosan.NewContext(w, req)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err := handler.Store(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Store() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTagHandler_Update(t *testing.T) {
+	mockTagService := NewMockTagService()
+	mockPermService := NewMockPermissionService()
+	
+	// Create a test tag
+	tag, _ := mockTagService.Create(dto.CreateTagDTO{Name: "ExistingTag"})
+
+	handler := NewTagHandler(mockTagService, mockPermService)
+
+	tests := []struct {
+		name       string
+		tagID      string
+		user       *domain.User
+		formData   url.Values
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name:  "admin can update tag",
+			tagID: tag.ID,
+			user:  &domain.User{ID: "1", Role: domain.RoleAdmin},
+			formData: url.Values{
+				"name": {"UpdatedTag"},
+			},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:  "editor can update tag",
+			tagID: tag.ID,
+			user:  &domain.User{ID: "2", Role: domain.RoleEditor},
+			formData: url.Values{
+				"name": {"EditorUpdated"},
+			},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:  "author cannot update tag",
+			tagID: tag.ID,
+			user:  &domain.User{ID: "3", Role: domain.RoleAuthor},
+			formData: url.Values{
+				"name": {"CannotUpdate"},
+			},
+			wantStatus: http.StatusForbidden,
+			wantErr:    true,
+		},
+		{
+			name:  "non-existing tag",
+			tagID: "999",
+			user:  &domain.User{ID: "1", Role: domain.RoleAdmin},
+			formData: url.Values{
+				"name": {"UpdatedTag"},
+			},
+			wantStatus: http.StatusNotFound,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPut, "/admin/tags/"+tt.tagID, strings.NewReader(tt.formData.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			w := httptest.NewRecorder()
+			
+			ctx := cosan.NewContext(w, req)
+			ctx.SetParam("id", tt.tagID)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err := handler.Update(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTagHandler_Destroy(t *testing.T) {
+	mockTagService := NewMockTagService()
+	mockPermService := NewMockPermissionService()
+	
+	// Create a test tag
+	tag, _ := mockTagService.Create(dto.CreateTagDTO{Name: "ToDelete"})
+
+	handler := NewTagHandler(mockTagService, mockPermService)
+
+	tests := []struct {
+		name       string
+		tagID      string
+		user       *domain.User
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name:       "admin can delete tag",
+			tagID:      tag.ID,
+			user:       &domain.User{ID: "1", Role: domain.RoleAdmin},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:       "editor can delete tag",
+			tagID:      tag.ID,
+			user:       &domain.User{ID: "2", Role: domain.RoleEditor},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:       "author cannot delete tag",
+			tagID:      tag.ID,
+			user:       &domain.User{ID: "3", Role: domain.RoleAuthor},
+			wantStatus: http.StatusForbidden,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Recreate tag for each test
+			if tt.name != "author cannot delete tag" {
+				mockTagService.Create(dto.CreateTagDTO{Name: "ToDelete"})
+			}
+
+			req := httptest.NewRequest(http.MethodDelete, "/admin/tags/"+tt.tagID, nil)
+			w := httptest.NewRecorder()
+			
+			ctx := cosan.NewContext(w, req)
+			ctx.SetParam("id", tt.tagID)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err := handler.Destroy(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Destroy() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

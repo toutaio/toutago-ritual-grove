@@ -1,0 +1,39 @@
+package domain
+
+import (
+	"errors"
+	"time"
+)
+
+// Tag represents a blog post tag
+type Tag struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Slug      string    `json:"slug"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Validate ensures tag data is valid
+func (t *Tag) Validate() error {
+	if t.Name == "" {
+		return errors.New("tag name is required")
+	}
+	if len(t.Name) > 50 {
+		return errors.New("tag name too long (max 50 characters)")
+	}
+	if t.Slug == "" {
+		return errors.New("tag slug is required")
+	}
+	if len(t.Slug) > 100 {
+		return errors.New("tag slug too long (max 100 characters)")
+	}
+	return nil
+}
+
+// PostTag represents the many-to-many relationship between posts and tags
+type PostTag struct {
+	PostID    string    `json:"post_id"`
+	TagID     string    `json:"tag_id"`
+	CreatedAt time.Time `json:"created_at"`
+}

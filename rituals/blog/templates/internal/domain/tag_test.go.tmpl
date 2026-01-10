@@ -1,0 +1,88 @@
+package domain
+
+import (
+	"testing"
+	"time"
+)
+
+func TestTag_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		tag     Tag
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid tag",
+			tag: Tag{
+				ID:        "1",
+				Name:      "Technology",
+				Slug:      "technology",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty name",
+			tag: Tag{
+				ID:   "1",
+				Name: "",
+				Slug: "test",
+			},
+			wantErr: true,
+			errMsg:  "tag name is required",
+		},
+		{
+			name: "name too long",
+			tag: Tag{
+				ID:   "1",
+				Name: "ThisIsAVeryLongTagNameThatExceedsTheMaximumAllowedLengthOfFiftyCharacters",
+				Slug: "long-tag",
+			},
+			wantErr: true,
+			errMsg:  "tag name too long (max 50 characters)",
+		},
+		{
+			name: "empty slug",
+			tag: Tag{
+				ID:   "1",
+				Name: "Valid Name",
+				Slug: "",
+			},
+			wantErr: true,
+			errMsg:  "tag slug is required",
+		},
+		{
+			name: "slug too long",
+			tag: Tag{
+				ID:   "1",
+				Name: "Valid",
+				Slug: "this-is-a-very-long-slug-that-exceeds-the-maximum-allowed-length-of-one-hundred-characters-and-should-fail-validation",
+			},
+			wantErr: true,
+			errMsg:  "tag slug too long (max 100 characters)",
+		},
+		{
+			name: "minimal valid tag",
+			tag: Tag{
+				Name: "Go",
+				Slug: "go",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.tag.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Errorf("Validate() error message = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}

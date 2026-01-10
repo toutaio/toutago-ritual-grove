@@ -1,0 +1,489 @@
+package services
+
+import (
+	"errors"
+	"testing"
+	"time"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// MockTagRepository is a mock implementation of TagRepository for testing
+type MockTagRepository struct {
+	tags         map[string]*domain.Tag
+	postTags     map[string][]string // postID -> []tagID
+	createErr    error
+	updateErr    error
+	deleteErr    error
+	findErr      error
+	existsByName map[string]bool
+	existsBySlug map[string]bool
+}
+
+func NewMockTagRepository() *MockTagRepository {
+	return &MockTagRepository{
+		tags:         make(map[string]*domain.Tag),
+		postTags:     make(map[string][]string),
+		existsByName: make(map[string]bool),
+		existsBySlug: make(map[string]bool),
+	}
+}
+
+func (m *MockTagRepository) Create(tag *domain.Tag) error {
+	if m.createErr != nil {
+		return m.createErr
+	}
+	m.tags[tag.ID] = tag
+	m.existsByName[tag.Name] = true
+	m.existsBySlug[tag.Slug] = true
+	return nil
+}
+
+func (m *MockTagRepository) Update(tag *domain.Tag) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
+	m.tags[tag.ID] = tag
+	return nil
+}
+
+func (m *MockTagRepository) Delete(id string) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	if tag, exists := m.tags[id]; exists {
+		delete(m.existsByName, tag.Name)
+		delete(m.existsBySlug, tag.Slug)
+	}
+	delete(m.tags, id)
+	return nil
+}
+
+func (m *MockTagRepository) FindByID(id string) (*domain.Tag, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	tag, exists := m.tags[id]
+	if !exists {
+		return nil, errors.New("tag not found")
+	}
+	return tag, nil
+}
+
+func (m *MockTagRepository) FindBySlug(slug string) (*domain.Tag, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	for _, tag := range m.tags {
+		if tag.Slug == slug {
+			return tag, nil
+		}
+	}
+	return nil, errors.New("tag not found")
+}
+
+func (m *MockTagRepository) List(filters dto.TagFilters) ([]*domain.Tag, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	var tags []*domain.Tag
+	for _, tag := range m.tags {
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+func (m *MockTagRepository) Count() (int, error) {
+	return len(m.tags), nil
+}
+
+func (m *MockTagRepository) ExistsByName(name string) (bool, error) {
+	return m.existsByName[name], nil
+}
+
+func (m *MockTagRepository) ExistsBySlug(slug string) (bool, error) {
+	return m.existsBySlug[slug], nil
+}
+
+func (m *MockTagRepository) GetTagsForPost(postID string) ([]*domain.Tag, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	tagIDs := m.postTags[postID]
+	var tags []*domain.Tag
+	for _, tagID := range tagIDs {
+		if tag, exists := m.tags[tagID]; exists {
+			tags = append(tags, tag)
+		}
+	}
+	return tags, nil
+}
+
+func (m *MockTagRepository) AttachTagToPost(postID, tagID string) error {
+	if m.postTags[postID] == nil {
+		m.postTags[postID] = []string{}
+	}
+	m.postTags[postID] = append(m.postTags[postID], tagID)
+	return nil
+}
+
+func (m *MockTagRepository) DetachTagFromPost(postID, tagID string) error {
+	tags := m.postTags[postID]
+	newTags := []string{}
+	for _, id := range tags {
+		if id != tagID {
+			newTags = append(newTags, id)
+		}
+	}
+	m.postTags[postID] = newTags
+	return nil
+}
+
+func (m *MockTagRepository) DetachAllTagsFromPost(postID string) error {
+	delete(m.postTags, postID)
+	return nil
+}
+
+func (m *MockTagRepository) GetPostsByTag(tagID string) ([]string, error) {
+	var postIDs []string
+	for postID, tagIDs := range m.postTags {
+		for _, id := range tagIDs {
+			if id == tagID {
+				postIDs = append(postIDs, postID)
+				break
+			}
+		}
+	}
+	return postIDs, nil
+}
+
+func TestTagService_Create(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     dto.CreateTagDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "valid tag",
+			dto:     dto.CreateTagDTO{Name: "Technology"},
+			wantErr: false,
+		},
+		{
+			name:    "empty name",
+			dto:     dto.CreateTagDTO{Name: ""},
+			wantErr: true,
+			errMsg:  "tag name is required",
+		},
+		{
+			name:    "duplicate tag name",
+			dto:     dto.CreateTagDTO{Name: "Existing"},
+			wantErr: true,
+			errMsg:  "tag with this name already exists",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := NewMockTagRepository()
+			
+			// Setup: Create existing tag for duplicate test
+			if tt.name == "duplicate tag name" {
+				mockRepo.Create(&domain.Tag{
+					ID:        "1",
+					Name:      "Existing",
+					Slug:      "existing",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				})
+			}
+
+			service := NewTagService(mockRepo)
+			tag, err := service.Create(tt.dto)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Errorf("Create() error message = %v, want %v", err.Error(), tt.errMsg)
+				return
+			}
+
+			if !tt.wantErr {
+				if tag == nil {
+					t.Error("Create() returned nil tag")
+					return
+				}
+				if tag.Name != tt.dto.Name {
+					t.Errorf("Create() tag name = %v, want %v", tag.Name, tt.dto.Name)
+				}
+				if tag.Slug == "" {
+					t.Error("Create() tag slug should not be empty")
+				}
+			}
+		})
+	}
+}
+
+func TestTagService_Update(t *testing.T) {
+	tests := []struct {
+		name    string
+		tagID   string
+		dto     dto.UpdateTagDTO
+		setup   func(*MockTagRepository)
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:  "valid update",
+			tagID: "1",
+			dto:   dto.UpdateTagDTO{Name: "Updated Tag"},
+			setup: func(repo *MockTagRepository) {
+				repo.Create(&domain.Tag{
+					ID:        "1",
+					Name:      "Original",
+					Slug:      "original",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				})
+			},
+			wantErr: false,
+		},
+		{
+			name:    "tag not found",
+			tagID:   "999",
+			dto:     dto.UpdateTagDTO{Name: "Updated"},
+			setup:   func(repo *MockTagRepository) {},
+			wantErr: true,
+			errMsg:  "tag not found",
+		},
+		{
+			name:  "invalid DTO",
+			tagID: "1",
+			dto:   dto.UpdateTagDTO{Name: ""},
+			setup: func(repo *MockTagRepository) {
+				repo.Create(&domain.Tag{
+					ID:        "1",
+					Name:      "Original",
+					Slug:      "original",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				})
+			},
+			wantErr: true,
+			errMsg:  "tag name is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := NewMockTagRepository()
+			tt.setup(mockRepo)
+
+			service := NewTagService(mockRepo)
+			err := service.Update(tt.tagID, tt.dto)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Errorf("Update() error message = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestTagService_Delete(t *testing.T) {
+	tests := []struct {
+		name    string
+		tagID   string
+		setup   func(*MockTagRepository)
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:  "successful delete",
+			tagID: "1",
+			setup: func(repo *MockTagRepository) {
+				repo.Create(&domain.Tag{
+					ID:        "1",
+					Name:      "ToDelete",
+					Slug:      "to-delete",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				})
+			},
+			wantErr: false,
+		},
+		{
+			name:    "tag not found",
+			tagID:   "999",
+			setup:   func(repo *MockTagRepository) {},
+			wantErr: false, // Delete is idempotent
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := NewMockTagRepository()
+			tt.setup(mockRepo)
+
+			service := NewTagService(mockRepo)
+			err := service.Delete(tt.tagID)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTagService_GetByID(t *testing.T) {
+	mockRepo := NewMockTagRepository()
+	mockRepo.Create(&domain.Tag{
+		ID:        "1",
+		Name:      "Test Tag",
+		Slug:      "test-tag",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+
+	service := NewTagService(mockRepo)
+
+	t.Run("existing tag", func(t *testing.T) {
+		tag, err := service.GetByID("1")
+		if err != nil {
+			t.Errorf("GetByID() unexpected error: %v", err)
+		}
+		if tag == nil {
+			t.Error("GetByID() returned nil tag")
+		}
+		if tag.Name != "Test Tag" {
+			t.Errorf("GetByID() tag name = %v, want Test Tag", tag.Name)
+		}
+	})
+
+	t.Run("non-existing tag", func(t *testing.T) {
+		_, err := service.GetByID("999")
+		if err == nil {
+			t.Error("GetByID() expected error for non-existing tag")
+		}
+	})
+}
+
+func TestTagService_GetOrCreateByName(t *testing.T) {
+	tests := []struct {
+		name     string
+		tagName  string
+		setup    func(*MockTagRepository)
+		wantNew  bool
+		wantErr  bool
+	}{
+		{
+			name:     "create new tag",
+			tagName:  "NewTag",
+			setup:    func(repo *MockTagRepository) {},
+			wantNew:  true,
+			wantErr:  false,
+		},
+		{
+			name:    "get existing tag",
+			tagName: "Existing",
+			setup: func(repo *MockTagRepository) {
+				repo.Create(&domain.Tag{
+					ID:        "1",
+					Name:      "Existing",
+					Slug:      "existing",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				})
+			},
+			wantNew: false,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := NewMockTagRepository()
+			tt.setup(mockRepo)
+
+			service := NewTagService(mockRepo)
+			tag, err := service.GetOrCreateByName(tt.tagName)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetOrCreateByName() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tag == nil {
+				t.Error("GetOrCreateByName() returned nil tag")
+				return
+			}
+
+			if tag.Name != tt.tagName {
+				t.Errorf("GetOrCreateByName() tag name = %v, want %v", tag.Name, tt.tagName)
+			}
+		})
+	}
+}
+
+func TestTagService_SyncTagsForPost(t *testing.T) {
+	mockRepo := NewMockTagRepository()
+	
+	// Create some tags
+	mockRepo.Create(&domain.Tag{ID: "1", Name: "Tag1", Slug: "tag1", CreatedAt: time.Now(), UpdatedAt: time.Now()})
+	mockRepo.Create(&domain.Tag{ID: "2", Name: "Tag2", Slug: "tag2", CreatedAt: time.Now(), UpdatedAt: time.Now()})
+	mockRepo.Create(&domain.Tag{ID: "3", Name: "Tag3", Slug: "tag3", CreatedAt: time.Now(), UpdatedAt: time.Now()})
+
+	service := NewTagService(mockRepo)
+
+	t.Run("sync tags for post", func(t *testing.T) {
+		postID := "post1"
+		
+		// Initial tags
+		err := service.SyncTagsForPost(postID, []string{"1", "2"})
+		if err != nil {
+			t.Errorf("SyncTagsForPost() unexpected error: %v", err)
+		}
+
+		tags, _ := mockRepo.GetTagsForPost(postID)
+		if len(tags) != 2 {
+			t.Errorf("SyncTagsForPost() got %d tags, want 2", len(tags))
+		}
+
+		// Update tags (replace with different set)
+		err = service.SyncTagsForPost(postID, []string{"2", "3"})
+		if err != nil {
+			t.Errorf("SyncTagsForPost() unexpected error: %v", err)
+		}
+
+		tags, _ = mockRepo.GetTagsForPost(postID)
+		if len(tags) != 2 {
+			t.Errorf("SyncTagsForPost() got %d tags after update, want 2", len(tags))
+		}
+	})
+
+	t.Run("remove all tags", func(t *testing.T) {
+		postID := "post2"
+		
+		// Set initial tags
+		service.SyncTagsForPost(postID, []string{"1", "2"})
+		
+		// Remove all tags
+		err := service.SyncTagsForPost(postID, []string{})
+		if err != nil {
+			t.Errorf("SyncTagsForPost() unexpected error: %v", err)
+		}
+
+		tags, _ := mockRepo.GetTagsForPost(postID)
+		if len(tags) != 0 {
+			t.Errorf("SyncTagsForPost() got %d tags, want 0", len(tags))
+		}
+	})
+}
