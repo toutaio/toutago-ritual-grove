@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Blog Ritual: Media Management Foundation** (TDD)
+  - **Media Domain Model**:
+    - `Media` entity with comprehensive validation
+    - Media type enums (image, video, document, other)
+    - Fields: filename, original_name, mime_type, size, storage_path, URL, uploaded_by
+    - Helper methods: `IsImage()`, `IsVideo()`, `IsDocument()`
+    - Size conversion utilities: `SizeInKB()`, `SizeInMB()`
+    - 15+ domain model test cases covering all validation rules
+  - **Validation Rules**:
+    - Filename required (max 255 chars)
+    - Original name required
+    - MIME type required  
+    - Valid file size (> 0)
+    - Storage path required
+    - Uploaded by user ID required
+  - **Test Coverage**:
+    - Type checking tests
+    - Size conversion tests
+    - Comprehensive validation scenarios
+
 - **Blog Ritual: Tag Management System** (TDD)
   - **Tag Domain Model**:
     - `Tag` entity with validation (name, slug, timestamps)
@@ -45,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Permission-based access control
     - Empty state messaging
   - **Test Coverage**:
-    - 38+ test functions across 4 test files
+    - 53+ test functions across 6 test files
     - Full TDD approach (tests written first)
     - Mock implementations for isolated testing
     - Permission scenarios covered
