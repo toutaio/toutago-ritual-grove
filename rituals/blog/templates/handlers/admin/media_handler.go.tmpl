@@ -1,0 +1,184 @@
+package admin
+
+import (
+	"io"
+	"net/http"
+
+	"github.com/toutaio/toutago-cosan-router"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/services"
+)
+
+// MediaHandler handles HTTP requests for media management
+type MediaHandler struct {
+	mediaService services.MediaService
+	permService  services.PermissionService
+}
+
+// NewMediaHandler creates a new media handler
+func NewMediaHandler(mediaService services.MediaService, permService services.PermissionService) *MediaHandler {
+	return &MediaHandler{
+		mediaService: mediaService,
+		permService:  permService,
+	}
+}
+
+// List displays all media with pagination and filters
+func (h *MediaHandler) List(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Parse filters from query params
+	filters := dto.MediaFilters{
+		Type:   c.Query("type"),
+		Search: c.Query("search"),
+		Limit:  50, // Default limit
+		Offset: 0,
+	}
+
+	// Get media list
+	mediaList, err := h.mediaService.List(filters)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve media"})
+	}
+
+	// Get statistics
+	totalCount, _ := h.mediaService.Count()
+	imageCount, _ := h.mediaService.CountByType(domain.MediaTypeImage)
+	videoCount, _ := h.mediaService.CountByType(domain.MediaTypeVideo)
+	docCount, _ := h.mediaService.CountByType(domain.MediaTypeDocument)
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"media": mediaList,
+		"stats": map[string]interface{}{
+			"total":     totalCount,
+			"images":    imageCount,
+			"videos":    videoCount,
+			"documents": docCount,
+		},
+	})
+}
+
+// Upload handles file upload
+func (h *MediaHandler) Upload(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Parse multipart form (10MB max)
+	err = c.Request().ParseMultipartForm(10 << 20)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid form data"})
+	}
+
+	// Get file from form
+	file, header, err := c.Request().FormFile("file")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "No file provided"})
+	}
+	defer file.Close()
+
+	// Read file content
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to read file"})
+	}
+
+	// Detect content type
+	contentType := header.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = http.DetectContentType(content)
+	}
+
+	// Create upload DTO
+	uploadDTO := dto.UploadMediaDTO{
+		Filename:     header.Filename,
+		OriginalName: header.Filename,
+		MimeType:     contentType,
+		Size:         header.Size,
+		Content:      content,
+	}
+
+	// Upload media
+	media, err := h.mediaService.Upload(user, uploadDTO)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "filename is required" ||
+		   err.Error() == "file too large (max 10MB)" ||
+		   err.Error() == "invalid file size" {
+			statusCode = http.StatusBadRequest
+		}
+		return c.JSON(statusCode, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"media":   media,
+		"message": "Media uploaded successfully",
+	})
+}
+
+// GetByID retrieves a media item by ID
+func (h *MediaHandler) GetByID(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Get media ID from URL
+	mediaID := c.Param("id")
+	if mediaID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Media ID is required"})
+	}
+
+	// Get media
+	media, err := h.mediaService.GetByID(mediaID)
+	if err != nil {
+		if err == services.ErrNotFound {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Media not found"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve media"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"media": media,
+	})
+}
+
+// Delete deletes a media item
+func (h *MediaHandler) Delete(c cosan.Context) error {
+	// Get authenticated user
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Get media ID from URL
+	mediaID := c.Param("id")
+	if mediaID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Media ID is required"})
+	}
+
+	// Delete media
+	err = h.mediaService.Delete(mediaID, user)
+	if err != nil {
+		if err == services.ErrNotFound {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Media not found"})
+		}
+		if err.Error() == "permission denied: you can only delete your own media" {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to delete media"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Media deleted successfully",
+	})
+}

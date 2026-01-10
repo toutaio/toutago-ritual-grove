@@ -1,0 +1,387 @@
+package admin
+
+import (
+	"bytes"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/toutaio/toutago-cosan-router"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/services"
+)
+
+// MockMediaService is a mock implementation of MediaService for testing
+type MockMediaService struct {
+	media     map[string]*domain.Media
+	uploadErr error
+	deleteErr error
+	getErr    error
+}
+
+func NewMockMediaService() *MockMediaService {
+	return &MockMediaService{
+		media: make(map[string]*domain.Media),
+	}
+}
+
+func (m *MockMediaService) Upload(user *domain.User, uploadDTO dto.UploadMediaDTO) (*domain.Media, error) {
+	if m.uploadErr != nil {
+		return nil, m.uploadErr
+	}
+	media := &domain.Media{
+		ID:           "new-media-id",
+		Filename:     uploadDTO.Filename,
+		OriginalName: uploadDTO.OriginalName,
+		MimeType:     uploadDTO.MimeType,
+		Size:         uploadDTO.Size,
+		StoragePath:  "uploads/" + uploadDTO.Filename,
+		URL:          "https://cdn.example.com/" + uploadDTO.Filename,
+		Type:         domain.MediaTypeImage,
+		UploadedBy:   user.ID,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	m.media[media.ID] = media
+	return media, nil
+}
+
+func (m *MockMediaService) Delete(id string, user *domain.User) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	delete(m.media, id)
+	return nil
+}
+
+func (m *MockMediaService) GetByID(id string) (*domain.Media, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	media, exists := m.media[id]
+	if !exists {
+		return nil, services.ErrNotFound
+	}
+	return media, nil
+}
+
+func (m *MockMediaService) List(filters dto.MediaFilters) ([]*domain.Media, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	var result []*domain.Media
+	for _, media := range m.media {
+		result = append(result, media)
+	}
+	return result, nil
+}
+
+func (m *MockMediaService) Count() (int, error) {
+	return len(m.media), nil
+}
+
+func (m *MockMediaService) CountByType(mediaType domain.MediaType) (int, error) {
+	count := 0
+	for _, media := range m.media {
+		if media.Type == mediaType {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *MockMediaService) GetByUploader(userID string, limit, offset int) ([]*domain.Media, error) {
+	var result []*domain.Media
+	for _, media := range m.media {
+		if media.UploadedBy == userID {
+			result = append(result, media)
+		}
+	}
+	return result, nil
+}
+
+func TestMediaHandler_List(t *testing.T) {
+	mockMediaService := NewMockMediaService()
+	mockPermService := NewMockPermissionService()
+
+	// Create test media
+	mockMediaService.media["1"] = &domain.Media{
+		ID:           "1",
+		Filename:     "test.jpg",
+		OriginalName: "test.jpg",
+		MimeType:     "image/jpeg",
+		Size:         1024,
+		StoragePath:  "uploads/test.jpg",
+		URL:          "https://cdn.example.com/test.jpg",
+		Type:         domain.MediaTypeImage,
+		UploadedBy:   "user1",
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	handler := NewMediaHandler(mockMediaService, mockPermService)
+
+	tests := []struct {
+		name       string
+		user       *domain.User
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name:       "authenticated user can list media",
+			user:       &domain.User{ID: "user1", Role: domain.RoleAuthor},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:       "unauthenticated user",
+			user:       nil,
+			wantStatus: http.StatusUnauthorized,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/admin/media", nil)
+			w := httptest.NewRecorder()
+
+			ctx := cosan.NewContext(w, req)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err := handler.List(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMediaHandler_Upload(t *testing.T) {
+	tests := []struct {
+		name         string
+		user         *domain.User
+		setupRequest func() (*http.Request, error)
+		wantErr      bool
+		wantStatus   int
+	}{
+		{
+			name: "successful upload",
+			user: &domain.User{ID: "user1", Role: domain.RoleAuthor},
+			setupRequest: func() (*http.Request, error) {
+				body := &bytes.Buffer{}
+				writer := multipart.NewWriter(body)
+				
+				// Create file field
+				part, err := writer.CreateFormFile("file", "test.jpg")
+				if err != nil {
+					return nil, err
+				}
+				_, err = io.WriteString(part, "fake image content")
+				if err != nil {
+					return nil, err
+				}
+				
+				writer.Close()
+				
+				req := httptest.NewRequest(http.MethodPost, "/admin/media", body)
+				req.Header.Set("Content-Type", writer.FormDataContentType())
+				return req, nil
+			},
+			wantErr:    false,
+			wantStatus: http.StatusCreated,
+		},
+		{
+			name: "unauthenticated user",
+			user: nil,
+			setupRequest: func() (*http.Request, error) {
+				return httptest.NewRequest(http.MethodPost, "/admin/media", nil), nil
+			},
+			wantErr:    true,
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "no file provided",
+			user: &domain.User{ID: "user1", Role: domain.RoleAuthor},
+			setupRequest: func() (*http.Request, error) {
+				body := &bytes.Buffer{}
+				writer := multipart.NewWriter(body)
+				writer.Close()
+				
+				req := httptest.NewRequest(http.MethodPost, "/admin/media", body)
+				req.Header.Set("Content-Type", writer.FormDataContentType())
+				return req, nil
+			},
+			wantErr:    true,
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockMediaService := NewMockMediaService()
+			mockPermService := NewMockPermissionService()
+			handler := NewMediaHandler(mockMediaService, mockPermService)
+
+			req, err := tt.setupRequest()
+			if err != nil {
+				t.Fatalf("Failed to setup request: %v", err)
+			}
+
+			w := httptest.NewRecorder()
+			ctx := cosan.NewContext(w, req)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err = handler.Upload(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Upload() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMediaHandler_Delete(t *testing.T) {
+	mockMediaService := NewMockMediaService()
+	mockPermService := NewMockPermissionService()
+
+	// Create test media
+	mockMediaService.media["media1"] = &domain.Media{
+		ID:          "media1",
+		Filename:    "test.jpg",
+		OriginalName: "test.jpg",
+		MimeType:    "image/jpeg",
+		Size:        1024,
+		StoragePath: "uploads/test.jpg",
+		UploadedBy:  "user1",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	handler := NewMediaHandler(mockMediaService, mockPermService)
+
+	tests := []struct {
+		name       string
+		mediaID    string
+		user       *domain.User
+		wantErr    bool
+		wantStatus int
+	}{
+		{
+			name:       "successful delete",
+			mediaID:    "media1",
+			user:       &domain.User{ID: "user1", Role: domain.RoleAuthor},
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "unauthenticated user",
+			mediaID:    "media1",
+			user:       nil,
+			wantErr:    true,
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "media not found",
+			mediaID:    "nonexistent",
+			user:       &domain.User{ID: "user1", Role: domain.RoleAuthor},
+			wantErr:    true,
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodDelete, "/admin/media/"+tt.mediaID, nil)
+			w := httptest.NewRecorder()
+
+			ctx := cosan.NewContext(w, req)
+			ctx.SetParam("id", tt.mediaID)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err := handler.Delete(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMediaHandler_GetByID(t *testing.T) {
+	mockMediaService := NewMockMediaService()
+	mockPermService := NewMockPermissionService()
+
+	mockMediaService.media["media1"] = &domain.Media{
+		ID:          "media1",
+		Filename:    "test.jpg",
+		OriginalName: "test.jpg",
+		MimeType:    "image/jpeg",
+		Size:        1024,
+		StoragePath: "uploads/test.jpg",
+		URL:         "https://cdn.example.com/test.jpg",
+		UploadedBy:  "user1",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	handler := NewMediaHandler(mockMediaService, mockPermService)
+
+	tests := []struct {
+		name    string
+		mediaID string
+		user    *domain.User
+		wantErr bool
+	}{
+		{
+			name:    "existing media",
+			mediaID: "media1",
+			user:    &domain.User{ID: "user1"},
+			wantErr: false,
+		},
+		{
+			name:    "non-existing media",
+			mediaID: "nonexistent",
+			user:    &domain.User{ID: "user1"},
+			wantErr: true,
+		},
+		{
+			name:    "unauthenticated",
+			mediaID: "media1",
+			user:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/admin/media/"+tt.mediaID, nil)
+			w := httptest.NewRecorder()
+
+			ctx := cosan.NewContext(w, req)
+			ctx.SetParam("id", tt.mediaID)
+			if tt.user != nil {
+				ctx.Set("user", tt.user)
+			}
+
+			err := handler.GetByID(ctx)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetByID() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
