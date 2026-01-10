@@ -1,0 +1,435 @@
+package services
+
+import (
+	"errors"
+	"testing"
+	"time"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// MockMediaRepository is a mock implementation of MediaRepository for testing
+type MockMediaRepository struct {
+	media      map[string]*domain.Media
+	createErr  error
+	findErr    error
+	deleteErr  error
+}
+
+func NewMockMediaRepository() *MockMediaRepository {
+	return &MockMediaRepository{
+		media: make(map[string]*domain.Media),
+	}
+}
+
+func (m *MockMediaRepository) Create(media *domain.Media) error {
+	if m.createErr != nil {
+		return m.createErr
+	}
+	m.media[media.ID] = media
+	return nil
+}
+
+func (m *MockMediaRepository) Update(media *domain.Media) error {
+	m.media[media.ID] = media
+	return nil
+}
+
+func (m *MockMediaRepository) Delete(id string) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	delete(m.media, id)
+	return nil
+}
+
+func (m *MockMediaRepository) FindByID(id string) (*domain.Media, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	media, exists := m.media[id]
+	if !exists {
+		return nil, errors.New("media not found")
+	}
+	return media, nil
+}
+
+func (m *MockMediaRepository) List(filters dto.MediaFilters) ([]*domain.Media, error) {
+	var result []*domain.Media
+	for _, media := range m.media {
+		result = append(result, media)
+	}
+	return result, nil
+}
+
+func (m *MockMediaRepository) Count() (int, error) {
+	return len(m.media), nil
+}
+
+func (m *MockMediaRepository) CountByType(mediaType domain.MediaType) (int, error) {
+	count := 0
+	for _, media := range m.media {
+		if media.Type == mediaType {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *MockMediaRepository) FindByUploader(userID string, limit, offset int) ([]*domain.Media, error) {
+	var result []*domain.Media
+	for _, media := range m.media {
+		if media.UploadedBy == userID {
+			result = append(result, media)
+		}
+	}
+	return result, nil
+}
+
+// MockStorageProvider is a mock implementation of StorageProvider for testing
+type MockStorageProvider struct {
+	uploadErr  error
+	deleteErr  error
+	uploaded   map[string][]byte
+}
+
+func NewMockStorageProvider() *MockStorageProvider {
+	return &MockStorageProvider{
+		uploaded: make(map[string][]byte),
+	}
+}
+
+func (m *MockStorageProvider) Upload(filename string, content []byte, contentType string) (string, string, error) {
+	if m.uploadErr != nil {
+		return "", "", m.uploadErr
+	}
+	storagePath := "uploads/" + filename
+	url := "https://cdn.example.com/" + filename
+	m.uploaded[storagePath] = content
+	return storagePath, url, nil
+}
+
+func (m *MockStorageProvider) Delete(storagePath string) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	delete(m.uploaded, storagePath)
+	return nil
+}
+
+func (m *MockStorageProvider) GetURL(storagePath string) string {
+	return "https://cdn.example.com/" + storagePath
+}
+
+func TestMediaService_Upload(t *testing.T) {
+	tests := []struct {
+		name       string
+		user       *domain.User
+		dto        dto.UploadMediaDTO
+		setupMock  func(*MockMediaRepository, *MockStorageProvider)
+		wantErr    bool
+		errMsg     string
+		checkMedia func(*testing.T, *domain.Media)
+	}{
+		{
+			name: "successful upload",
+			user: &domain.User{ID: "user1", Role: domain.RoleAuthor},
+			dto: dto.UploadMediaDTO{
+				Filename:     "photo.jpg",
+				OriginalName: "my-photo.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				Content:      []byte("fake image data"),
+			},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {},
+			wantErr:   false,
+			checkMedia: func(t *testing.T, media *domain.Media) {
+				if media == nil {
+					t.Fatal("Upload() returned nil media")
+				}
+				if media.OriginalName != "my-photo.jpg" {
+					t.Errorf("OriginalName = %v, want my-photo.jpg", media.OriginalName)
+				}
+				if media.Type != domain.MediaTypeImage {
+					t.Errorf("Type = %v, want %v", media.Type, domain.MediaTypeImage)
+				}
+				if media.UploadedBy != "user1" {
+					t.Errorf("UploadedBy = %v, want user1", media.UploadedBy)
+				}
+			},
+		},
+		{
+			name: "invalid DTO",
+			user: &domain.User{ID: "user1"},
+			dto: dto.UploadMediaDTO{
+				Filename: "", // Invalid
+			},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {},
+			wantErr:   true,
+			errMsg:    "filename is required",
+		},
+		{
+			name: "storage upload failure",
+			user: &domain.User{ID: "user1"},
+			dto: dto.UploadMediaDTO{
+				Filename:     "photo.jpg",
+				OriginalName: "photo.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				Content:      []byte("data"),
+			},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {
+				sp.uploadErr = errors.New("storage error")
+			},
+			wantErr: true,
+		},
+		{
+			name: "database create failure",
+			user: &domain.User{ID: "user1"},
+			dto: dto.UploadMediaDTO{
+				Filename:     "photo.jpg",
+				OriginalName: "photo.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				Content:      []byte("data"),
+			},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {
+				mr.createErr = errors.New("database error")
+			},
+			wantErr: true,
+		},
+		{
+			name: "video file upload",
+			user: &domain.User{ID: "user1"},
+			dto: dto.UploadMediaDTO{
+				Filename:     "video.mp4",
+				OriginalName: "my-video.mp4",
+				MimeType:     "video/mp4",
+				Size:         5242880, // 5MB
+				Content:      []byte("video data"),
+			},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {},
+			wantErr:   false,
+			checkMedia: func(t *testing.T, media *domain.Media) {
+				if media.Type != domain.MediaTypeVideo {
+					t.Errorf("Type = %v, want %v", media.Type, domain.MediaTypeVideo)
+				}
+			},
+		},
+		{
+			name: "document file upload",
+			user: &domain.User{ID: "user1"},
+			dto: dto.UploadMediaDTO{
+				Filename:     "doc.pdf",
+				OriginalName: "document.pdf",
+				MimeType:     "application/pdf",
+				Size:         2048,
+				Content:      []byte("pdf data"),
+			},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {},
+			wantErr:   false,
+			checkMedia: func(t *testing.T, media *domain.Media) {
+				if media.Type != domain.MediaTypeDocument {
+					t.Errorf("Type = %v, want %v", media.Type, domain.MediaTypeDocument)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := NewMockMediaRepository()
+			mockStorage := NewMockStorageProvider()
+			mockPerm := NewMockPermissionService()
+			
+			tt.setupMock(mockRepo, mockStorage)
+			
+			service := NewMediaService(mockRepo, mockStorage, mockPerm)
+			media, err := service.Upload(tt.user, tt.dto)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Upload() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr && tt.errMsg != "" && err.Error() != tt.errMsg {
+				t.Errorf("Upload() error message = %v, want %v", err.Error(), tt.errMsg)
+				return
+			}
+
+			if !tt.wantErr && tt.checkMedia != nil {
+				tt.checkMedia(t, media)
+			}
+		})
+	}
+}
+
+func TestMediaService_Delete(t *testing.T) {
+	tests := []struct {
+		name      string
+		mediaID   string
+		user      *domain.User
+		setupMock func(*MockMediaRepository, *MockStorageProvider)
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:    "owner can delete own media",
+			mediaID: "media1",
+			user:    &domain.User{ID: "user1", Role: domain.RoleAuthor},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {
+				mr.media["media1"] = &domain.Media{
+					ID:          "media1",
+					Filename:    "test.jpg",
+					OriginalName: "test.jpg",
+					MimeType:    "image/jpeg",
+					Size:        1024,
+					StoragePath: "uploads/test.jpg",
+					UploadedBy:  "user1",
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name:    "admin can delete any media",
+			mediaID: "media1",
+			user:    &domain.User{ID: "admin", Role: domain.RoleAdmin},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {
+				mr.media["media1"] = &domain.Media{
+					ID:          "media1",
+					StoragePath: "uploads/test.jpg",
+					UploadedBy:  "user1", // Different user
+					Filename:    "test.jpg",
+					OriginalName: "test.jpg",
+					MimeType:    "image/jpeg",
+					Size:        1024,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name:    "non-owner cannot delete",
+			mediaID: "media1",
+			user:    &domain.User{ID: "user2", Role: domain.RoleAuthor},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {
+				mr.media["media1"] = &domain.Media{
+					ID:          "media1",
+					StoragePath: "uploads/test.jpg",
+					UploadedBy:  "user1", // Different user
+					Filename:    "test.jpg",
+					OriginalName: "test.jpg",
+					MimeType:    "image/jpeg",
+					Size:        1024,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				}
+			},
+			wantErr: true,
+			errMsg:  "permission denied: you can only delete your own media",
+		},
+		{
+			name:    "media not found",
+			mediaID: "nonexistent",
+			user:    &domain.User{ID: "user1", Role: domain.RoleAdmin},
+			setupMock: func(mr *MockMediaRepository, sp *MockStorageProvider) {
+				mr.findErr = errors.New("media not found")
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := NewMockMediaRepository()
+			mockStorage := NewMockStorageProvider()
+			mockPerm := NewMockPermissionService()
+			
+			tt.setupMock(mockRepo, mockStorage)
+			
+			service := NewMediaService(mockRepo, mockStorage, mockPerm)
+			err := service.Delete(tt.mediaID, tt.user)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr && tt.errMsg != "" && err.Error() != tt.errMsg {
+				t.Errorf("Delete() error message = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestMediaService_GetByID(t *testing.T) {
+	mockRepo := NewMockMediaRepository()
+	mockStorage := NewMockStorageProvider()
+	mockPerm := NewMockPermissionService()
+	
+	testMedia := &domain.Media{
+		ID:          "media1",
+		Filename:    "test.jpg",
+		OriginalName: "test.jpg",
+		MimeType:    "image/jpeg",
+		Size:        1024,
+		StoragePath: "uploads/test.jpg",
+		UploadedBy:  "user1",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	mockRepo.media["media1"] = testMedia
+
+	service := NewMediaService(mockRepo, mockStorage, mockPerm)
+
+	t.Run("existing media", func(t *testing.T) {
+		media, err := service.GetByID("media1")
+		if err != nil {
+			t.Errorf("GetByID() unexpected error: %v", err)
+		}
+		if media == nil {
+			t.Error("GetByID() returned nil media")
+		}
+		if media.ID != "media1" {
+			t.Errorf("GetByID() ID = %v, want media1", media.ID)
+		}
+	})
+
+	t.Run("non-existing media", func(t *testing.T) {
+		_, err := service.GetByID("nonexistent")
+		if err == nil {
+			t.Error("GetByID() expected error for non-existing media")
+		}
+	})
+}
+
+func TestDetermineMediaType(t *testing.T) {
+	tests := []struct {
+		mimeType string
+		want     domain.MediaType
+	}{
+		{"image/jpeg", domain.MediaTypeImage},
+		{"image/png", domain.MediaTypeImage},
+		{"image/gif", domain.MediaTypeImage},
+		{"video/mp4", domain.MediaTypeVideo},
+		{"video/mpeg", domain.MediaTypeVideo},
+		{"application/pdf", domain.MediaTypeDocument},
+		{"application/msword", domain.MediaTypeDocument},
+		{"text/plain", domain.MediaTypeDocument},
+		{"application/octet-stream", domain.MediaTypeOther},
+		{"audio/mpeg", domain.MediaTypeOther},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.mimeType, func(t *testing.T) {
+			got := determineMediaType(tt.mimeType)
+			if got != tt.want {
+				t.Errorf("determineMediaType(%v) = %v, want %v", tt.mimeType, got, tt.want)
+			}
+		})
+	}
+}

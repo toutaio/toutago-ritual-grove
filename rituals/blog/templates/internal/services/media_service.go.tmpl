@@ -1,0 +1,42 @@
+package services
+
+import (
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// StorageProvider defines the interface for file storage (S3, local, etc.)
+type StorageProvider interface {
+	// Upload uploads a file and returns the storage path and URL
+	Upload(filename string, content []byte, contentType string) (storagePath string, url string, err error)
+
+	// Delete deletes a file from storage
+	Delete(storagePath string) error
+
+	// GetURL returns the public URL for a file
+	GetURL(storagePath string) string
+}
+
+// MediaService defines methods for media business logic
+type MediaService interface {
+	// Upload uploads a media file
+	Upload(user *domain.User, dto dto.UploadMediaDTO) (*domain.Media, error)
+
+	// Delete deletes a media file
+	Delete(id string, user *domain.User) error
+
+	// GetByID retrieves a media record by ID
+	GetByID(id string) (*domain.Media, error)
+
+	// List retrieves media records based on filters
+	List(filters dto.MediaFilters) ([]*domain.Media, error)
+
+	// Count returns total number of media records
+	Count() (int, error)
+
+	// CountByType returns media count by type
+	CountByType(mediaType domain.MediaType) (int, error)
+
+	// GetByUploader retrieves media uploaded by a specific user
+	GetByUploader(userID string, limit, offset int) ([]*domain.Media, error)
+}

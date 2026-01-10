@@ -1,0 +1,151 @@
+package services
+
+import (
+	"errors"
+	"fmt"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+	"[[ .module_path ]]/internal/repositories"
+)
+
+// mediaService implements MediaService
+type mediaService struct {
+	repo     repositories.MediaRepository
+	storage  StorageProvider
+	permService PermissionService
+}
+
+// NewMediaService creates a new media service
+func NewMediaService(repo repositories.MediaRepository, storage StorageProvider, permService PermissionService) MediaService {
+	return &mediaService{
+		repo:     repo,
+		storage:  storage,
+		permService: permService,
+	}
+}
+
+// Upload uploads a media file
+func (s *mediaService) Upload(user *domain.User, uploadDTO dto.UploadMediaDTO) (*domain.Media, error) {
+	// Validate DTO
+	if err := uploadDTO.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Generate unique filename
+	ext := filepath.Ext(uploadDTO.Filename)
+	uniqueFilename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+
+	// Upload to storage
+	storagePath, url, err := s.storage.Upload(uniqueFilename, uploadDTO.Content, uploadDTO.MimeType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload file: %w", err)
+	}
+
+	// Determine media type from mime type
+	mediaType := determineMediaType(uploadDTO.MimeType)
+
+	// Create media record
+	media := &domain.Media{
+		ID:           uuid.New().String(),
+		Filename:     uniqueFilename,
+		OriginalName: uploadDTO.OriginalName,
+		MimeType:     uploadDTO.MimeType,
+		Size:         uploadDTO.Size,
+		StoragePath:  storagePath,
+		URL:          url,
+		Type:         mediaType,
+		UploadedBy:   user.ID,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	// Validate domain entity
+	if err := media.Validate(); err != nil {
+		// Cleanup uploaded file on validation failure
+		s.storage.Delete(storagePath)
+		return nil, err
+	}
+
+	// Save to repository
+	if err := s.repo.Create(media); err != nil {
+		// Cleanup uploaded file on database failure
+		s.storage.Delete(storagePath)
+		return nil, err
+	}
+
+	return media, nil
+}
+
+// Delete deletes a media file
+func (s *mediaService) Delete(id string, user *domain.User) error {
+	// Get media record
+	media, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Check permissions - only uploader or admin can delete
+	if media.UploadedBy != user.ID && !s.permService.HasRole(user, domain.RoleAdmin) {
+		return errors.New("permission denied: you can only delete your own media")
+	}
+
+	// Delete from storage
+	if err := s.storage.Delete(media.StoragePath); err != nil {
+		// Log error but continue with database deletion
+		// (storage might already be deleted or unavailable)
+	}
+
+	// Delete from database
+	return s.repo.Delete(id)
+}
+
+// GetByID retrieves a media record by ID
+func (s *mediaService) GetByID(id string) (*domain.Media, error) {
+	return s.repo.FindByID(id)
+}
+
+// List retrieves media records based on filters
+func (s *mediaService) List(filters dto.MediaFilters) ([]*domain.Media, error) {
+	return s.repo.List(filters)
+}
+
+// Count returns total number of media records
+func (s *mediaService) Count() (int, error) {
+	return s.repo.Count()
+}
+
+// CountByType returns media count by type
+func (s *mediaService) CountByType(mediaType domain.MediaType) (int, error) {
+	return s.repo.CountByType(mediaType)
+}
+
+// GetByUploader retrieves media uploaded by a specific user
+func (s *mediaService) GetByUploader(userID string, limit, offset int) ([]*domain.Media, error) {
+	return s.repo.FindByUploader(userID, limit, offset)
+}
+
+// determineMediaType determines the media type from mime type
+func determineMediaType(mimeType string) domain.MediaType {
+	mimeType = strings.ToLower(mimeType)
+	
+	if strings.HasPrefix(mimeType, "image/") {
+		return domain.MediaTypeImage
+	}
+	if strings.HasPrefix(mimeType, "video/") {
+		return domain.MediaTypeVideo
+	}
+	if strings.HasPrefix(mimeType, "application/pdf") ||
+	   strings.HasPrefix(mimeType, "application/msword") ||
+	   strings.HasPrefix(mimeType, "application/vnd.") ||
+	   strings.HasPrefix(mimeType, "text/") {
+		return domain.MediaTypeDocument
+	}
+	
+	return domain.MediaTypeOther
+}

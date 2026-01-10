@@ -1,0 +1,33 @@
+package repositories
+
+import (
+	"[[ .module_path ]]/internal/domain"
+	"[[ .module_path ]]/internal/dto"
+)
+
+// MediaRepository defines methods for media data access
+type MediaRepository interface {
+	// Create creates a new media record
+	Create(media *domain.Media) error
+
+	// Update updates an existing media record
+	Update(media *domain.Media) error
+
+	// Delete deletes a media record by ID
+	Delete(id string) error
+
+	// FindByID finds a media record by ID
+	FindByID(id string) (*domain.Media, error)
+
+	// List returns media records based on filters
+	List(filters dto.MediaFilters) ([]*domain.Media, error)
+
+	// Count returns total number of media records
+	Count() (int, error)
+
+	// CountByType returns media count by type
+	CountByType(mediaType domain.MediaType) (int, error)
+
+	// FindByUploader finds media uploaded by a specific user
+	FindByUploader(userID string, limit, offset int) ([]*domain.Media, error)
+}

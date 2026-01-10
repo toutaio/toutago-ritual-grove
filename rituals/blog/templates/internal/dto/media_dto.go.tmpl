@@ -1,0 +1,47 @@
+package dto
+
+import "errors"
+
+// UploadMediaDTO represents data for uploading a media file
+type UploadMediaDTO struct {
+	Filename     string
+	OriginalName string
+	MimeType     string
+	Size         int64
+	Content      []byte // File content
+}
+
+// Validate validates the UploadMediaDTO
+func (dto *UploadMediaDTO) Validate() error {
+	if dto.Filename == "" {
+		return errors.New("filename is required")
+	}
+	if len(dto.Filename) > 255 {
+		return errors.New("filename too long (max 255 characters)")
+	}
+	if dto.OriginalName == "" {
+		return errors.New("original name is required")
+	}
+	if dto.MimeType == "" {
+		return errors.New("mime type is required")
+	}
+	if dto.Size <= 0 {
+		return errors.New("invalid file size")
+	}
+	if dto.Size > 10*1024*1024 { // 10MB limit
+		return errors.New("file too large (max 10MB)")
+	}
+	if len(dto.Content) == 0 {
+		return errors.New("file content is required")
+	}
+	return nil
+}
+
+// MediaFilters represents filtering options for querying media
+type MediaFilters struct {
+	Type       string // Filter by media type (image, video, document, other)
+	UploadedBy string // Filter by uploader user ID
+	Search     string // Search in filename or original name
+	Limit      int
+	Offset     int
+}

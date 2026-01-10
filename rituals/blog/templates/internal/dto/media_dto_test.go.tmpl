@@ -1,0 +1,141 @@
+package dto
+
+import "testing"
+
+func TestUploadMediaDTO_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		dto     UploadMediaDTO
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid upload",
+			dto: UploadMediaDTO{
+				Filename:     "test.jpg",
+				OriginalName: "my-photo.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				Content:      []byte("fake image data"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty filename",
+			dto: UploadMediaDTO{
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				Content:      []byte("data"),
+			},
+			wantErr: true,
+			errMsg:  "filename is required",
+		},
+		{
+			name: "filename too long",
+			dto: UploadMediaDTO{
+				Filename:     string(make([]byte, 256)),
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				Content:      []byte("data"),
+			},
+			wantErr: true,
+			errMsg:  "filename too long (max 255 characters)",
+		},
+		{
+			name: "empty original name",
+			dto: UploadMediaDTO{
+				Filename: "test.jpg",
+				MimeType: "image/jpeg",
+				Size:     1024,
+				Content:  []byte("data"),
+			},
+			wantErr: true,
+			errMsg:  "original name is required",
+		},
+		{
+			name: "empty mime type",
+			dto: UploadMediaDTO{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				Size:         1024,
+				Content:      []byte("data"),
+			},
+			wantErr: true,
+			errMsg:  "mime type is required",
+		},
+		{
+			name: "zero size",
+			dto: UploadMediaDTO{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         0,
+				Content:      []byte("data"),
+			},
+			wantErr: true,
+			errMsg:  "invalid file size",
+		},
+		{
+			name: "negative size",
+			dto: UploadMediaDTO{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         -100,
+				Content:      []byte("data"),
+			},
+			wantErr: true,
+			errMsg:  "invalid file size",
+		},
+		{
+			name: "file too large",
+			dto: UploadMediaDTO{
+				Filename:     "huge.jpg",
+				OriginalName: "huge.jpg",
+				MimeType:     "image/jpeg",
+				Size:         11 * 1024 * 1024, // 11MB
+				Content:      []byte("data"),
+			},
+			wantErr: true,
+			errMsg:  "file too large (max 10MB)",
+		},
+		{
+			name: "empty content",
+			dto: UploadMediaDTO{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				Content:      []byte{},
+			},
+			wantErr: true,
+			errMsg:  "file content is required",
+		},
+		{
+			name: "exactly 10MB",
+			dto: UploadMediaDTO{
+				Filename:     "large.jpg",
+				OriginalName: "large.jpg",
+				MimeType:     "image/jpeg",
+				Size:         10 * 1024 * 1024,
+				Content:      []byte("data"),
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dto.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Errorf("Validate() error message = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}
