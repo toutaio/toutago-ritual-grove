@@ -1,0 +1,82 @@
+package domain
+
+import (
+	"errors"
+	"time"
+)
+
+// MediaType represents the type of media file
+type MediaType string
+
+const (
+	MediaTypeImage    MediaType = "image"
+	MediaTypeVideo    MediaType = "video"
+	MediaTypeDocument MediaType = "document"
+	MediaTypeOther    MediaType = "other"
+)
+
+// Media represents an uploaded media file
+type Media struct {
+	ID          string    `json:"id"`
+	Filename    string    `json:"filename"`
+	OriginalName string   `json:"original_name"`
+	MimeType    string    `json:"mime_type"`
+	Size        int64     `json:"size"` // Size in bytes
+	StoragePath string    `json:"storage_path"` // S3 key or file path
+	URL         string    `json:"url"`
+	Type        MediaType `json:"type"`
+	UploadedBy  string    `json:"uploaded_by"` // User ID
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// Validate ensures media data is valid
+func (m *Media) Validate() error {
+	if m.Filename == "" {
+		return errors.New("filename is required")
+	}
+	if len(m.Filename) > 255 {
+		return errors.New("filename too long (max 255 characters)")
+	}
+	if m.OriginalName == "" {
+		return errors.New("original name is required")
+	}
+	if m.MimeType == "" {
+		return errors.New("mime type is required")
+	}
+	if m.Size <= 0 {
+		return errors.New("invalid file size")
+	}
+	if m.StoragePath == "" {
+		return errors.New("storage path is required")
+	}
+	if m.UploadedBy == "" {
+		return errors.New("uploaded by is required")
+	}
+	return nil
+}
+
+// IsImage returns true if the media is an image
+func (m *Media) IsImage() bool {
+	return m.Type == MediaTypeImage
+}
+
+// IsVideo returns true if the media is a video
+func (m *Media) IsVideo() bool {
+	return m.Type == MediaTypeVideo
+}
+
+// IsDocument returns true if the media is a document
+func (m *Media) IsDocument() bool {
+	return m.Type == MediaTypeDocument
+}
+
+// SizeInKB returns the file size in kilobytes
+func (m *Media) SizeInKB() float64 {
+	return float64(m.Size) / 1024
+}
+
+// SizeInMB returns the file size in megabytes
+func (m *Media) SizeInMB() float64 {
+	return float64(m.Size) / (1024 * 1024)
+}

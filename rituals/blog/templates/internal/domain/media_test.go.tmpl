@@ -1,0 +1,241 @@
+package domain
+
+import (
+	"testing"
+	"time"
+)
+
+func TestMedia_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		media   Media
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid media",
+			media: Media{
+				ID:           "1",
+				Filename:     "image.jpg",
+				OriginalName: "my-image.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				StoragePath:  "uploads/2024/01/image.jpg",
+				URL:          "https://cdn.example.com/image.jpg",
+				Type:         MediaTypeImage,
+				UploadedBy:   "user-1",
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty filename",
+			media: Media{
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				StoragePath:  "path",
+				UploadedBy:   "user-1",
+			},
+			wantErr: true,
+			errMsg:  "filename is required",
+		},
+		{
+			name: "filename too long",
+			media: Media{
+				Filename:     string(make([]byte, 256)),
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				StoragePath:  "path",
+				UploadedBy:   "user-1",
+			},
+			wantErr: true,
+			errMsg:  "filename too long (max 255 characters)",
+		},
+		{
+			name: "empty original name",
+			media: Media{
+				Filename:    "test.jpg",
+				MimeType:    "image/jpeg",
+				Size:        1024,
+				StoragePath: "path",
+				UploadedBy:  "user-1",
+			},
+			wantErr: true,
+			errMsg:  "original name is required",
+		},
+		{
+			name: "empty mime type",
+			media: Media{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				Size:         1024,
+				StoragePath:  "path",
+				UploadedBy:   "user-1",
+			},
+			wantErr: true,
+			errMsg:  "mime type is required",
+		},
+		{
+			name: "invalid size (zero)",
+			media: Media{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         0,
+				StoragePath:  "path",
+				UploadedBy:   "user-1",
+			},
+			wantErr: true,
+			errMsg:  "invalid file size",
+		},
+		{
+			name: "invalid size (negative)",
+			media: Media{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         -100,
+				StoragePath:  "path",
+				UploadedBy:   "user-1",
+			},
+			wantErr: true,
+			errMsg:  "invalid file size",
+		},
+		{
+			name: "empty storage path",
+			media: Media{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				UploadedBy:   "user-1",
+			},
+			wantErr: true,
+			errMsg:  "storage path is required",
+		},
+		{
+			name: "empty uploaded by",
+			media: Media{
+				Filename:     "test.jpg",
+				OriginalName: "test.jpg",
+				MimeType:     "image/jpeg",
+				Size:         1024,
+				StoragePath:  "path",
+			},
+			wantErr: true,
+			errMsg:  "uploaded by is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.media.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Errorf("Validate() error message = %v, want %v", err.Error(), tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestMedia_TypeChecks(t *testing.T) {
+	tests := []struct {
+		name          string
+		mediaType     MediaType
+		expectImage   bool
+		expectVideo   bool
+		expectDoc     bool
+	}{
+		{
+			name:        "image type",
+			mediaType:   MediaTypeImage,
+			expectImage: true,
+			expectVideo: false,
+			expectDoc:   false,
+		},
+		{
+			name:        "video type",
+			mediaType:   MediaTypeVideo,
+			expectImage: false,
+			expectVideo: true,
+			expectDoc:   false,
+		},
+		{
+			name:        "document type",
+			mediaType:   MediaTypeDocument,
+			expectImage: false,
+			expectVideo: false,
+			expectDoc:   true,
+		},
+		{
+			name:        "other type",
+			mediaType:   MediaTypeOther,
+			expectImage: false,
+			expectVideo: false,
+			expectDoc:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			media := Media{Type: tt.mediaType}
+			
+			if media.IsImage() != tt.expectImage {
+				t.Errorf("IsImage() = %v, want %v", media.IsImage(), tt.expectImage)
+			}
+			if media.IsVideo() != tt.expectVideo {
+				t.Errorf("IsVideo() = %v, want %v", media.IsVideo(), tt.expectVideo)
+			}
+			if media.IsDocument() != tt.expectDoc {
+				t.Errorf("IsDocument() = %v, want %v", media.IsDocument(), tt.expectDoc)
+			}
+		})
+	}
+}
+
+func TestMedia_SizeConversions(t *testing.T) {
+	tests := []struct {
+		name     string
+		size     int64
+		expectKB float64
+		expectMB float64
+	}{
+		{
+			name:     "1 KB",
+			size:     1024,
+			expectKB: 1.0,
+			expectMB: 0.0009765625,
+		},
+		{
+			name:     "1 MB",
+			size:     1048576,
+			expectKB: 1024.0,
+			expectMB: 1.0,
+		},
+		{
+			name:     "5 MB",
+			size:     5242880,
+			expectKB: 5120.0,
+			expectMB: 5.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			media := Media{Size: tt.size}
+			
+			if media.SizeInKB() != tt.expectKB {
+				t.Errorf("SizeInKB() = %v, want %v", media.SizeInKB(), tt.expectKB)
+			}
+			if media.SizeInMB() != tt.expectMB {
+				t.Errorf("SizeInMB() = %v, want %v", media.SizeInMB(), tt.expectMB)
+			}
+		})
+	}
+}
