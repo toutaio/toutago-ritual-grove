@@ -1,0 +1,102 @@
+package storage
+
+import (
+"errors"
+"fmt"
+"os"
+"path/filepath"
+"strings"
+)
+
+// LocalStorage implements StorageProvider for local file system storage
+type LocalStorage struct {
+basePath string
+baseURL  string
+}
+
+// NewLocalStorage creates a new local storage provider
+func NewLocalStorage(basePath, baseURL string) *LocalStorage {
+return &LocalStorage{
+basePath: basePath,
+baseURL:  baseURL,
+}
+}
+
+// Upload uploads a file to local storage
+func (s *LocalStorage) Upload(filename string, content []byte, contentType string) (string, string, error) {
+// Validate inputs
+if filename == "" {
+return "", "", errors.New("filename cannot be empty")
+}
+if content == nil {
+return "", "", errors.New("content cannot be nil")
+}
+
+// Security: prevent path traversal attacks
+if err := validatePath(filename); err != nil {
+return "", "", err
+}
+
+// Construct full path
+storagePath := filename
+fullPath := filepath.Join(s.basePath, storagePath)
+
+// Ensure directory exists
+dir := filepath.Dir(fullPath)
+if err := os.MkdirAll(dir, 0755); err != nil {
+return "", "", fmt.Errorf("failed to create directory: %w", err)
+}
+
+// Write file
+if err := os.WriteFile(fullPath, content, 0644); err != nil {
+return "", "", fmt.Errorf("failed to write file: %w", err)
+}
+
+// Generate URL
+url := s.GetURL(storagePath)
+
+return storagePath, url, nil
+}
+
+// Delete deletes a file from local storage
+func (s *LocalStorage) Delete(storagePath string) error {
+if storagePath == "" {
+return errors.New("storage path cannot be empty")
+}
+
+// Security: prevent path traversal attacks
+if err := validatePath(storagePath); err != nil {
+return err
+}
+
+fullPath := filepath.Join(s.basePath, storagePath)
+
+// Remove file (ignore if doesn't exist)
+err := os.Remove(fullPath)
+if err != nil && !os.IsNotExist(err) {
+return fmt.Errorf("failed to delete file: %w", err)
+}
+
+return nil
+}
+
+// GetURL returns the public URL for a file
+func (s *LocalStorage) GetURL(storagePath string) string {
+return fmt.Sprintf("%s/uploads/%s", s.baseURL, storagePath)
+}
+
+// validatePath ensures the path doesn't contain malicious elements
+func validatePath(path string) error {
+// Check for absolute paths
+if filepath.IsAbs(path) {
+return errors.New("absolute paths are not allowed")
+}
+
+// Clean the path and check for path traversal
+cleaned := filepath.Clean(path)
+if strings.HasPrefix(cleaned, "..") || strings.Contains(cleaned, "/../") {
+return errors.New("path traversal detected")
+}
+
+return nil
+}

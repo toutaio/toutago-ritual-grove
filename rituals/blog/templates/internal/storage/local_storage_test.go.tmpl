@@ -1,0 +1,230 @@
+package storage
+
+import (
+"os"
+"path/filepath"
+"testing"
+)
+
+func TestLocalStorage_Upload(t *testing.T) {
+// Create temporary directory for tests
+tempDir := t.TempDir()
+
+storage := NewLocalStorage(tempDir, "http://localhost:8080")
+
+tests := []struct {
+name        string
+filename    string
+content     []byte
+contentType string
+wantErr     bool
+}{
+{
+name:        "successful upload",
+filename:    "test.jpg",
+content:     []byte("fake image content"),
+contentType: "image/jpeg",
+wantErr:     false,
+},
+{
+name:        "upload with subdirectory",
+filename:    "2024/01/photo.jpg",
+content:     []byte("photo data"),
+contentType: "image/jpeg",
+wantErr:     false,
+},
+{
+name:        "empty filename",
+filename:    "",
+content:     []byte("data"),
+contentType: "image/jpeg",
+wantErr:     true,
+},
+{
+name:        "nil content",
+filename:    "test.jpg",
+content:     nil,
+contentType: "image/jpeg",
+wantErr:     true,
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+storagePath, url, err := storage.Upload(tt.filename, tt.content, tt.contentType)
+
+if (err != nil) != tt.wantErr {
+t.Errorf("Upload() error = %v, wantErr %v", err, tt.wantErr)
+return
+}
+
+if !tt.wantErr {
+// Verify file was created
+fullPath := filepath.Join(tempDir, storagePath)
+if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+t.Errorf("Upload() file not created at %v", fullPath)
+}
+
+// Verify content
+savedContent, err := os.ReadFile(fullPath)
+if err != nil {
+t.Errorf("Upload() failed to read saved file: %v", err)
+}
+if string(savedContent) != string(tt.content) {
+t.Errorf("Upload() saved content = %v, want %v", string(savedContent), string(tt.content))
+}
+
+// Verify URL
+if url == "" {
+t.Error("Upload() returned empty URL")
+}
+}
+})
+}
+}
+
+func TestLocalStorage_Delete(t *testing.T) {
+tempDir := t.TempDir()
+storage := NewLocalStorage(tempDir, "http://localhost:8080")
+
+// Upload a file first
+filename := "test-delete.jpg"
+content := []byte("test content")
+storagePath, _, err := storage.Upload(filename, content, "image/jpeg")
+if err != nil {
+t.Fatalf("Setup failed: %v", err)
+}
+
+tests := []struct {
+name        string
+storagePath string
+wantErr     bool
+}{
+{
+name:        "delete existing file",
+storagePath: storagePath,
+wantErr:     false,
+},
+{
+name:        "delete non-existing file",
+storagePath: "nonexistent.jpg",
+wantErr:     false, // Should not error on non-existing files
+},
+{
+name:        "delete with empty path",
+storagePath: "",
+wantErr:     true,
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+err := storage.Delete(tt.storagePath)
+
+if (err != nil) != tt.wantErr {
+t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+}
+
+// Verify file was deleted for successful cases
+if !tt.wantErr && tt.storagePath != "" && tt.storagePath != "nonexistent.jpg" {
+fullPath := filepath.Join(tempDir, tt.storagePath)
+if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+t.Errorf("Delete() file still exists at %v", fullPath)
+}
+}
+})
+}
+}
+
+func TestLocalStorage_GetURL(t *testing.T) {
+tempDir := t.TempDir()
+baseURL := "http://localhost:8080"
+storage := NewLocalStorage(tempDir, baseURL)
+
+tests := []struct {
+name        string
+storagePath string
+wantURL     string
+}{
+{
+name:        "simple path",
+storagePath: "test.jpg",
+wantURL:     baseURL + "/uploads/test.jpg",
+},
+{
+name:        "path with subdirectory",
+storagePath: "2024/01/photo.jpg",
+wantURL:     baseURL + "/uploads/2024/01/photo.jpg",
+},
+{
+name:        "empty path",
+storagePath: "",
+wantURL:     baseURL + "/uploads/",
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+url := storage.GetURL(tt.storagePath)
+if url != tt.wantURL {
+t.Errorf("GetURL() = %v, want %v", url, tt.wantURL)
+}
+})
+}
+}
+
+func TestLocalStorage_EnsureDirectoryCreation(t *testing.T) {
+tempDir := t.TempDir()
+storage := NewLocalStorage(tempDir, "http://localhost:8080")
+
+// Upload file with nested directory structure
+filename := "deep/nested/path/file.jpg"
+content := []byte("test")
+storagePath, _, err := storage.Upload(filename, content, "image/jpeg")
+if err != nil {
+t.Fatalf("Upload() with nested path failed: %v", err)
+}
+
+// Verify all directories were created
+fullPath := filepath.Join(tempDir, storagePath)
+if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+t.Errorf("Upload() did not create necessary directories for %v", fullPath)
+}
+}
+
+func TestLocalStorage_PathSafety(t *testing.T) {
+tempDir := t.TempDir()
+storage := NewLocalStorage(tempDir, "http://localhost:8080")
+
+tests := []struct {
+name     string
+filename string
+wantErr  bool
+}{
+{
+name:     "path traversal attempt",
+filename: "../../../etc/passwd",
+wantErr:  true,
+},
+{
+name:     "absolute path attempt",
+filename: "/etc/passwd",
+wantErr:  true,
+},
+{
+name:     "normal relative path",
+filename: "subfolder/file.jpg",
+wantErr:  false,
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+_, _, err := storage.Upload(tt.filename, []byte("test"), "image/jpeg")
+
+if (err != nil) != tt.wantErr {
+t.Errorf("Upload() with %v, error = %v, wantErr %v", tt.filename, err, tt.wantErr)
+}
+})
+}
+}
